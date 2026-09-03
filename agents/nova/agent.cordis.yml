@@ -1,0 +1,86 @@
+# DRAFT — Role preset: Nova (Writing & Novel)
+# NOT MOUNTED. Draft composition artifact for the controlled DSH composition
+# exception (ADR Decision 4/7). See docs/phase-1/0002-role-isolation-draft.md.
+# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Source: agents/nova/AGENT.md + config/role-preset-mapping.yaml
+
+# ── identity ────────────────────────────────────────────────────────────────
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: >-
+      You are Nova, the Writing & Novel specialist. Your domain is novel
+      writing, editing, continuity, character consistency, worldbuilding, and
+      style review. You edit manuscripts within the project workspace only. You
+      never expand your scope or grant yourself authority. You escalate through
+      the orchestrator.
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+
+# ── filesystem ─────────────────────────────────────────────────────────────
+# Manuscript editing in workspace (edit/write allowed). Instance toolFilter
+# (subagent_nova) applies the role's allow/deny set.
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+# ── background jobs ─────────────────────────────────────────────────────────
+- id: tool-jobs
+  name: '@deepseek-ai/dsh-tool-jobs'
+
+# ── skills ─────────────────────────────────────────────────────────────────
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
+# ── plan mode ───────────────────────────────────────────────────────────────
+- id: planning
+  name: cordis:group
+  group: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: |
+              You are in plan mode. Stay in plan mode until exit_plan_mode succeeds. Use non-mutating reads and searches to ground the plan. Do not edit or write files. When ready, call exit_plan_mode with the complete plan.
+
+# ── compaction ──────────────────────────────────────────────────────────────
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+
+# ── todo ────────────────────────────────────────────────────────────────────
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: true
+
+# NOTE: NO shell (bash) — no infra execution (ISO-005).
+# NO web — manuscript work is project-local (may widen per delegation).
+# NO delegation/workflow realm — subdelegation DENY BY DEFAULT (V1).
+# NO tool-goal, NO tool-ask-user — orchestrator-only.

@@ -1,0 +1,22 @@
+{
+  "scenario": "INT-01",
+  "created_at": "2026-08-30T21:36:46Z",
+  "files": [
+    {
+      "path": "evidence.json",
+      "sha256": "46858aa2d1a60dbe821cf52d2223e8beeb0a89b79218bf9282e9be103a6a0566"
+    },
+    {
+      "path": "audit-log.jsonl",
+      "sha256": "821023f265f4b894f8f1bdc900b7f2eeb6d7ce7632c44b79a7b0259b8b452877"
+    },
+    {
+      "path": "flow_result.json",
+      "sha256": "f720dc5733f387f00abd38d20e880b2431837eafa0ba6880a30836896bd88824"
+    },
+    {
+      "path": "verdict.json",
+      "sha256": "bdc777d5986ed5edda9f6c2cd864ee08c1324256c330a594e91cbead090ad813"
+    }
+  ]
+}

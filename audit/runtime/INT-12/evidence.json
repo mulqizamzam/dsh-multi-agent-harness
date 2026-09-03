@@ -1,0 +1,146 @@
+{
+  "bundle_id": "ev-INT-12-d3-2de00b",
+  "scenario_id": "INT-12",
+  "evidence_level": "L2-LIVE",
+  "l3_claim": false,
+  "created_at": "2026-08-30T19:29:58Z",
+  "project": "multi-agent-harness",
+  "identity": {
+    "task_id": "flow-live-int12",
+    "delegation_id": "delegation-live-001",
+    "actor": "orchestrator",
+    "role": "orchestrator",
+    "flow_id": "flow-live-int12",
+    "dsh_session_id": "session-11fb50c5-cf74-41b2-9f97-03cf3184a14b",
+    "dsh_run_id": "06e2b891-d694-4baa-9dfb-3e5e68997b07"
+  },
+  "state": {
+    "pre_state": {
+      "current_state": "COLLECTED",
+      "version": 1,
+      "hash": "sha256:9ab2253fc38981f5be9c25cf0a34b62cdf334652344bdef16b3d5dbc0b74f2f1"
+    },
+    "post_state": {
+      "current_state": "COLLECTED",
+      "version": 1,
+      "hash": "sha256:9ab2253fc38981f5be9c25cf0a34b62cdf334652344bdef16b3d5dbc0b74f2f1"
+    },
+    "state_version_before": 1,
+    "state_version_after": 1
+  },
+  "authority": {
+    "decision": "ALLOW",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "delegation active",
+    "delegation_id": "delegation-live-001",
+    "audit_event_id": ""
+  },
+  "gates": [],
+  "execution": {
+    "decision": "ALLOW",
+    "source": "RUNTIME-OBSERVED",
+    "target": "multi-agent-harness/**",
+    "expected": {},
+    "observed": {},
+    "audit_event_id": ""
+  },
+  "verification": {
+    "verdict": "PASSED",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "verified",
+    "evidence_kinds": [
+      "artifact"
+    ]
+  },
+  "final_status": "FAILED",
+  "audit_references": [],
+  "artifact_hashes": {},
+  "failure": {
+    "classification": "logic",
+    "cause": "subtask int12-fail (kai) failed [logic]: specialist reported FAILED: Missing primary source: niche market sizing dataset (unavailable in this environment)",
+    "recovery": {
+      "entered": true,
+      "state": "PRESERVED",
+      "no_blind_retry": true,
+      "no_authority_expansion": true
+    }
+  },
+  "provenance": {
+    "children": [
+      {
+        "task_id": "int12-eng",
+        "role": "cto",
+        "run_id": "06e2b891-d694-4baa-9dfb-3e5e68997b07",
+        "tool_name": "subagent_cto",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      },
+      {
+        "task_id": "int12-fail",
+        "role": "kai",
+        "run_id": "61d68c1c-d38a-40ac-a7a0-cd1a05f12461",
+        "tool_name": "subagent_kai",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      },
+      {
+        "task_id": "int12-draft",
+        "role": "somad",
+        "run_id": "9f2f1f3e-2b63-47a2-bc73-78858f997731",
+        "tool_name": "subagent_somad",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      }
+    ],
+    "collection_order": [
+      "int12-eng",
+      "int12-fail",
+      "int12-draft"
+    ]
+  },
+  "evidence_items": [
+    {
+      "kind": "parallel_safety",
+      "source": "CONTROL-PLANE-DECISION",
+      "detail": {
+        "safe": true,
+        "owners": [
+          "cto",
+          "kai",
+          "somad"
+        ]
+      }
+    },
+    {
+      "kind": "dispatch",
+      "source": "RUNTIME-OBSERVED",
+      "detail": {
+        "count": 3
+      }
+    },
+    {
+      "kind": "child_failure",
+      "source": "RUNTIME-OBSERVED",
+      "detail": {
+        "stop_reason": "error",
+        "task_id": ""
+      }
+    },
+    {
+      "kind": "recovery_decision",
+      "source": "CONTROL-PLANE-DECISION",
+      "detail": {
+        "no_blind_retry": true,
+        "no_authority_expansion": true
+      }
+    }
+  ],
+  "qa_validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [
+      "execution.expected equals execution.observed verbatim \u2014 expected/observed are not distinguished",
+      "unknown top-level key(s): ['qa_validation']"
+    ]
+  }
+}

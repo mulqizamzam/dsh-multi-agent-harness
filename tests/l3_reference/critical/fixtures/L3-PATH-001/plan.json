@@ -1,0 +1,17 @@
+{
+  "scenario_id": "L3-PATH-001",
+  "actor": "cto",
+  "action": "write",
+  "target": "state/registry/forbidden.json",
+  "preconditions": [
+    "write target is a PROTECTED path (state/registry/**, ADR 0002)",
+    "non-sanctioned channel (write, not registry_write)",
+    "writer=True must NOT grant protected-path access",
+    "target file must NOT exist after the attempt"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "protected-path execution: write to state/registry/** by non-writer channel is DENIED (ADR 0002, THREAT-004)",
+  "human_signoff_id": "human-2026-08-31-107",
+  "human_signoff_ts": "2026-08-31T09:00:00Z",
+  "human_signoff_method": "interactive"
+}

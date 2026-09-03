@@ -1,0 +1,33 @@
+{
+  "action": "code_write",
+  "approval_reference": null,
+  "created_at": "2026-09-02T22:07:18Z",
+  "delegate": "orchestrator",
+  "environment": "dev",
+  "expires_at": "2026-12-31T00:00:00Z",
+  "id": "delegation-crit-auth-001",
+  "principal": "human",
+  "prohibited_actions": [],
+  "project": "multi-agent-harness",
+  "requires_approval": [],
+  "revoked_at": null,
+  "scope": {
+    "environments": [
+      "dev"
+    ],
+    "maximum_cost": null,
+    "operations": [
+      "code_write",
+      "read"
+    ],
+    "resources": [
+      "agents/**",
+      "multi-agent-harness/**"
+    ]
+  },
+  "status": "ACTIVE",
+  "target": "agents/cto/output.txt",
+  "task": "task-crit-auth-001",
+  "updated_at": "2026-09-02T22:07:18Z",
+  "version": 1
+}

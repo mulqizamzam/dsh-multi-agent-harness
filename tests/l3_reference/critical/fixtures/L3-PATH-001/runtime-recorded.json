@@ -1,0 +1,32 @@
+{
+  "scenario_id": "L3-PATH-001",
+  "decision": "DENY",
+  "denial_path": "execution_gate.authorize_write",
+  "tool_call_id": "tool-call-crit-path-001",
+  "audit_event_ids": ["event-crit-path-001"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "BLOCKED",
+  "state_version_before": 1,
+  "state_version_after": 1,
+  "failure": {
+    "class": "authorization",
+    "cause": "target is a protected path (ADR 0002)",
+    "recovery": null
+  },
+  "audit_log": [
+    {
+      "event_id": "event-crit-path-001",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "cto",
+      "actor_type": "agent",
+      "action": "write",
+      "target": "state/registry/forbidden.json",
+      "project": "multi-agent-harness",
+      "task_id": "task-crit-path-001",
+      "event_class": "execution_denial",
+      "result": "denied",
+      "authority_source": null
+    }
+  ]
+}

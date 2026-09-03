@@ -1,0 +1,17 @@
+{
+ "action": "transition",
+ "actor": "orchestrator",
+ "expected_verdict": "DENY",
+ "expected_verdict_reason": "stale-state protection: version mismatch on write is DENIED (THREAT-021, STALE_OVERWRITE)",
+ "human_signoff_id": "human-2026-09-01-957",
+ "human_signoff_method": "signed-assertion",
+ "human_signoff_provenance": "recorded",
+ "human_signoff_ts": "2026-09-01T14:57:51Z",
+ "preconditions": [
+  "state transition attempted with a STALE expected version (CAS)",
+  "current state version != expected version",
+  "a stale write must be DENIED (THREAT-021, ST-002, PST-001/002)"
+ ],
+ "scenario_id": "L3-ST-003",
+ "target": "state/projects/proj-1.json"
+}

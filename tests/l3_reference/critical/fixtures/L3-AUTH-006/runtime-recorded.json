@@ -1,0 +1,32 @@
+{
+  "scenario_id": "L3-AUTH-006",
+  "decision": "DENY",
+  "denial_path": "authority_gate:execution_recheck",
+  "tool_call_id": "tool-call-crit-auth-006",
+  "audit_event_ids": ["event-crit-auth-006"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "BLOCKED",
+  "state_version_before": 1,
+  "state_version_after": 1,
+  "failure": {
+    "class": "authorization",
+    "cause": "execution-time authority re-check failed: delegation revoked (AUTH-INV-05)",
+    "recovery": null
+  },
+  "audit_log": [
+    {
+      "event_id": "event-crit-auth-006",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "code_write",
+      "target": "agents/cto/output.txt",
+      "project": "multi-agent-harness",
+      "task_id": "task-crit-auth-006",
+      "event_class": "authority_recheck_failed",
+      "result": "denied",
+      "authority_source": "delegation-crit-auth-006"
+    }
+  ]
+}

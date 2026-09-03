@@ -1,0 +1,52 @@
+{
+ "children": [],
+ "collection_order": [],
+ "delegation_chain": [],
+ "gate_under_test": "authority",
+ "oracle_classes_used": [
+  "O1",
+  "O3",
+  "O4"
+ ],
+ "oracle_context": {
+  "action": "code_write",
+  "actor": "orchestrator",
+  "approval_reference": "",
+  "delegation": {
+   "action": "code_write",
+   "created_at": "2026-09-01T00:00:00Z",
+   "delegate": "orchestrator",
+   "environment": "dev",
+   "expires_at": "2026-12-31T00:00:00Z",
+   "id": "delegation-crit-auth-001",
+   "principal": "human",
+   "project": "multi-agent-harness",
+   "revoked_at": "",
+   "scope_environments": [
+    "dev"
+   ],
+   "scope_operations": [
+    "code_write",
+    "read"
+   ],
+   "scope_resources": [
+    "agents/**",
+    "multi-agent-harness/**"
+   ],
+   "status": "ACTIVE",
+   "target": "agents/cto/output.txt",
+   "task": "task-crit-auth-001",
+   "updated_at": "2026-09-01T00:00:00Z",
+   "version": 1
+  },
+  "environment": "dev",
+  "now": "2026-09-01T15:00:00Z",
+  "project": "multi-agent-harness",
+  "revocation_list": [],
+  "target": "agents/cto/output.txt"
+ },
+ "oracle_rationale": "O1 independent authority oracle + O3 state hash + O4 Human-signed expectation",
+ "replayable": true,
+ "scenario_id": "L3-AUTH-001",
+ "target_is_protected": false
+}

@@ -1,0 +1,168 @@
+# ============================================================================
+# PERMISSION MATRIX — multi-agent-harness
+# Phase 1 (Foundation)
+#
+# This file defines the TECHNICAL CAPABILITY BOUNDARY for each agent
+# (PRD §8). It answers: what may this agent technically do in the system?
+#
+# It does NOT grant project/action authority. That is `authority.yaml`.
+# Capability ≠ Permission ≠ Authority (PRD §6).
+#
+# Vocabulary (normalized from PRD §8):
+#   yes             always permitted (still bounded by sandbox + delegation)
+#   scoped          permitted ONLY within an explicit, project-scoped delegation
+#   review          read-only access for review purposes (no mutation, no execution)
+#   approval        permitted ONLY with explicit human approval per action
+#   scoped_approval scoped AND requires human approval per action
+#   no              not permitted
+#
+# Tool names are DSH tool-catalog entries verified in Phase 0
+# (docs/tool-catalog.md, v0.1.1-rc.2). See docs/operations.md for the mapping.
+# ============================================================================
+
+matrix_version: 1
+status: foundation
+agents: [zeko, cto, cfo, kai, somad, badsector, nova]
+
+# ── capability × agent matrix (PRD §8, normalized) ─────────────────────────
+capabilities:
+  server_read:
+    zeko: "yes"
+    cto: scoped
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+  server_write:
+    zeko: scoped          # PRD: "YES/scoped" — scoped default, no standing write
+    cto: scoped
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+  code_read:
+    zeko: scoped
+    cto: "yes"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: review
+    nova: "no"
+  code_write:
+    zeko: "no"
+    cto: "yes"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+  financial_analysis:
+    zeko: "no"
+    cto: scoped
+    cfo: "yes"
+    kai: scoped
+    somad: scoped
+    badsector: review
+    nova: "no"
+  financial_transaction:
+    zeko: scoped
+    cto: "no"
+    cfo: "no"            # PRD: "NO by default" — never standing, always delegated
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+  web_research:
+    zeko: scoped
+    cto: scoped
+    cfo: scoped
+    kai: "yes"
+    somad: scoped
+    badsector: scoped
+    nova: "no"
+  social_drafting:
+    zeko: "no"
+    cto: "no"
+    cfo: scoped
+    kai: scoped
+    somad: "yes"
+    badsector: review
+    nova: "no"
+  social_publishing:
+    zeko: "no"
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: scoped_approval
+    badsector: "no"
+    nova: "no"
+  novel_editing:
+    zeko: "no"
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: review
+    nova: "yes"
+  adversarial_review:
+    zeko: "no"
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "yes"
+    nova: "no"
+  production_deploy:
+    zeko: scoped
+    cto: scoped
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+  destructive_action:
+    zeko: approval
+    cto: approval
+    cfo: approval
+    kai: "no"
+    somad: approval
+    badsector: "no"
+    nova: "no"
+
+# ── per-agent sandbox + approval defaults ───────────────────────────────────
+# sandbox: read-only | workspace-write | danger-full-access  (verified DSH modes)
+# approval: ask | never                                     (verified DSH policies)
+# These are DEFAULTS only; a project delegation may narrow them, never widen
+# them (least privilege, PRD §19.9).
+agent_defaults:
+  zeko:
+    sandbox: workspace-write
+    approval: ask          # destructive/irreversible ops require human approval
+  cto:
+    sandbox: workspace-write
+    approval: ask          # production/destructive actions require approval
+  cfo:
+    sandbox: read-only     # analysis only; no money movement, no mutation
+    approval: never        # no execution path; cannot request escalation
+  kai:
+    sandbox: read-only
+    approval: never        # research only; cannot execute
+  somad:
+    sandbox: workspace-write  # content drafting in workspace
+    approval: ask             # publishing requires explicit approval
+  badsector:
+    sandbox: read-only
+    approval: never        # reviewer; never executes the reviewed plan
+  nova:
+    sandbox: workspace-write  # manuscript editing in workspace
+    approval: never        # internal, non-destructive file work
+
+# Invariants (enforced by tests/validate-config.py)
+invariants:
+  no_agent_grants_itself_authority: true
+  badsector_never_executes: true          # read-only + approval never
+  kai_never_executes: true                # read-only + approval never
+  cfo_no_transaction_by_default: true
+  destructive_always_requires_approval_or_denied: true

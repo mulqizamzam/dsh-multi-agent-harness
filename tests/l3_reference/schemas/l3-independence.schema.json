@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/independence.schema.json",
+  "title": "L3 verifier independence checklist",
+  "description": "Records the verifier independence checks IO-1..IO-10 (design 0002 §14). Any failed check invalidates the L3 evidence bundle.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id", "verifier_pid", "verifier_uid", "verifier_session_id",
+    "parent_session_id", "trust_root", "orchestrator_pid", "io_checks", "all_pass"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "verifier_pid": { "type": "integer", "exclusiveMinimum": 0 },
+    "verifier_uid": { "type": "integer", "exclusiveMinimum": 0 },
+    "verifier_session_id": { "type": "string", "minLength": 1 },
+    "parent_session_id": { "type": ["string", "null"] },
+    "trust_root": { "type": "string", "enum": ["verifier-process", "auditor-process"] },
+    "orchestrator_pid": { "type": "integer", "exclusiveMinimum": 0 },
+    "io_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["IO-1", "IO-2", "IO-3", "IO-4", "IO-5", "IO-6", "IO-7", "IO-8", "IO-9", "IO-10"],
+      "properties": {
+        "IO-1": { "$ref": "#/$defs/ioCheck" },
+        "IO-2": { "$ref": "#/$defs/ioCheck" },
+        "IO-3": { "$ref": "#/$defs/ioCheck" },
+        "IO-4": { "$ref": "#/$defs/ioCheck" },
+        "IO-5": { "$ref": "#/$defs/ioCheck" },
+        "IO-6": { "$ref": "#/$defs/ioCheck" },
+        "IO-7": { "$ref": "#/$defs/ioCheck" },
+        "IO-8": { "$ref": "#/$defs/ioCheck" },
+        "IO-9": { "$ref": "#/$defs/ioCheck" },
+        "IO-10": { "$ref": "#/$defs/ioCheck" }
+      }
+    },
+    "all_pass": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "ioCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass", "detail"],
+      "properties": {
+        "pass": { "type": "boolean" },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

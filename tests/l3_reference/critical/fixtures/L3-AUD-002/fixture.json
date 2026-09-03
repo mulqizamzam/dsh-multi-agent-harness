@@ -1,0 +1,18 @@
+{
+  "scenario_id": "L3-AUD-002",
+  "gate_under_test": "audit_integrity",
+  "oracle_classes_used": ["O1", "O2", "O4"],
+  "oracle_rationale": "O1 independent audit-chain re-implementation detects tampering + O2 schema-as-oracle (audit-event schema) + O4 expected INVALID",
+  "replayable": true,
+  "target_is_protected": false,
+  "environment": "dev",
+  "project": "multi-agent-harness",
+  "unresolved_unknowns": [],
+  "oracle_context": {
+    "log_path": "tests/l3_reference/critical/fixtures/L3-AUD-002/ledger.jsonl",
+    "sidecar_path": "tests/l3_reference/critical/fixtures/L3-AUD-002/ledger.chain"
+  },
+  "delegation_chain": [],
+  "children": [],
+  "collection_order": []
+}

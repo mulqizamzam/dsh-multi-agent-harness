@@ -1,0 +1,263 @@
+{
+  "protocol": "BAGIAN 1 \u2014 OPEN THE LIVE EXECUTION PATH",
+  "acceptance_gate": "FRONT_DOOR_REAL_E2E",
+  "verdict": "VERIFIED",
+  "timestamp": "2026-09-01T05:25:45Z",
+  "version_pin": "deepseek-harness-0.1.1-rc.2",
+  "chain": {
+    "order": [
+      "DSH Chat",
+      "Front Door (run_from_chat)",
+      "ProductionRun",
+      "BoundedExecutor",
+      "ExecutionFlow",
+      "RealDSHBackend",
+      "REAL subagent (kai)"
+    ],
+    "single_chain": true,
+    "not_separate_direct_smoke": true
+  },
+  "front_door": {
+    "status": "COMPLETE",
+    "run_id": "prod-794f3104",
+    "outcome": "complete",
+    "objective": "research report on D4/D7 composition readiness",
+    "report_present": true
+  },
+  "flow": {
+    "outcome": "COMPLETE",
+    "phase": "close",
+    "final_state": "COMPLETE",
+    "risk": "LOW",
+    "selected_roles": [
+      "kai"
+    ],
+    "verification": {
+      "verdict": "PASSED",
+      "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+      "detail": {
+        "action_category": "internal_analysis",
+        "independence": "self",
+        "required_evidence": [],
+        "human_confirmation_required": false,
+        "evidence": [
+          {
+            "kind": "artifact",
+            "source": "docs/phase-5/environment/live-bridge/#artifact",
+            "verifier": "self:orchestrator",
+            "independent": false,
+            "human_confirmation": false
+          }
+        ]
+      }
+    }
+  },
+  "backend": {
+    "kind": "REAL",
+    "bridge_marker": "1",
+    "real_selected": true
+  },
+  "real_child": {
+    "provenance_run_id": "522d03a5-70e8-44cd-9f24-dd66d6412aea",
+    "role": "kai",
+    "tool_name": "subagent_kai",
+    "persona": "role-kai",
+    "parent_session": "session-cd20d290-0805-426b-88e6-f72b932c493f",
+    "stop_reason": "completed",
+    "result_status": "SUCCEEDED"
+  },
+  "audit_chain": [
+    {
+      "event_id": "event-000001",
+      "event_class": "production_run",
+      "action": "run",
+      "result": "started"
+    },
+    {
+      "event_id": "event-000002",
+      "event_class": "production_run",
+      "action": "plan",
+      "result": "planned"
+    },
+    {
+      "event_id": "event-000003",
+      "event_class": "flow_started",
+      "action": "run",
+      "result": "recorded"
+    },
+    {
+      "event_id": "event-000004",
+      "event_class": "intake_recorded",
+      "action": "intake",
+      "result": "recorded"
+    },
+    {
+      "event_id": "event-000005",
+      "event_class": "authority_context",
+      "action": "understand",
+      "result": "ok"
+    },
+    {
+      "event_id": "event-000006",
+      "event_class": "gate_risk",
+      "action": "risk_gate",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000007",
+      "event_class": "state_transition",
+      "action": "transition:PLANNED",
+      "result": "transitioned"
+    },
+    {
+      "event_id": "event-000008",
+      "event_class": "routing_selected",
+      "action": "select",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000009",
+      "event_class": "state_transition",
+      "action": "transition:DELEGATED",
+      "result": "transitioned"
+    },
+    {
+      "event_id": "event-000010",
+      "event_class": "delegation_issued",
+      "action": "delegate",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000011",
+      "event_class": "state_transition",
+      "action": "transition:EXECUTING",
+      "result": "transitioned"
+    },
+    {
+      "event_id": "event-000012",
+      "event_class": "subtasks_executed",
+      "action": "execute_subtasks",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000013",
+      "event_class": "result_collected",
+      "action": "collect",
+      "result": "recorded"
+    },
+    {
+      "event_id": "event-000014",
+      "event_class": "state_transition",
+      "action": "transition:COLLECTED",
+      "result": "transitioned"
+    },
+    {
+      "event_id": "event-000015",
+      "event_class": "gate_evidence",
+      "action": "evidence_gate",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000016",
+      "event_class": "state_transition",
+      "action": "transition:SYNTHESIZING",
+      "result": "transitioned"
+    },
+    {
+      "event_id": "event-000017",
+      "event_class": "gate_conflict",
+      "action": "conflict_gate",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000018",
+      "event_class": "gate_review",
+      "action": "review",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000019",
+      "event_class": "gate_authority",
+      "action": "authority_gate",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000020",
+      "event_class": "execution_request_validated",
+      "action": "analysis",
+      "result": "recorded"
+    },
+    {
+      "event_id": "event-000021",
+      "event_class": "authority_recheck",
+      "action": "analysis",
+      "result": "ALLOW"
+    },
+    {
+      "event_id": "event-000022",
+      "event_class": "execution_attempt",
+      "action": "analysis",
+      "result": "executed"
+    },
+    {
+      "event_id": "event-000023",
+      "event_class": "execution_attempt",
+      "action": "analysis",
+      "result": "executed"
+    },
+    {
+      "event_id": "event-000024",
+      "event_class": "gate_verification",
+      "action": "verify",
+      "result": "allowed"
+    },
+    {
+      "event_id": "event-000025",
+      "event_class": "state_transition",
+      "action": "transition:COMPLETE",
+      "result": "transitioned"
+    },
+    {
+      "event_id": "event-000026",
+      "event_class": "state_complete",
+      "action": "close",
+      "result": "completed"
+    },
+    {
+      "event_id": "event-000027",
+      "event_class": "flow_finished",
+      "action": "finish",
+      "result": "complete"
+    },
+    {
+      "event_id": "event-000028",
+      "event_class": "production_run",
+      "action": "execute",
+      "result": "complete"
+    },
+    {
+      "event_id": "event-000029",
+      "event_class": "final_report",
+      "action": "report",
+      "result": "generated"
+    },
+    {
+      "event_id": "event-000030",
+      "event_class": "production_run",
+      "action": "report",
+      "result": "generated"
+    },
+    {
+      "event_id": "event-000031",
+      "event_class": "production_run",
+      "action": "close",
+      "result": "completed"
+    }
+  ],
+  "audit_event_count": 31,
+  "real_child_session_verified": {
+    "child_session_id": "522d03a5-70e8-44cd-9f24-dd66d6412aea",
+    "parent_is_orchestrator": true,
+    "source": "decompressed $DSH_HOME/sessions/.../{run_id}/session.jsonl.zstd header parentSession"
+  }
+}

@@ -1,0 +1,33 @@
+# config/registry-writer.yaml — O3 daemon configuration
+#
+# Created by Engineering (G10 O3 implementation). Contains PATHS, never
+# secrets. The HMAC secret lives at the referenced path outside the
+# workspace (/etc/dsh-registry-writer/hmac-secret, 0600/0640).
+#
+# This file is the reference spec from
+# docs/phase-5/security/g10/o3/execution/0002 §3.6.
+
+daemon:
+  root: /var/lib/dsh-registry-writer
+  socket_path: /var/lib/dsh-registry-writer/ipc.sock
+  pid_file: /var/lib/dsh-registry-writer/daemon.pid
+  uid: dsh-writer
+  gid: dsh-writer
+  socket_group: dsh
+  socket_mode: 0660
+  ipc_protocol_version: 1
+
+auth:
+  hmac_secret_path: /etc/dsh-registry-writer/hmac-secret
+  replay_window_seconds: 30
+
+backup:
+  backup_dir: /var/lib/dsh-registry-writer/backup
+  manifest_format: sha256
+
+limits:
+  max_doc_bytes: 16777216    # 16 MiB, matches state/helpers/atomic_write.py:42
+  max_payload_bytes: 33554432  # 32 MiB (request/response)
+  connection_limit: 64
+  request_timeout_seconds: 30
+  graceful_shutdown_seconds: 10

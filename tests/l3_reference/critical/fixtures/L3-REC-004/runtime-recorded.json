@@ -1,0 +1,37 @@
+{
+  "scenario_id": "L3-REC-004",
+  "decision": "DENY",
+  "denial_path": "recovery_gate:privilege_bounded",
+  "tool_call_id": "tool-call-crit-rec-004",
+  "audit_event_ids": ["event-crit-rec-004"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "BLOCKED",
+  "state_version_before": 1,
+  "state_version_after": 1,
+  "failure": {
+    "class": "authorization",
+    "cause": "recovery privilege escalation: action not covered by original authority (AUTH-INV-12)",
+    "recovery": {
+      "entered": true,
+      "no_blind_retry": true,
+      "no_authority_expansion": true,
+      "preserved_version": 1
+    }
+  },
+  "audit_log": [
+    {
+      "event_id": "event-crit-rec-004",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "recovery",
+      "target": "recovery:re-execute",
+      "project": "multi-agent-harness",
+      "task_id": "task-crit-rec-004",
+      "event_class": "execution_denial",
+      "result": "denied",
+      "authority_source": "delegation-crit-rec-004"
+    }
+  ]
+}

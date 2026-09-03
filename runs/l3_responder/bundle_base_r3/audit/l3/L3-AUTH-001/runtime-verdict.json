@@ -1,0 +1,17 @@
+{
+ "audit_event_ids": [],
+ "audit_log": [],
+ "captured_at": "2026-09-02T22:06:49Z",
+ "decision": "ERROR",
+ "denial_path": "live-rendezvous-malformed",
+ "failure": {
+  "cause": "bridge response carries no valid runtime decision (structured=False): [{'type': 'reasoning', 'text': 'The command completed and printed its final JSON. The responder returned an ERROR decision because the gate-verdict directory is read-only (it tried to write a tmp file next to gate-verdict.json). Per instructions: use its final printed JSON as my reply — one JSON object, no other text.'}, {'type': 'text', 'text': '{\\n \"scenario_id\": \"L3-AUTH-001\",\\n \"decision\": \"ERROR\",\\n \"denial_path\": \"responder-error\",\\n \"stop_reason\": \"completed\",\\n \"final_status\": \"BLOCKED\",\\n \"audit_event_ids\": [],\\n \"audit_log\": [],\\n \"audit_event_id\": \"\",\\n \"responder_rc\": 5,\\n \"reason\": \"OSError: [Errno 30] Read-only file system: \\'/home/administrator/deepseek-harness/runs/l3_rendezvous/L3-AUTH-001-r3/gate-verdict.json.tmp-2\\' (no verdict invented)\",\\n \"captured_at\": \"2026-09-02T22:06:39Z\"\\n}'}]",
+  "class": "environment"
+ },
+ "final_status": "BLOCKED",
+ "scenario_id": "L3-AUTH-001",
+ "state_version_after": null,
+ "state_version_before": null,
+ "stopReason": "completed",
+ "tool_call_id": "ac0c9b04-dfb8-4107-bdc8-435c5d3e2912"
+}

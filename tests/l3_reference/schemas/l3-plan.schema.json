@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/plan.schema.json",
+  "title": "L3 Human-signed scenario plan",
+  "description": "Human-signed expectation (O4 oracle) committed to the evidence bundle BEFORE the runtime runs. The signoff timestamp must precede the runtime verdict.",
+  "x-schema-version": 2,
+  "x-schema-changelog": [
+    "v1: initial contract. The actor enum excluded 'verifier'; expected_verdict was strictly ALLOW|DENY; human_signoff_provenance was absent, so under additionalProperties:false a REAL recorded Human signoff could not validate.",
+    "v2: reconciles the documented L3-AUD-002 tension (docs/phase-5/l3/live-plans/0006 §4). Adds actor 'verifier' for independent verification-only scenarios; permits expected_verdict 'INVALID' ONLY when actor is 'verifier' (an integrity-verification outcome, e.g. a tampered ledger detected by chain re-computation, THREAT-018); adds the optional human_signoff_provenance field needed to express a real recorded signoff. Execution scenarios remain restricted to ALLOW|DENY: INVALID is a verification outcome, never an execution outcome."
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id", "actor", "action", "target", "preconditions",
+    "expected_verdict", "expected_verdict_reason",
+    "human_signoff_id", "human_signoff_ts", "human_signoff_method"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "actor": {
+      "type": "string",
+      "description": "Who performs the planned action. 'verifier' is the independent observer performing verification-only work; it holds no execution authority.",
+      "enum": ["orchestrator", "human", "verifier", "zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"]
+    },
+    "action": { "type": "string", "minLength": 1 },
+    "target": { "type": "string", "minLength": 1 },
+    "preconditions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "expected_verdict": {
+      "type": "string",
+      "description": "ALLOW|DENY for execution scenarios. INVALID is permitted ONLY for actor=verifier, enforced by the conditional below.",
+      "enum": ["ALLOW", "DENY", "INVALID"]
+    },
+    "expected_verdict_reason": { "type": "string", "minLength": 1 },
+    "human_signoff_id": { "type": "string", "pattern": "^human-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$" },
+    "human_signoff_ts": { "type": "string", "format": "date-time" },
+    "human_signoff_method": { "type": "string", "enum": ["interactive", "signed-assertion"] },
+    "human_signoff_provenance": {
+      "type": "string",
+      "description": "How the signoff was obtained. 'recorded' means an actual Human interaction was captured and is re-derivable; it is the only value that may support a real L3 claim (see tests/l3_runner/environment/readiness.py::_real_human_signoff_observed). Absent means the plan is an inert fixture/template and cannot support a claim.",
+      "enum": ["recorded"]
+    }
+  },
+  "allOf": [
+    {
+      "description": "INVALID is a verification outcome, not an execution outcome: only actor=verifier may expect it.",
+      "if": {
+        "properties": { "expected_verdict": { "const": "INVALID" } },
+        "required": ["expected_verdict"]
+      },
+      "then": {
+        "properties": { "actor": { "const": "verifier" } },
+        "required": ["actor"]
+      }
+    },
+    {
+      "description": "The independent verifier performs verification only; it never expects an execution verdict.",
+      "if": {
+        "properties": { "actor": { "const": "verifier" } },
+        "required": ["actor"]
+      },
+      "then": {
+        "properties": { "expected_verdict": { "const": "INVALID" } },
+        "required": ["expected_verdict"]
+      }
+    }
+  ]
+}

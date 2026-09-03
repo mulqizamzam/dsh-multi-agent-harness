@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/runtime-verdict.schema.json",
+  "title": "L3 runtime verdict",
+  "description": "What the runtime actually did (plan 0003 §6 runtime-verdict.json). Recorded by the runtime, read by the verifier.",
+  "x-schema-version": 2,
+  "x-schema-changelog": [
+    "v1: decision enum was ALLOW|DENY|ERROR, and 'failure' was not declared while additionalProperties was false.",
+    "v2: adds INVALID to the decision enum for verification-only scenarios (integrity verification: a tampered ledger detected by independent chain re-computation — L3-AUD-002, THREAT-018), matching l3-plan.schema.json v2 and claim_gate P1; declares the optional 'failure' object the runtime driver already emits."
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id", "decision", "denial_path", "tool_call_id",
+    "audit_event_ids", "stopReason", "captured_at"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "decision": {
+      "type": "string",
+      "description": "ALLOW|DENY|ERROR for execution scenarios; INVALID for a verification-only outcome (integrity verification).",
+      "enum": ["ALLOW", "DENY", "ERROR", "INVALID"]
+    },
+    "denial_path": { "type": ["string", "null"] },
+    "tool_call_id": { "type": ["string", "null"] },
+    "audit_event_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^event-[A-Za-z0-9-]+$" }
+    },
+    "stopReason": { "type": "string", "enum": ["completed", "error", "aborted", "max-tokens", "refusal"] },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "final_status": { "type": "string", "enum": ["COMPLETE", "BLOCKED", "FAILED", "ESCALATED", "RECOVERING"] },
+    "state_version_before": { "type": ["integer", "null"] },
+    "state_version_after": { "type": ["integer", "null"] },
+    "failure": {
+      "type": ["object", "null"],
+      "description": "Typed failure record when the runtime did not complete normally (class + cause, optionally recovery).",
+      "properties": {
+        "class": { "type": "string" },
+        "cause": { "type": "string" },
+        "recovery": { "type": ["string", "object", "null"] }
+      }
+    }
+  }
+}

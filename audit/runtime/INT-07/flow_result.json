@@ -1,0 +1,304 @@
+{
+  "flow_id": "flow-closure-int-07-7a2e46",
+  "objective": "engineering analysis",
+  "project": "multi-agent-harness",
+  "task_id": "task-1",
+  "outcome": "BLOCKED",
+  "phase": "execute",
+  "final_state": "BLOCKED",
+  "version": 7,
+  "risk": "MEDIUM",
+  "selected": [
+    "cto"
+  ],
+  "tasks": [
+    {
+      "task_id": "task-1",
+      "objective": "engineering analysis",
+      "assigned_role": "cto",
+      "parent_task": "",
+      "dependencies": [],
+      "expected_output": "module written and verified",
+      "risk_metadata": "MEDIUM",
+      "authorization_requirements": [],
+      "scope": [
+        "agents/**"
+      ],
+      "project": "multi-agent-harness"
+    }
+  ],
+  "delegations": [
+    {
+      "id": "delegation-task-1-9885c334",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "task": "task-1",
+      "action": "write",
+      "target": "agents/cto/output.txt",
+      "environment": "dev",
+      "scope": {
+        "operations": [
+          "write",
+          "read",
+          "code_write"
+        ],
+        "resources": [
+          "agents/**",
+          "docs/**",
+          "multi-agent-harness/**"
+        ],
+        "environments": [
+          "dev"
+        ],
+        "maximum_cost": null
+      },
+      "prohibited_actions": [],
+      "requires_approval": [],
+      "expires_at": null,
+      "approval_reference": null,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-30T21:46:37Z",
+      "updated_at": "2026-08-30T21:46:37Z",
+      "revoked_at": null
+    }
+  ],
+  "results": [
+    {
+      "task_id": "task-1:cto",
+      "role": "cto",
+      "provenance": {
+        "delegation_id": "delegation-task-1-9885c334",
+        "task_id": "task-1:cto",
+        "role": "cto",
+        "tool_name": "subagent_cto",
+        "persona": "role-cto",
+        "instance_max_depth": 1,
+        "background_mode": "continuable",
+        "provider": "spawn",
+        "actor": "orchestrator",
+        "session_id": "session-11fb50c5-cf74-41b2-9f97-03cf3184a14b",
+        "adapter_version": "dsh-integration-adapter-1.0",
+        "dsh_version_pin": "deepseek-harness-0.1.1-rc.2",
+        "run_id": "94d12d42-3f97-4730-9361-637d449a7dcf",
+        "started_at": "2026-08-30T21:46:37Z",
+        "settled_at": "2026-08-30T21:46:38Z",
+        "stop_reason": "completed",
+        "result_status": "SUCCEEDED"
+      },
+      "status": "SUCCEEDED",
+      "findings": [
+        "Role framework is structurally complete and machine-validated: all 7 specialists have AGENT.md + policy.yaml, delegation tools denied for all specialists (subdelegation DENY BY DEFAULT, max_depth 1), orchestrator owns 7 gates and is single writer of state/audit, config validation passes 194 checks (exit 0) and 5 unit tests pass.",
+        "Capability-level inconsistencies exist that the validator does not catch: CTO AGENT.md asserts financial_* = no (ISO-001) with invariant no_financial_capability, but CTO policy.yaml grants financial_analysis: scoped (matching permissions.yaml).",
+        "Control-plane integration is deferred: per-role presets (agent.cordis.yml) and tool-subagent instances are DRAFT (NOT MOUNTED); mounting requires a controlled DSH composition exception per ADR D4/D7 (HUMAN_PENDING)."
+      ],
+      "evidence": [
+        "agents/cto/AGENT.md line 32: financial_* = no, line 48: invariant no_financial_capability; agents/cto/policy.yaml line 19: financial_analysis: scoped, line 56: no_financial_capability: true",
+        "config/permissions.yaml line 70: financial_transaction: zeko: scoped; agents/zeko/policy.yaml line 20: financial_transaction: no, line 52: prohibited_actions includes financial_transaction",
+        "tests/validate-config.py exit 0 with 194 PASS checks; tests/unit/test_config.py 5 passed",
+        "All 7 agents/** files exist: 21 files total; config/role-preset-mapping.yaml defines all 7 roles with tool_filter allow\u2229deny=\u2205, max_depth 1, delegation tools denied.",
+        "orchestrator/contract.md defines 15-phase lifecycle with 7 gates; config/tool-subagent-instances.yaml status: draft, NOT mounted."
+      ],
+      "risks": [
+        "Capability drift between AGENT.md narrative and policy.yaml/permissions.yaml can silently accumulate.",
+        "Draft presets not mounted means role isolation is currently aspirational.",
+        "The CTO financial_analysis inconsistency could cause ambiguity or denial during gate enforcement if reconciliation is deferred."
+      ],
+      "assumptions": [
+        "policy.yaml and permissions.yaml are the operative control-plane inputs; AGENT.md is the human-readable contract, not the enforcement source."
+      ],
+      "unresolved_items": [
+        "CTO AGENT.md financial_* = no contradicts policy.yaml financial_analysis: scoped \u2014 resolve which is source of truth.",
+        "Zeko permissions.yaml grants financial_transaction: scoped but zeko policy.yaml denies it.",
+        "BadSector has web_research: scoped in AGENT.md/permissions/policy but web_search is denied in its tool_filter."
+      ],
+      "actions_taken": [
+        "Read all 7 AGENT.md files and policy.yaml files.",
+        "Read config/agents.yaml, config/permissions.yaml, config/role-preset-mapping.yaml, config/tool-subagent-instances.yaml.",
+        "Ran tests/validate-config.py (exit 0, 194 PASS) and python3 -m pytest tests/unit/test_config.py -q (5 passed)."
+      ],
+      "recommendation": "Resolve the two financial capability inconsistencies before the controlled mount. Extend tests/validate_config.py to assert each role's policy.yaml capabilities block matches its row in config/permissions.yaml. Proceed with the ADR D4/D7 controlled mounting only after reconciliation.",
+      "confidence": "HIGH",
+      "reported_at": "2026-08-30T21:39:35Z"
+    }
+  ],
+  "parallel": {
+    "safe": true,
+    "mode": "sequential",
+    "task_ids": [
+      "task-1:cto"
+    ],
+    "owners": [
+      "cto"
+    ],
+    "held_version": 4
+  },
+  "synthesis": {
+    "task_id": "task-1",
+    "objective": "engineering analysis",
+    "risk": "MEDIUM",
+    "findings": [
+      "Role framework is structurally complete and machine-validated: all 7 specialists have AGENT.md + policy.yaml, delegation tools denied for all specialists (subdelegation DENY BY DEFAULT, max_depth 1), orchestrator owns 7 gates and is single writer of state/audit, config validation passes 194 checks (exit 0) and 5 unit tests pass.",
+      "Capability-level inconsistencies exist that the validator does not catch: CTO AGENT.md asserts financial_* = no (ISO-001) with invariant no_financial_capability, but CTO policy.yaml grants financial_analysis: scoped (matching permissions.yaml).",
+      "Control-plane integration is deferred: per-role presets (agent.cordis.yml) and tool-subagent instances are DRAFT (NOT MOUNTED); mounting requires a controlled DSH composition exception per ADR D4/D7 (HUMAN_PENDING)."
+    ],
+    "recommendations": [
+      "Resolve the two financial capability inconsistencies before the controlled mount. Extend tests/validate_config.py to assert each role's policy.yaml capabilities block matches its row in config/permissions.yaml. Proceed with the ADR D4/D7 controlled mounting only after reconciliation."
+    ],
+    "assumptions": [
+      "policy.yaml and permissions.yaml are the operative control-plane inputs; AGENT.md is the human-readable contract, not the enforcement source."
+    ],
+    "risks": [
+      "Capability drift between AGENT.md narrative and policy.yaml/permissions.yaml can silently accumulate.",
+      "Draft presets not mounted means role isolation is currently aspirational.",
+      "The CTO financial_analysis inconsistency could cause ambiguity or denial during gate enforcement if reconciliation is deferred."
+    ],
+    "unresolved_items": [
+      "CTO AGENT.md financial_* = no contradicts policy.yaml financial_analysis: scoped \u2014 resolve which is source of truth.",
+      "Zeko permissions.yaml grants financial_transaction: scoped but zeko policy.yaml denies it.",
+      "BadSector has web_research: scoped in AGENT.md/permissions/policy but web_search is denied in its tool_filter."
+    ],
+    "roles": [
+      "cto"
+    ]
+  },
+  "gates": [
+    {
+      "phase": "classify",
+      "gate": "risk_classify",
+      "decision": "ALLOW",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "detail": {
+        "risk": "MEDIUM",
+        "intrinsic": false,
+        "signals": []
+      }
+    },
+    {
+      "phase": "risk_gate",
+      "gate": "risk",
+      "decision": "ALLOW",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "detail": {
+        "risk": "MEDIUM",
+        "intrinsic": false,
+        "signals": []
+      }
+    },
+    {
+      "phase": "evidence_gate",
+      "gate": "evidence",
+      "decision": "ALLOW",
+      "reason": "evidence sufficient for action",
+      "detail": {
+        "rung": "SUFFICIENT_FOR_ACTION",
+        "evidence_present": true
+      }
+    },
+    {
+      "phase": "conflict_gate",
+      "gate": "conflict",
+      "decision": "ALLOW",
+      "reason": "all conflicts synthesized; disagreement preserved; no voting",
+      "detail": {
+        "action": "synthesize",
+        "detail": {
+          "conflicts": []
+        }
+      }
+    },
+    {
+      "phase": "adversarial_review",
+      "gate": "badsector_review",
+      "decision": "ALLOW",
+      "reason": "review not required for this action class",
+      "detail": {
+        "mandatory": false,
+        "risk": "MEDIUM",
+        "action": "write"
+      }
+    },
+    {
+      "phase": "authority_gate",
+      "gate": "authority",
+      "decision": "ALLOW",
+      "reason": "",
+      "detail": {}
+    }
+  ],
+  "steps": [
+    {
+      "phase": "intake",
+      "note": "intake accepted"
+    },
+    {
+      "phase": "understand",
+      "note": "normalize objective + require authority context"
+    },
+    {
+      "phase": "classify",
+      "note": "deterministic risk classification"
+    },
+    {
+      "phase": "risk_gate",
+      "note": "risk gate (non-downgradable HIGH)"
+    },
+    {
+      "phase": "decompose",
+      "note": "decompose objective into a scoped task"
+    },
+    {
+      "phase": "select",
+      "note": "select minimum specialist set"
+    },
+    {
+      "phase": "delegate",
+      "note": "issue scoped child delegation (orchestrator-only)"
+    },
+    {
+      "phase": "execute_subtasks",
+      "note": "delegate subtasks to specialists (parallel when independent)"
+    },
+    {
+      "phase": "collect",
+      "note": "collect structured results (data, not authority)"
+    },
+    {
+      "phase": "evidence_gate",
+      "note": "evidence sufficiency ladder"
+    },
+    {
+      "phase": "synthesize",
+      "note": "consolidate results (preserve disagreement)"
+    },
+    {
+      "phase": "conflict_gate",
+      "note": "detect + resolve conflicts (no voting)"
+    },
+    {
+      "phase": "adversarial_review",
+      "note": "BadSector review (PASS != authority)"
+    },
+    {
+      "phase": "authority_gate",
+      "note": "planning-time authority check"
+    },
+    {
+      "phase": "execute",
+      "note": "execution-time authority re-check + execute"
+    }
+  ],
+  "verification": {},
+  "recovery": {},
+  "audit_ids": [
+    "event-000001",
+    "event-000021"
+  ],
+  "files_written": [],
+  "errors": [
+    "execution-time re-check: delegation revoked/expired (AUTH-INV-06)"
+  ],
+  "started_at": "2026-08-30T21:46:37Z",
+  "finished_at": "2026-08-30T21:46:38Z"
+}

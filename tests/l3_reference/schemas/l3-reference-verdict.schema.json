@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/reference-verdict.schema.json",
+  "title": "L3 verifier reference verdict (O1 oracle)",
+  "description": "The verifier's pre-runtime oracle verdict computed by a separate-file reference re-implementation with no shared imports from the production gate.",
+  "x-schema-version": 2,
+  "x-schema-changelog": [
+    "v1: decision enum was ALLOW|DENY.",
+    "v2: adds INVALID for verification-only oracles. The audit-chain oracle (tests/l3_reference/audit_chain.py) returns VALID|INVALID by design, so a reference verdict for a verification scenario could not previously be expressed. Matches l3-plan.schema.json v2, l3-runtime-verdict.schema.json v2, l3-verdict-match.schema.json v2 and claim_gate P1."
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id", "decision", "reason", "gate_under_test",
+    "checklist_item_results", "computed_at", "verifier_binary_sha256"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "decision": {
+      "type": "string",
+      "description": "ALLOW|DENY for execution gates; VALID|INVALID for integrity-verification gates (the audit-chain oracle returns VALID when the chain re-computes and INVALID on any mismatch).",
+      "enum": ["ALLOW", "DENY", "VALID", "INVALID"]
+    },
+    "reason": { "type": "string", "minLength": 1 },
+    "gate_under_test": { "type": "string", "minLength": 1 },
+    "checklist_item_results": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["pass", "fail", "skip"]
+      }
+    },
+    "computed_at": { "type": "string", "format": "date-time" },
+    "verifier_binary_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

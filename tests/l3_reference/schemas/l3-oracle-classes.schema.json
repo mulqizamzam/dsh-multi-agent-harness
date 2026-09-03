@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/oracle-classes.schema.json",
+  "title": "L3 oracle classes used",
+  "description": "Records which oracle classes (O1..O4) an L3 scenario used. Every L3 scenario requires at least two.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scenario_id", "oracle_classes_used", "rationale"],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "oracle_classes_used": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["O1", "O2", "O3", "O4"]
+      }
+    },
+    "rationale": { "type": "string", "minLength": 1 }
+  }
+}

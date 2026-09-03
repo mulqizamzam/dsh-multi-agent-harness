@@ -1,0 +1,18 @@
+{
+  "run_id": "child-real-dispatch-kai-001",
+  "stop_reason": "completed",
+  "structured": {
+    "task_id": "task-1:kai",
+    "assigned_role": "kai",
+    "status": "SUCCEEDED",
+    "findings": ["Real D4/D7 child dispatched successfully"],
+    "evidence": ["artifact:real-dispatch"],
+    "assumptions": ["research role; no mutation performed"],
+    "risks": [],
+    "recommendation": "proceed",
+    "confidence": "HIGH",
+    "unresolved_items": [],
+    "actions_taken": ["dispatched real subagent_kai"],
+    "reported_at": "2026-09-01T05:05:00Z"
+  }
+}

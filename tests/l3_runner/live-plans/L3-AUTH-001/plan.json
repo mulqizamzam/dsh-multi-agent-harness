@@ -1,0 +1,21 @@
+{
+ "action": "code_write",
+ "actor": "orchestrator",
+ "expected_verdict": "ALLOW",
+ "expected_verdict_reason": "authority grant: structured ACTIVE delegation, in-scope action/target, not revoked/expired (AUTH-INV-05/06)",
+ "human_signoff_id": "human-2026-09-01-957",
+ "human_signoff_method": "signed-assertion",
+ "human_signoff_provenance": "recorded",
+ "human_signoff_ts": "2026-09-01T14:57:51Z",
+ "preconditions": [
+  "delegation delegation-crit-auth-001 ACTIVE (scope: code_write/read on agents/**, env dev)",
+  "delegation NOT in revocation list",
+  "delegation NOT expired at execution time",
+  "action code_write within delegation operations",
+  "target agents/cto/output.txt within delegation resources",
+  "no approval_reference required",
+  "no text/state/PASS/message authority claimed"
+ ],
+ "scenario_id": "L3-AUTH-001",
+ "target": "agents/cto/output.txt"
+}

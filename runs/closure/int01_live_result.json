@@ -1,0 +1,28 @@
+{
+  "run_id": "30446fa4-e80f-444b-9fb1-f650fbb9fb21",
+  "stop_reason": "completed",
+  "output": "Engineering analysis of agents/** complete...",
+  "structured": {
+    "task_id": "task-1:cto",
+    "assigned_role": "cto",
+    "status": "SUCCEEDED",
+    "confidence": "HIGH",
+    "reported_at": "2026-08-31T01:58:00Z",
+    "findings": [
+      "All 7 specialist agents (zeko, cto, cfo, kai, somad, badsector, nova) have finalized, mutually consistent Phase 1A artifacts: AGENT.md role contracts, policy.yaml declarative policies, and agent.cordis.yml preset drafts, all version-pinned to DeepSeek Harness 0.1.1-rc.2.",
+      "The least-privilege capability architecture is correctly realized across three layers (permissions.yaml matrix, per-role policy.yaml, role-preset-mapping.yaml toolFilter): read-only roles (cfo, kai, badsector) deny bash/edit/write, badsector has no execution path and never authorizes, subdelegation is DENY BY DEFAULT for all specialists, and only the orchestrator holds delegation tools.",
+      "The 7 agent.cordis.yml presets and config/tool-subagent-instances.yaml are DRAFT and NOT mounted (mount_required: false, ADR Decision 4/7 is HUMAN_PENDING), so the role contracts are specification-complete but not yet deployed as DSH Agent Presets/tool-subagent instances."
+    ],
+    "evidence": [
+      "tests/validate-config.py --root . reports '194 passed, 0 failed', including schema validation for all 7 policy.yaml files, allow∩deny=∅ for every role, tool names verified against the DSH 0.1.1-rc.2 catalog, no delegation tools in any specialist, and instance==mapping==policy consistency.",
+      "config/agents.yaml registers exactly 7 specialist agents with peer_relationship: true, badsector_is_reviewer_not_authorizer: true, and orchestrator_is_coordination_not_eighth_specialist: true.",
+      "config/permissions.yaml defines 13 capability dimensions × 7 agents with the normalized yes/scoped/review/approval/scoped_approval/no vocabulary.",
+      "config/role-preset-mapping.yaml and config/tool-subagent-instances.yaml both mark status: draft / NOT MOUNTED with draft_artifacts.mount_required: false."
+    ],
+    "assumptions": ["The standalone validate-config.py result is the authoritative config-validation evidence.", "The intended runtime boundary is the declared toolFilter/allow-deny sets in the mapping files.", "docs/phase-1/0002-role-isolation-draft.md is the canonical register for the controlled composition exception."],
+    "risks": ["spec-to-runtime gap: until ADR Decision 4/7 (HUMAN_PENDING) executes the controlled composition exception, the validated role definitions are not enforced at runtime.", "Minor declared-level inconsistency: cto/policy.yaml lists financial_analysis: 'scoped' while cto/AGENT.md states financial_* as 'no'.", "unmounted_candidates (lsp, str_replace_editor for cto; web_fetch for kai) remain unavailable until a controlled composition exception is granted."],
+    "unresolved_items": ["Deployment of the 7 role presets and subagent_<id> instances pending the HUMAN_PENDING controlled DSH composition exception (ADR Decision 4/7).", "Reconciliation of the cto financial_analysis level discrepancy between AGENT.md (no) and policy.yaml/permissions.yaml (scoped).", "Independent pytest unit-test run pending a Python environment with pytest installed."],
+    "actions_taken": ["Read all 7 agents/<id>/AGENT.md, policy.yaml, and agent.cordis.yml role artifacts.", "Read the supporting config layer.", "Executed tests/validate-config.py against the repo root and confirmed all 194 config/invariant checks pass with exit code 0."],
+    "recommendation": "The agents/** engineering surface is spec-complete, internally consistent, and passes all 194 validation checks; proceed to Phase 1C execution of the controlled DSH composition exception (ADR Decision 4/7, HUMAN_PENDING) to mount the 7 role presets and subagent_<id> instances, and first reconcile the minor cto financial_analysis capability discrepancy."
+  }
+}

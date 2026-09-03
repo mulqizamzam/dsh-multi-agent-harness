@@ -1,0 +1,90 @@
+- insert:
+    - id: mcp-omni
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: omni
+        transport: stdio
+        command: '/home/administrator/.local/bin/omni'
+        args: ['--mcp']
+        env:
+          OMNI_AGENT_ID: 'dsh'
+        cwd: '/home/administrator/agent-workspace'
+        toolCallTimeoutMs: 60000
+        failOnStartupError: true
+    - id: tool-subagent-zeko
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_zeko
+        persona: role-zeko
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [bash, read, read_image, edit, write, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]
+    - id: tool-subagent-cto
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_cto
+        persona: role-cto
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [bash, read, read_image, edit, write, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]
+    - id: tool-subagent-cfo
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_cfo
+        persona: role-cfo
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]
+    - id: tool-subagent-kai
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_kai
+        persona: role-kai
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]
+    - id: tool-subagent-somad
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_somad
+        persona: role-somad
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, edit, write, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]
+    - id: tool-subagent-badsector
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_badsector
+        persona: role-badsector
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, web_search, subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]
+    - id: tool-subagent-nova
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_nova
+        persona: role-nova
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, edit, write, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [bash, web_search, subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow, ralph, ask_user_question, create_goal, get_goal, update_goal]

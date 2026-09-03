@@ -1,0 +1,1 @@
+"""Audit hardening tests (Phase 5 / Session D)."""

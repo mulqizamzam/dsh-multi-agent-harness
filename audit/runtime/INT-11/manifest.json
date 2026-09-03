@@ -1,0 +1,14 @@
+{
+  "scenario": "INT-11",
+  "created_at": "2026-08-30T19:29:58Z",
+  "files": [
+    {
+      "path": "evidence.json",
+      "sha256": "749103de0848856a1a99c6e1ec05ffe1e42e0f83dee0187ca417f3e70dd6472a"
+    },
+    {
+      "path": "verdict.json",
+      "sha256": "29308aa0a75bc40a5941429d452133ed66d93d2aeb476bac0da977bc1df39251"
+    }
+  ]
+}

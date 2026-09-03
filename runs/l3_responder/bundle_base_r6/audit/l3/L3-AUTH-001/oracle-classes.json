@@ -1,0 +1,9 @@
+{
+ "oracle_classes_used": [
+  "O1",
+  "O3",
+  "O4"
+ ],
+ "rationale": "O1 independent authority oracle + O3 state hash + O4 Human-signed expectation",
+ "scenario_id": "L3-AUTH-001"
+}

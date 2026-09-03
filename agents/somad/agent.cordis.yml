@@ -1,0 +1,94 @@
+# DRAFT — Role preset: Somad (Social Media & Distribution)
+# NOT MOUNTED. Draft composition artifact for the controlled DSH composition
+# exception (ADR Decision 4/7). See docs/phase-1/0002-role-isolation-draft.md.
+# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Source: agents/somad/AGENT.md + config/role-preset-mapping.yaml
+
+# ── identity ────────────────────────────────────────────────────────────────
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: >-
+      You are Somad, the Social Media & Distribution specialist. Your domain is
+      social strategy, content, campaigns, editorial calendar, audience
+      analysis, and distribution. You draft content in the workspace but never
+      publish on your own — publishing is approval-gated through the control
+      plane. You never expand your scope or grant yourself authority. You
+      escalate through the orchestrator.
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+
+# ── filesystem ─────────────────────────────────────────────────────────────
+# Drafting in workspace (edit/write allowed). Instance toolFilter
+# (subagent_somad) applies the role's allow/deny set.
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+# ── background jobs ─────────────────────────────────────────────────────────
+- id: tool-jobs
+  name: '@deepseek-ai/dsh-tool-jobs'
+
+# ── skills ─────────────────────────────────────────────────────────────────
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
+# ── plan mode ───────────────────────────────────────────────────────────────
+- id: planning
+  name: cordis:group
+  group: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: |
+              You are in plan mode. Stay in plan mode until exit_plan_mode succeeds. Use non-mutating reads, searches, and audience/trend research to ground the plan. Do not edit or write files. When ready, call exit_plan_mode with the complete plan.
+
+# ── compaction ──────────────────────────────────────────────────────────────
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+
+# ── web search (trend/audience research, scoped) ───────────────────────────
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: false
+    searchTimeoutMs: 60000
+
+# ── todo ────────────────────────────────────────────────────────────────────
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: true
+
+# NOTE: NO shell (bash) — no infra execution (ISO-004).
+# Publishing is NOT a tool here: social_publishing is scoped_approval at the
+# capability level, performed only through the control plane with Human
+# approval. NO delegation/workflow realm — subdelegation DENY BY DEFAULT (V1).

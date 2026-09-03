@@ -1,0 +1,58 @@
+{
+  "active_delegations": [],
+  "approvals": [],
+  "current_state": "DRAFT",
+  "project": "multi-agent-harness",
+  "task_machines": {
+    "task-1": {
+      "history": [
+        {
+          "actor": "orchestrator",
+          "from": "DRAFT",
+          "task_id": "task-1",
+          "to": "PLANNED",
+          "version": 2
+        },
+        {
+          "actor": "orchestrator",
+          "from": "PLANNED",
+          "task_id": "task-1",
+          "to": "DELEGATED",
+          "version": 3
+        },
+        {
+          "actor": "orchestrator",
+          "from": "DELEGATED",
+          "task_id": "task-1",
+          "to": "EXECUTING",
+          "version": 4
+        },
+        {
+          "actor": "orchestrator",
+          "from": "EXECUTING",
+          "task_id": "task-1",
+          "to": "COLLECTED",
+          "version": 5
+        },
+        {
+          "actor": "orchestrator",
+          "from": "COLLECTED",
+          "task_id": "task-1",
+          "to": "SYNTHESIZING",
+          "version": 6
+        },
+        {
+          "actor": "orchestrator",
+          "from": "SYNTHESIZING",
+          "task_id": "task-1",
+          "to": "COMPLETE",
+          "version": 7
+        }
+      ],
+      "state": "COMPLETE",
+      "task_id": "task-1",
+      "version": 7
+    }
+  },
+  "version": 7
+}

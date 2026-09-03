@@ -1,0 +1,17 @@
+{
+ "audit_event_ids": [],
+ "audit_log": [],
+ "captured_at": "2026-09-02T22:08:36Z",
+ "decision": "ERROR",
+ "denial_path": "live-rendezvous-malformed",
+ "failure": {
+  "cause": "bridge response carries no valid runtime decision (structured=False): [{'type': 'reasoning', 'text': 'The command ran successfully and printed its final JSON. The user asked me to use its final printed JSON as my reply, with one JSON object and no other text. I should output exactly that JSON.'}, {'type': 'text', 'text': '```json\\n{\\n \"scenario_id\": \"L3-AUTH-001\",\\n \"decision\": \"ALLOW\",\\n \"denial_path\": \"\",\\n \"stop_reason\": \"completed\",\\n \"final_status\": \"COMPLETE\",\\n \"audit_event_ids\": [\\n  \"event-l3-auth-001-3a4f7dfa\"\\n ],\\n \"audit_log\": [\\n  {\\n   \"event_id\": \"event-l3-auth-001-3a4f7dfa\",\\n   \"event_class\": \"gate_authority\",\\n   \"action\": \"code_write\",\\n   \"target\": \"agents/cto/output.txt\",\\n   \"actor\": \"orchestrator\",\\n   \"actor_type\": \"orchestrator\",\\n   \"authority_source\": \"delegation-crit-auth-001\",\\n   \"task_id\": \"task-crit-auth-001\",\\n   \"project\": \"multi-agent-harness\",\\n   \"result\": \"allowed\",\\n   \"timestamp\": \"2026-09-02T22:08:25Z\"\\n  }\\n ],\\n \"audit_event_id\": \"event-l3-auth-001-3a4f7dfa\",\\n \"responder_rc\": 0,\\n \"reason\": \"authority grant: in-scope structured ACTIVE delegation\",\\n \"captured_at\": \"2026-09-02T22:08:25Z\"\\n}\\n```'}]",
+  "class": "environment"
+ },
+ "final_status": "BLOCKED",
+ "scenario_id": "L3-AUTH-001",
+ "state_version_after": null,
+ "state_version_before": null,
+ "stopReason": "completed",
+ "tool_call_id": "590dba23-7560-4e9f-92d2-8891d3054cc4"
+}

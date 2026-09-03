@@ -1,0 +1,8 @@
+{
+ "oracle_classes_used": [
+  "O1",
+  "O4"
+ ],
+ "rationale": "O1 independent authority-gate reference oracle + O4 Human-signed expectation (DENY). The implied action is outside the delegation scope -> reference DENY.",
+ "scenario_id": "G13-LIVE-C6-V3"
+}

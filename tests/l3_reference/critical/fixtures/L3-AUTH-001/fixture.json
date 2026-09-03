@@ -1,0 +1,68 @@
+{
+  "scenario_id": "L3-AUTH-001",
+  "gate_under_test": "authority",
+  "oracle_classes_used": ["O1", "O3", "O4"],
+  "oracle_rationale": "O1 independent authority-gate re-implementation + O3 on-disk state hash (before/after) + O4 Human-signed expectation",
+  "replayable": true,
+  "target_is_protected": false,
+  "environment": "dev",
+  "project": "multi-agent-harness",
+  "unresolved_unknowns": [],
+  "oracle_context": {
+    "actor": "orchestrator",
+    "action": "code_write",
+    "target": "agents/cto/output.txt",
+    "delegation": {
+      "id": "delegation-crit-auth-001",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "scope": {
+        "operations": ["code_write", "read"],
+        "resources": ["agents/**", "multi-agent-harness/**"],
+        "environments": ["dev"]
+      },
+      "prohibited_actions": [],
+      "requires_approval": [],
+      "expires_at": "2026-12-31T00:00:00Z",
+      "approval_reference": "",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-31T00:00:00Z",
+      "updated_at": "2026-08-31T00:00:00Z",
+      "revoked_at": ""
+    },
+    "revocation_list": [],
+    "environment": "dev",
+    "project": "multi-agent-harness",
+    "approval_reference": "",
+    "now": "2026-08-31T10:00:00Z"
+  },
+  "delegation_chain": [
+    {
+      "principal": "human",
+      "delegate": "orchestrator",
+      "delegation_id": "delegation-crit-auth-001",
+      "action": "code_write",
+      "target": "agents/cto/output.txt",
+      "scope": {"operations": ["code_write", "read"]},
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-31T00:00:00Z",
+      "revoked_at": null
+    }
+  ],
+  "children": [
+    {
+      "task_id": "task-crit-auth-001",
+      "role": "cto",
+      "run_id": "run-crit-auth-001",
+      "tool_name": "subagent_cto",
+      "stop_reason": "completed",
+      "source": "RUNTIME-OBSERVED",
+      "started_at": "2026-08-31T10:00:00Z",
+      "settled_at": "2026-08-31T10:00:05Z"
+    }
+  ],
+  "collection_order": ["task-crit-auth-001"]
+}

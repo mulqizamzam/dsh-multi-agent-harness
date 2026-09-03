@@ -1,0 +1,145 @@
+{
+  "bundle_id": "ev-INT-11-d3-184197",
+  "scenario_id": "INT-11",
+  "evidence_level": "L2-LIVE",
+  "l3_claim": false,
+  "created_at": "2026-08-30T19:29:58Z",
+  "project": "multi-agent-harness",
+  "identity": {
+    "task_id": "flow-live-int11",
+    "delegation_id": "delegation-live-001",
+    "actor": "orchestrator",
+    "role": "orchestrator",
+    "flow_id": "flow-live-int11",
+    "dsh_session_id": "session-11fb50c5-cf74-41b2-9f97-03cf3184a14b",
+    "dsh_run_id": "45124e03-2f53-4a28-ad06-5de79bb7f34d"
+  },
+  "state": {
+    "pre_state": {
+      "current_state": "COLLECTED",
+      "version": 1,
+      "hash": "sha256:9ab2253fc38981f5be9c25cf0a34b62cdf334652344bdef16b3d5dbc0b74f2f1"
+    },
+    "post_state": {
+      "current_state": "COLLECTED",
+      "version": 1,
+      "hash": "sha256:9ab2253fc38981f5be9c25cf0a34b62cdf334652344bdef16b3d5dbc0b74f2f1"
+    },
+    "state_version_before": 1,
+    "state_version_after": 1
+  },
+  "authority": {
+    "decision": "ALLOW",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "delegation active",
+    "delegation_id": "delegation-live-001",
+    "audit_event_id": ""
+  },
+  "gates": [],
+  "execution": {
+    "decision": "ALLOW",
+    "source": "RUNTIME-OBSERVED",
+    "target": "multi-agent-harness/**",
+    "expected": {},
+    "observed": {},
+    "audit_event_id": ""
+  },
+  "verification": {
+    "verdict": "PASSED",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "verified",
+    "evidence_kinds": [
+      "artifact"
+    ]
+  },
+  "final_status": "COMPLETE",
+  "audit_references": [],
+  "artifact_hashes": {},
+  "failure": null,
+  "provenance": {
+    "children": [
+      {
+        "task_id": "int11-pricing",
+        "role": "cfo",
+        "run_id": "45124e03-2f53-4a28-ad06-5de79bb7f34d",
+        "tool_name": "subagent_cfo",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      },
+      {
+        "task_id": "int11-research",
+        "role": "kai",
+        "run_id": "97518df6-3fb4-48ce-b0bd-de85a38a81c4",
+        "tool_name": "subagent_kai",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      },
+      {
+        "task_id": "int11-draft",
+        "role": "nova",
+        "run_id": "8b3c8603-9c8a-4c7c-a509-4d0cabbfd989",
+        "tool_name": "subagent_nova",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      }
+    ],
+    "collection_order": [
+      "int11-pricing",
+      "int11-research",
+      "int11-draft"
+    ]
+  },
+  "evidence_items": [
+    {
+      "kind": "parallel_safety",
+      "source": "CONTROL-PLANE-DECISION",
+      "detail": {
+        "safe": true,
+        "owners": [
+          "cfo",
+          "kai",
+          "nova"
+        ]
+      }
+    },
+    {
+      "kind": "dispatch",
+      "source": "RUNTIME-OBSERVED",
+      "detail": {
+        "count": 3
+      }
+    },
+    {
+      "kind": "agent_result",
+      "source": "AGENT-REPORTED",
+      "detail": {
+        "status": "SUCCEEDED",
+        "role": "cfo"
+      }
+    },
+    {
+      "kind": "agent_result",
+      "source": "AGENT-REPORTED",
+      "detail": {
+        "status": "SUCCEEDED",
+        "role": "kai"
+      }
+    },
+    {
+      "kind": "agent_result",
+      "source": "AGENT-REPORTED",
+      "detail": {
+        "status": "SUCCEEDED",
+        "role": "nova"
+      }
+    }
+  ],
+  "qa_validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [
+      "execution.expected equals execution.observed verbatim \u2014 expected/observed are not distinguished",
+      "unknown top-level key(s): ['qa_validation']"
+    ]
+  }
+}

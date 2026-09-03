@@ -1,0 +1,13 @@
+{
+ "audit_event_ids": [],
+ "captured_at": "2026-09-01T18:00:00Z",
+ "decision": "DENY",
+ "denial_path": "authority-gate:implied-action:G13-LIVE-C4-V6",
+ "failure": null,
+ "final_status": "COMPLETE",
+ "scenario_id": "G13-LIVE-C4-V6",
+ "state_version_after": null,
+ "state_version_before": null,
+ "stopReason": "completed",
+ "tool_call_id": "145b5a6b-c906-4da6-b5ad-2635e5caa505"
+}

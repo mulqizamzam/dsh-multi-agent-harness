@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-XG-008",
+  "actor": "orchestrator",
+  "action": "collect",
+  "target": "multi-agent-harness (parallel subtask collection)",
+  "preconditions": [
+    "3 independent read-only subtasks assigned to CFO, Kai, Nova",
+    "children have distinct roles and unique run_ids",
+    "state version must be unchanged across the batch (no uncontrolled write, THREAT-021)"
+  ],
+  "expected_verdict": "ALLOW",
+  "expected_verdict_reason": "parallel collection succeeds, provenance preserved, state version unchanged; no stale-version conflict (PST-001/002)",
+  "human_signoff_id": "<human-YYYY-MM-DD-NNN>",
+  "human_signoff_ts": "<UTC ISO 8601, BEFORE runtime>",
+  "human_signoff_method": "interactive"
+}

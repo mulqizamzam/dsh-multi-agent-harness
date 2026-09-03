@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/replay.schema.json",
+  "title": "L3 replay metadata",
+  "description": "Reproducibility metadata (plan 0003 §8). Enables an auditor to rerun the scenario and obtain the same verdict byte-for-byte.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id", "fixture_hash", "fixture_path", "command_line",
+    "dsh_version", "dsh_profile_path", "verifier_binary_sha256",
+    "schema_sha256", "fixture_seed", "replay_script"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "fixture_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "fixture_path": { "type": "string", "minLength": 1 },
+    "command_line": { "type": "string", "minLength": 1 },
+    "dsh_version": { "type": "string", "const": "0.1.1-rc.2" },
+    "dsh_profile_path": { "type": "string", "minLength": 1 },
+    "verifier_binary_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "schema_sha256": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    },
+    "fixture_seed": { "type": ["integer", "null"] },
+    "replay_script": { "type": "string", "minLength": 1 },
+    "replay_script_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }
+  }
+}

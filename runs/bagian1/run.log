@@ -1,0 +1,25 @@
+=== BAGIAN 1 — FRONT_DOOR_REAL_E2E (2026-09-02T14:18:21Z) ===
+Traceback (most recent call last):
+  File "/home/administrator/agent-workspace/multi-agent-harness/registry_writer/provider.py", line 72, in get_client
+    with open(secret_path, "rb") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/etc/dsh-registry-writer/hmac-secret'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/administrator/agent-workspace/multi-agent-harness/runs/bagian1/run.py", line 194, in <module>
+    evidence = run()
+  File "/home/administrator/agent-workspace/multi-agent-harness/runs/bagian1/run.py", line 143, in run
+    ws = seed_workspace(WS)
+  File "/home/administrator/agent-workspace/multi-agent-harness/runs/bagian1/run.py", line 55, in seed_workspace
+    registry_write("state/registry/delegations.json", d.to_dict(), base=ws)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/agent-workspace/multi-agent-harness/control/execution_gate.py", line 328, in registry_write
+    client = _daemon_client()
+  File "/home/administrator/agent-workspace/multi-agent-harness/control/execution_gate.py", line 293, in _daemon_client
+    return get_client()
+  File "/home/administrator/agent-workspace/multi-agent-harness/registry_writer/provider.py", line 75, in get_client
+    raise WriterUnavailable(
+        f"cannot read daemon HMAC secret at {secret_path}: {e}") from e
+registry_writer.client.WriterUnavailable: cannot read daemon HMAC secret at /etc/dsh-registry-writer/hmac-secret: [Errno 13] Permission denied: '/etc/dsh-registry-writer/hmac-secret'

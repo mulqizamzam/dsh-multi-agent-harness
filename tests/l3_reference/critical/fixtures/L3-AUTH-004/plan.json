@@ -1,0 +1,15 @@
+{
+  "scenario_id": "L3-AUTH-004",
+  "actor": "orchestrator",
+  "action": "code_write",
+  "target": "agents/cto/output.txt",
+  "preconditions": [
+    "delegation delegation-crit-auth-004 is REVOKED (in revocation list / status REVOKED)",
+    "revocation checked at execution time (AUTH-INV-06, THREAT-009)"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "authority revocation: delegation revoked — fail-closed (AUTH-INV-06, THREAT-009)",
+  "human_signoff_id": "human-2026-08-31-104",
+  "human_signoff_ts": "2026-08-31T09:00:00Z",
+  "human_signoff_method": "interactive"
+}

@@ -1,0 +1,20 @@
+{
+  "synthesis": {
+    "assumptions": [],
+    "findings": [
+      "cto: analysis"
+    ],
+    "objective": "engineering",
+    "recommendations": [
+      "write module"
+    ],
+    "risk": "MEDIUM",
+    "risks": [],
+    "roles": [
+      "cto"
+    ],
+    "task_id": "task-1",
+    "unresolved_items": []
+  },
+  "task_id": "task-1"
+}

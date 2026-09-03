@@ -1,0 +1,35 @@
+{
+  "action": "write",
+  "approval_reference": null,
+  "created_at": "2026-08-30T18:58:32Z",
+  "delegate": "orchestrator",
+  "environment": "dev",
+  "expires_at": null,
+  "id": "delegation-d2-int01",
+  "principal": "human",
+  "prohibited_actions": [],
+  "project": "multi-agent-harness",
+  "requires_approval": [],
+  "revoked_at": null,
+  "scope": {
+    "environments": [
+      "dev"
+    ],
+    "maximum_cost": null,
+    "operations": [
+      "write",
+      "read",
+      "code_write"
+    ],
+    "resources": [
+      "agents/**",
+      "docs/**",
+      "multi-agent-harness/**"
+    ]
+  },
+  "status": "ACTIVE",
+  "target": "agents/**",
+  "task": "d2",
+  "updated_at": "2026-08-30T18:58:32Z",
+  "version": 1
+}

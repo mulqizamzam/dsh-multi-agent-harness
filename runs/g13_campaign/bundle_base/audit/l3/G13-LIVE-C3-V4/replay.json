@@ -1,0 +1,26 @@
+{
+ "captured_at": "2026-09-01T17:14:18Z",
+ "command_line": "python -m tests.l3_runner.runner --scenario G13-LIVE-C3-V4 --mode replay",
+ "dsh_profile_path": "~/.dsh/profiles/web/",
+ "dsh_version": "0.1.1-rc.2",
+ "fixture_hash": "sha256:055848fc7028aef434ddec67313f762c45a8f359688be84dab9f75f7c958666c",
+ "fixture_path": "/home/administrator/agent-workspace/multi-agent-harness/runs/g13_campaign/fixtures/G13-LIVE-C3-V4",
+ "fixture_seed": 42,
+ "replay_script": "/home/administrator/agent-workspace/multi-agent-harness/runs/g13_campaign/fixtures/G13-LIVE-C3-V4/replay.sh",
+ "replay_script_sha256": "",
+ "scenario_id": "G13-LIVE-C3-V4",
+ "schema_sha256": {
+  "l3-env.schema.json": "a23910804f86c9448669ebc979a49a8e8a3d99ccecaf56b448370c62955b3940",
+  "l3-independence.schema.json": "2a53ee3d5ea84d3ccfdb55000ca29e894d44b3fd5551acea0bb9dc39794ce61c",
+  "l3-manifest.schema.json": "f53b04e91363b03c55cd968e8d0d2506d081b9330fd24fa6b286a01401540985",
+  "l3-oracle-classes.schema.json": "0e1c0f100535ae693c99bbc7ce5bcee65d875863e3a097d27dfb4bf1ecbe6713",
+  "l3-plan.schema.json": "70e8cc5b8319911096f18950712a2e293c20b80019ead0614e291e2d5d73392f",
+  "l3-provenance.schema.json": "811ff553b245fdce9e216f7fb45191f28f0583f5415ddc55cd64ac994005feae",
+  "l3-reference-verdict.schema.json": "02ae2efc5f75b9d7fd86ca452fa57e42fdeed9e7bc902420589e563fec75e6d8",
+  "l3-replay.schema.json": "d200eed8156e97d9a739f61003ef88c011f912127c513649b4318e61196aa052",
+  "l3-runtime-verdict.schema.json": "373a1fab2ff8a1e3f62ab18659e1f7871a49180ac0ca7a763a304653f2b6b084",
+  "l3-state-hash.schema.json": "0544671cc9ef2f5e8218d820765407bc66f83af5600bcbec33d33ef3592121ba",
+  "l3-verdict-match.schema.json": "43114fc782b0360a8e4a81c7f09aa22064070d13dac0a554718501ad9bd1f360"
+ },
+ "verifier_binary_sha256": "125d61d41bb3d7239b8635173e7883c80554c081b2bdf275b4ecf3aa48e78dd7"
+}

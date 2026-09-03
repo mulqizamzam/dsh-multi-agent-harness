@@ -1,0 +1,25 @@
+{
+ "actor_session_id": "session-52bbec00-e6cf-4570-9e2e-c7b629f5616e",
+ "children": [],
+ "collection_order": [],
+ "delegation_chain": [
+  {
+   "action": "read",
+   "created_at": "2026-09-01T00:00:00Z",
+   "delegate": "orchestrator",
+   "delegation_id": "delegation-g13-c1",
+   "principal": "human",
+   "revoked_at": null,
+   "scope": {
+    "operations": [
+     "read"
+    ]
+   },
+   "status": "ACTIVE",
+   "target": "docs/**",
+   "version": 1
+  }
+ ],
+ "scenario_id": "G13-LIVE-C1",
+ "verifier_session_id": "verifier-3"
+}

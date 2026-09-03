@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/workflow-skeleton.schema.json",
+  "title": "Workflow skeleton output",
+  "description": "Structured output of orchestrator/workflows/skeleton.js. Data only — never authority. Gates are placeholders; the orchestrator re-validates every result (ADR 0001 correction #4).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tasks", "selected", "results", "gates", "phases", "skeleton"],
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "objective", "scope"],
+        "properties": {
+          "id": { "type": "string" },
+          "objective": { "type": "string" },
+          "scope": { "type": "string" }
+        }
+      }
+    },
+    "selected": {
+      "type": "array",
+      "items": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["role", "status", "refs"],
+        "properties": {
+          "role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+          "status": { "type": "string" },
+          "refs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": { "const": "PLACEHOLDER" },
+      "description": "Every gate must be PLACEHOLDER in the skeleton; any other value means the script attempted enforcement and must be rejected (fail-closed)."
+    },
+    "phases": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 15,
+      "description": "The 15-phase chain: intake → understand → classify → risk_gate → decompose → select → delegate → collect → evidence_gate → synthesize → conflict_gate → review_gate → authority_gate → execute_gate → verify_gate."
+    },
+    "skeleton": { "const": true },
+    "note": { "type": "string" },
+    "error": { "type": "string" }
+  }
+}

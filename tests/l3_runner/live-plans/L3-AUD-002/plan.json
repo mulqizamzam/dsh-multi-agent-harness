@@ -1,0 +1,18 @@
+{
+ "action": "verify",
+ "actor": "verifier",
+ "expected_verdict": "INVALID",
+ "expected_verdict_reason": "audit integrity: tampered ledger detected by chain hash mismatch (L3-AUD-002, THREAT-018). NOTE: INVALID is the oracle verdict for tamper-detection; it intentionally sits outside the plan schema's ALLOW|DENY enum \u2014 schema tension documented in docs/phase-5/l3/live-plans/0006-audit-integrity-live-plan.md and test_l3_live_plans.py::test_audit_invalid_is_documented_schema_tension",
+ "human_signoff_id": "human-2026-09-01-957",
+ "human_signoff_method": "signed-assertion",
+ "human_signoff_provenance": "recorded",
+ "human_signoff_ts": "2026-09-01T14:57:51Z",
+ "preconditions": [
+  "audit ledger has been TAMPERED (one event mutated)",
+  "chain sidecar computed over the ORIGINAL (untampered) ledger",
+  "re-computation against the sidecar must detect the mismatch (INVALID)",
+  "verifier-independent chain re-computation must not be fooled by the forged entry"
+ ],
+ "scenario_id": "L3-AUD-002",
+ "target": "audit/ledger.jsonl"
+}

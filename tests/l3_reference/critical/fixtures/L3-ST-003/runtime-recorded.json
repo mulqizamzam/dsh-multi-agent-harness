@@ -1,0 +1,32 @@
+{
+  "scenario_id": "L3-ST-003",
+  "decision": "DENY",
+  "denial_path": "state_transition:stale_version",
+  "tool_call_id": "tool-call-crit-st-003",
+  "audit_event_ids": ["event-crit-st-003"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "BLOCKED",
+  "state_version_before": 3,
+  "state_version_after": 3,
+  "failure": {
+    "class": "logic",
+    "cause": "stale version CAS: expected 3, current 2 (THREAT-021)",
+    "recovery": null
+  },
+  "audit_log": [
+    {
+      "event_id": "event-crit-st-003",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "transition",
+      "target": "state/projects/proj-1.json",
+      "project": "multi-agent-harness",
+      "task_id": "task-crit-st-003",
+      "event_class": "version_conflict",
+      "result": "denied",
+      "authority_source": "delegation-crit-st-003"
+    }
+  ]
+}

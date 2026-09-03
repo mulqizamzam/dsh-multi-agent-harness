@@ -1,0 +1,13 @@
+{
+ "audit_event_ids": [],
+ "captured_at": "2026-09-01T16:20:00Z",
+ "decision": "DENY",
+ "denial_path": "authority-gate:write:agents/kai/out.md",
+ "failure": null,
+ "final_status": "COMPLETE",
+ "scenario_id": "G13-LIVE-C1",
+ "state_version_after": null,
+ "state_version_before": null,
+ "stopReason": "completed",
+ "tool_call_id": "6e9e4a1e-b36d-459a-82f9-0f519e6ba590"
+}

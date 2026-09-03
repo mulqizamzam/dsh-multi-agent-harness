@@ -1,0 +1,33 @@
+{
+  "action": "analysis",
+  "approval_reference": null,
+  "created_at": "2026-09-02T16:52:37Z",
+  "delegate": "orchestrator",
+  "environment": "dev",
+  "expires_at": null,
+  "id": "delegation-live-smoke",
+  "principal": "human",
+  "prohibited_actions": [],
+  "project": "multi-agent-harness",
+  "requires_approval": [],
+  "revoked_at": null,
+  "scope": {
+    "environments": [
+      "dev"
+    ],
+    "maximum_cost": null,
+    "operations": [
+      "analysis",
+      "read"
+    ],
+    "resources": [
+      "docs/**",
+      "state/**"
+    ]
+  },
+  "status": "ACTIVE",
+  "target": "docs/**",
+  "task": "task-live-smoke",
+  "updated_at": "2026-09-02T16:52:37Z",
+  "version": 1
+}

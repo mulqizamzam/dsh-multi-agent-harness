@@ -1,0 +1,88 @@
+{
+  "int12-eng": {
+    "tool_name": "subagent_cto",
+    "run_id": "06e2b891-d694-4baa-9dfb-3e5e68997b07",
+    "started_at": "2026-08-30T19:26:35Z",
+    "settled_at": "2026-08-30T19:27:03Z",
+    "stop_reason": "completed",
+    "output": "{\"task_id\": \"int12-eng\", \"assigned_role\": \"cto\", \"status\": \"SUCCEEDED\", \"confidence\": \"HIGH\", \"reported_at\": \"2026-08-30T19:26:58Z\", \"findings\": [\"ADR 0001 Decision 5: file-based authoritative project state (state/+audit/) depends on the orchestrator as the single writer and requires atomic temp-write+rename plus version checks that the project itself must implement \\u2014 the ADR explicitly states the state is 'not automatically crash-safe without our implementation', so a crash mid-write or an orphaned temp file can corrupt or leave stale authoritative project state before any safeguards exist.\"], \"evidence\": [\"practice\"], \"assumptions\": [], \"risks\": [], \"unresolved_items\": [], \"actions_taken\": [\"analysis\"], \"recommendation\": \"Implement atomic write (temp file + fsync + rename) with a version/checksum check and single-writer enforcement (e.g. a lockfile) for every state/audit write before any Phase-1 persistence is considered safe, and back it with validation tests.\"}",
+    "structured": {
+      "task_id": "int12-eng",
+      "assigned_role": "cto",
+      "status": "SUCCEEDED",
+      "confidence": "HIGH",
+      "reported_at": "2026-08-30T19:26:58Z",
+      "findings": [
+        "ADR 0001 Decision 5: file-based authoritative project state (state/+audit/) depends on the orchestrator as the single writer and requires atomic temp-write+rename plus version checks that the project itself must implement \u2014 the ADR explicitly states the state is 'not automatically crash-safe without our implementation', so a crash mid-write or an orphaned temp file can corrupt or leave stale authoritative project state before any safeguards exist."
+      ],
+      "evidence": [
+        "practice"
+      ],
+      "assumptions": [],
+      "risks": [],
+      "unresolved_items": [],
+      "actions_taken": [
+        "analysis"
+      ],
+      "recommendation": "Implement atomic write (temp file + fsync + rename) with a version/checksum check and single-writer enforcement (e.g. a lockfile) for every state/audit write before any Phase-1 persistence is considered safe, and back it with validation tests."
+    }
+  },
+  "int12-fail": {
+    "tool_name": "subagent_kai",
+    "run_id": "61d68c1c-d38a-40ac-a7a0-cd1a05f12461",
+    "started_at": "2026-08-30T19:22:05Z",
+    "settled_at": "2026-08-30T19:22:15Z",
+    "stop_reason": "completed",
+    "output": "{\"task_id\": \"int12-fail\", \"assigned_role\": \"kai\", \"status\": \"FAILED\", \"confidence\": \"LOW\", \"reported_at\": \"2026-05-14T12:00:00Z\", \"findings\": [], \"evidence\": [], \"assumptions\": [], \"risks\": [], \"unresolved_items\": [\"Missing primary source: niche market sizing dataset (unavailable in this environment)\"], \"actions_taken\": [], \"recommendation\": \"\"}",
+    "structured": {
+      "task_id": "int12-fail",
+      "assigned_role": "kai",
+      "status": "FAILED",
+      "confidence": "LOW",
+      "reported_at": "2026-05-14T12:00:00Z",
+      "findings": [],
+      "evidence": [],
+      "assumptions": [],
+      "risks": [],
+      "unresolved_items": [
+        "Missing primary source: niche market sizing dataset (unavailable in this environment)"
+      ],
+      "actions_taken": [],
+      "recommendation": ""
+    }
+  },
+  "int12-draft": {
+    "tool_name": "subagent_somad",
+    "run_id": "9f2f1f3e-2b63-47a2-bc73-78858f997731",
+    "started_at": "2026-08-30T19:22:05Z",
+    "settled_at": "2026-08-30T19:22:25Z",
+    "stop_reason": "completed",
+    "output": "{\"task_id\": \"int12-draft\", \"assigned_role\": \"somad\", \"status\": \"SUCCEEDED\", \"confidence\": \"HIGH\", \"reported_at\": \"2026-02-09T12:00:00Z\", \"findings\": [\"Dev.to is a free, developer-focused publishing platform purpose-built for technical content, making it the single highest-leverage low-cost channel for distributing technical documentation.\"], \"evidence\": [\"Dev.to is explicitly positioned as a free community for developers to publish and read technical content\"], \"assumptions\": [\"The project's documentation exists in a text/Markdown-friendly format\"], \"risks\": [\"Duplicate-content SEO risk: cross-posting the same docs verbatim can dilute the canonical docs site's ranking\"], \"unresolved_items\": [\"Whether the docs repo can support automated publish-on-merge to Dev.to\"], \"actions_taken\": [\"Conducted a pure text analysis of social distribution options\"], \"recommendation\": \"Adopt Dev.to as the project's single low-cost social distribution channel for documentation.\"}",
+    "structured": {
+      "task_id": "int12-draft",
+      "assigned_role": "somad",
+      "status": "SUCCEEDED",
+      "confidence": "HIGH",
+      "reported_at": "2026-02-09T12:00:00Z",
+      "findings": [
+        "Dev.to is a free, developer-focused publishing platform purpose-built for technical content, making it the single highest-leverage low-cost channel for distributing technical documentation."
+      ],
+      "evidence": [
+        "Dev.to is explicitly positioned as a free community for developers to publish and read technical content"
+      ],
+      "assumptions": [
+        "The project's documentation exists in a text/Markdown-friendly format"
+      ],
+      "risks": [
+        "Duplicate-content SEO risk: cross-posting the same docs verbatim can dilute the canonical docs site's ranking"
+      ],
+      "unresolved_items": [
+        "Whether the docs repo can support automated publish-on-merge to Dev.to"
+      ],
+      "actions_taken": [
+        "Conducted a pure text analysis of social distribution options"
+      ],
+      "recommendation": "Adopt Dev.to as the project's single low-cost social distribution channel for documentation."
+    }
+  }
+}

@@ -1,0 +1,1 @@
+# tests/control_verification/ — Session C / Verification + Recovery tests

@@ -1,0 +1,43 @@
+{
+ "created_at": "2026-09-01T17:15:40Z",
+ "dsh_version": "0.1.1-rc.2",
+ "files": {
+  "after.sha256": {
+   "sha256": "7ab28b01203e6e010d2a40b2e9137a4571c4c3826ac6d2d0cbab5ebeebb86f2c"
+  },
+  "audit-log.jsonl": {
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "before.sha256": {
+   "sha256": "7ab28b01203e6e010d2a40b2e9137a4571c4c3826ac6d2d0cbab5ebeebb86f2c"
+  },
+  "env.json": {
+   "sha256": "fa2d852861dc22b8a21c941bf4f75615a3061f17c039d62eaaa29d2a1e3290e1"
+  },
+  "oracle-classes.json": {
+   "sha256": "d5d489309aa21ec5ab141087282d8506d7c4eaea6a7cd4864c945c8edb3173e9"
+  },
+  "plan.json": {
+   "sha256": "fbdd0c2ce34186750c644b16cb00d5a63ee60279857e7b47112d1541e3359e46"
+  },
+  "provenance.json": {
+   "sha256": "ebf34eae3aed7b84d4cf37578373823aefe590e2c48b8fbbcb6cc47f575baca7"
+  },
+  "reference-verdict.json": {
+   "sha256": "d439f0406a459f17a1c3c528b8255bd0f498f7dd205b4d0e9bf323aad346441c"
+  },
+  "replay.json": {
+   "sha256": "66884819b9e3254bfcff9a5fbd8a8a2c44a5aa3bb835df1fc6993b7e9c9c2434"
+  },
+  "runtime-verdict.json": {
+   "sha256": "60e53a4353417cf834bee34cedfb8e6eb6bc79228fb5fef0121f73de822429c1"
+  },
+  "verdict-match.json": {
+   "sha256": "3a6d3bca4de382012aaeb9e86e75d301a84a41907f4ec88bd1a1b234af295b85"
+  },
+  "verifier-independence.json": {
+   "sha256": "e421fef5d95d14850732dac074fe404bc7972bdef7b03ffc8395633f12b77492"
+  }
+ },
+ "scenario_id": "G13-LIVE-C7-V8"
+}

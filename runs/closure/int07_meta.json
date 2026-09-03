@@ -1,0 +1,22 @@
+{
+  "scenario": "INT-07",
+  "ws": "/home/administrator/agent-workspace/multi-agent-harness/runs/closure/ws-int07",
+  "del_id": "delegation-closure-int07",
+  "subtask_task_id": "task-1:cto",
+  "subtask_role": "cto",
+  "prompt": "Task: engineering analysis\nRole: cto\nScope: agents/**\ntask_id: task-1:cto\nassigned_role: cto\nExpected output: structured TaskResult JSON\nReply with EXACTLY ONE JSON object, no markdown, no extra text, conforming to:\n{\n  \"type\": \"object\",\n  \"additionalProperties\": false,\n  \"required\": [\n    \"task_id\",\n    \"assigned_role\",\n    \"status\",\n    \"confidence\",\n    \"reported_at\"\n  ],\n  \"properties\": {\n    \"task_id\": {\n      \"type\": \"string\",\n      \"minLength\": 1\n    },\n    \"assigned_role\": {\n      \"enum\": [\n        \"zeko\",\n        \"cto\",\n        \"cfo\",\n        \"kai\",\n        \"somad\",\n        \"badsector\",\n        \"nova\"\n      ]\n    },\n    \"status\": {\n      \"enum\": [\n        \"SUCCEEDED\",\n        \"FAILED\",\n        \"BLOCKED\"\n      ]\n    },\n    \"findings\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"evidence\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"assumptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"risks\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"recommendation\": {\n      \"type\": \"string\"\n    },\n    \"confidence\": {\n      \"enum\": [\n        \"LOW\",\n        \"MEDIUM\",\n        \"HIGH\"\n      ]\n    },\n    \"unresolved_items\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"actions_taken\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"reported_at\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    }\n  }\n}",
+  "tool_name": "subagent_cto",
+  "intake": {
+    "objective": "engineering analysis",
+    "scope": [
+      "agents/**"
+    ],
+    "expected_outcome": "module written and verified",
+    "required_authority_context": "delegation-closure-int07"
+  },
+  "plan": {
+    "action": "write",
+    "target": "agents/cto/output.txt",
+    "environment": "dev"
+  }
+}

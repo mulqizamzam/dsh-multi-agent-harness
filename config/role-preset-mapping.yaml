@@ -1,0 +1,220 @@
+# ============================================================================
+# ROLE → PRESET / TOOLFILTER MAPPING — multi-agent-harness
+# Phase 1A (finalized). Control-plane input — NOT native DSH authorization.
+#
+# This file declares, for each role, the intended DSH Agent Preset and the
+# per-role `tool-subagent` instance configuration (toolName, toolFilter,
+# persona, backgroundMode, maxDepth) that the control plane will mount in a
+# later phase. It is the bridge between the project role definitions
+# (agents/<id>/AGENT.md + policy.yaml) and DSH Agent Presets.
+#
+# IMPORTANT:
+#  - NOTHING here is mounted. Mounting per-role presets/instances is a
+#    controlled DSH composition exception (ADR Decision 4/7 — HUMAN_PENDING,
+#    reversible per case).
+#  - Tool names are verified against the DSH 0.1.1-rc.2 tool catalog
+#    (docs/tool-catalog.md). Unknown names fail loudly at mount (VERIFIED).
+#  - toolFilter is a CAPABILITY boundary, not complete security isolation;
+#    sandbox/approval remain session-level.
+#  - Phase-1B validation tests must assert: allow ∩ deny = ∅, every name in
+#    the verified catalog, and consistency with agents/<id>/policy.yaml.
+# ============================================================================
+
+mapping_version: 1
+status: finalized
+version_pin: deepseek-harness-0.1.1-rc.2
+documentation_ref: docs/tool-catalog.md
+preset_naming_convention: 'role-<id>'          # Agent Preset directory id (not yet authored)
+instance_naming_convention: 'subagent_<id>'   # per-role tool-subagent toolName
+
+# Roles are exposed to the orchestrator via per-role tool-subagent instances.
+# All specialists: provider spawn, continuable (report channel available),
+# max_depth 1 (no further delegation — subdelegation DENY BY DEFAULT, V1).
+roles:
+  - id: zeko
+    preset: role-zeko
+    policy_ref: agents/zeko/policy.yaml
+    tool_instance:
+      tool_name: subagent_zeko
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-zeko
+    tool_filter:
+      allow: [bash, read, read_image, edit, write, glob, grep,
+              job_kill, job_list, job_output,
+              web_search, skill, exit_plan_mode, todo_write]
+      deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: ops role; bash scoped to diagnosis/delegation-bounded ops; no code architecture change
+
+  - id: cto
+    preset: role-cto
+    policy_ref: agents/cto/policy.yaml
+    tool_instance:
+      tool_name: subagent_cto
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-cto
+    tool_filter:
+      allow: [bash, read, read_image, edit, write, glob, grep,
+              job_kill, job_list, job_output,
+              web_search, skill, exit_plan_mode, todo_write]
+      deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: engineering role; lsp/str_replace_editor are unmounted_candidates (controlled exception required)
+
+  - id: cfo
+    preset: role-cfo
+    policy_ref: agents/cfo/policy.yaml
+    tool_instance:
+      tool_name: subagent_cfo
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-cfo
+    tool_filter:
+      allow: [read, read_image, glob, grep,
+              job_kill, job_list, job_output,
+              web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write,
+             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: read-only analysis; no execution path; transactions always delegated + approved
+
+  - id: kai
+    preset: role-kai
+    policy_ref: agents/kai/policy.yaml
+    tool_instance:
+      tool_name: subagent_kai
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-kai
+    tool_filter:
+      allow: [read, read_image, glob, grep,
+              job_kill, job_list, job_output,
+              web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write,
+             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: read-only research; web_fetch is unmounted_candidate (SSRF review required)
+
+  - id: somad
+    preset: role-somad
+    policy_ref: agents/somad/policy.yaml
+    tool_instance:
+      tool_name: subagent_somad
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-somad
+    tool_filter:
+      allow: [read, read_image, glob, grep,
+              job_kill, job_list, job_output,
+              web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash,
+             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: drafting content is channel-routed (no raw write/edit); no bash (no infra, ISO-004); publishing is approval-gated via control plane
+
+  - id: badsector
+    preset: role-badsector
+    policy_ref: agents/badsector/policy.yaml
+    tool_instance:
+      tool_name: subagent_badsector
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-badsector
+    tool_filter:
+      allow: [read, read_image, glob, grep,
+              job_kill, job_list, job_output,
+              skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write,
+             web_search,
+             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: strictly read-only reviewer; never executes; PASS never authorizes
+
+  - id: nova
+    preset: role-nova
+    policy_ref: agents/nova/policy.yaml
+    tool_instance:
+      tool_name: subagent_nova
+      provider: spawn
+      background_mode: continuable
+      max_depth: 1
+      persona: role-nova
+    tool_filter:
+      allow: [read, read_image, glob, grep,
+              job_kill, job_list, job_output,
+              skill, exit_plan_mode, todo_write]
+      deny: [bash,
+             web_search,
+             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+             workflow, ralph, ask_user_question,
+             create_goal, get_goal, update_goal]
+    notes: manuscript content is channel-routed (no raw write/edit); no bash, no web; project-local
+
+# The orchestrator is the root session (ADR Decision 3 hybrid), not a
+# tool-subagent instance. Its own session toolFilter is a deployment concern
+# (L2 backstop); the control-plane contract (orchestrator/contract.md) is the
+# actual security boundary (THREAT-025). B-lite carve-out: read-only /
+# reversible internal actions within delegation, always through the execution
+# gate; never direct HIGH-risk execution.
+orchestrator:
+  id: orchestrator
+  binding: root_session
+  policy_ref: orchestrator/AGENT.md
+  delegation_tools: [subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow]
+  tool_filter:
+    allow: [read, read_image, glob, grep, edit, write, bash,
+            job_kill, job_list, job_output,
+            subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+            workflow, skill, ask_user_question, exit_plan_mode,
+            create_goal, get_goal, update_goal, todo_write, web_search]
+    deny: [ralph, str_replace_editor, lsp, run_code, pwsh, web_fetch,
+           terminal_open, terminal_read, terminal_send, terminal_signal,
+           terminal_list, terminal_close,
+           schedule_create, schedule_delete, schedule_list,
+           session_event_read, session_event_search, session_event_trace,
+           session_search, session_trace,
+           cordis_define, cordis_inspect_list, cordis_inspect_query,
+           cordis_inspect_self, cordis_run, cordis_stop, cordis_undefine,
+           followup_task, spawn_teammate, team_task_create, team_task_get,
+           team_task_list, team_task_update, wait_agent]
+    notes: >
+      B-lite: edit/write/bash allowed ONLY for project state/audit maintenance
+      and reversible internal actions within delegation, ALWAYS through the
+      execution gate. HIGH-risk actions (production/destructive/financial/
+      credential/material publication) are never executed directly — they route
+      to a specialist under authority + approval (ORC-002). ralph and
+      agent-team tools are out of scope for the orchestrator (ralph is a
+      fresh-agent loop, not orchestration; agent teams are BLOCKED/out of scope).
+
+# Consistency guardrails (validated by Phase-1B tests):
+consistency_rules:
+  allow_deny_disjoint: true
+  tool_names_verified: true        # against docs/tool-catalog.md (0.1.1-rc.2)
+  matches_role_policy_yaml: true   # each role's allow/deny matches agents/<id>/policy.yaml
+  delegation_orchestrator_only: true   # subdelegation DENY BY DEFAULT (V1)
+  specialist_max_depth_1: true
+
+# ── Phase 1C draft references (DRAFT ONLY — nothing mounted) ────────────────
+# The controlled DSH composition exception (ADR D4/D7) would mount the
+# artifacts referenced below. They are drafts; see
+# docs/phase-1/0002-role-isolation-draft.md for the full register.
+draft_artifacts:
+  status: draft                       # NOT mounted
+  preset_draft_path: 'agents/<id>/agent.cordis.yml'   # per-role preset composition
+  instances_draft_path: config/tool-subagent-instances.yaml  # per-role tool-subagent rows
+  orchestrator_preset: standard       # root session stays on the shipped standard preset
+  mount_required: false               # true only when the controlled exception executes

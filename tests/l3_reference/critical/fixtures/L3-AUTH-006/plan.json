@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-AUTH-006",
+  "actor": "orchestrator",
+  "action": "code_write",
+  "target": "agents/cto/output.txt",
+  "preconditions": [
+    "delegation delegation-crit-auth-006 ACTIVE at PLANNING time",
+    "delegation REVOKED before EXECUTION time",
+    "authority must be re-validated at execution time, not planning time (AUTH-INV-05, THREAT-009/024)"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "execution-time recheck: planning ALLOW is never sufficient; delegation revoked before execution — DENY (AUTH-INV-05, THREAT-024)",
+  "human_signoff_id": "human-2026-08-31-106",
+  "human_signoff_ts": "2026-08-31T09:00:00Z",
+  "human_signoff_method": "interactive"
+}

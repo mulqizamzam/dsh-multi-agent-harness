@@ -1,0 +1,719 @@
+{
+  "bagian": 1,
+  "protocol": "OPEN_LIVE_EXECUTION_PATH",
+  "acceptance_gate": "FRONT_DOOR_REAL_E2E",
+  "timestamp": "2026-09-01T05:22:49Z",
+  "chain_verified": true,
+  "front_door_result": {
+    "schema": "run-result@1",
+    "status": "COMPLETE",
+    "run_id": "prod-794f3104",
+    "objective": "research report on D4/D7 composition readiness",
+    "state": {
+      "run_id": "prod-794f3104",
+      "phase": "close",
+      "outcome": "complete",
+      "objective": "research report on D4/D7 composition readiness",
+      "plan": {
+        "objective": "research report on D4/D7 composition readiness",
+        "authority_context": "delegation-bagian1-real",
+        "declared_risk": "LOW",
+        "review_required": false,
+        "approval_required": false,
+        "selected_roles": [
+          "kai"
+        ],
+        "intake": {
+          "objective": "research report on D4/D7 composition readiness",
+          "scope": [
+            "docs/phase-5/environment/live-bridge/"
+          ],
+          "constraints": [],
+          "expected_outcome": "",
+          "required_authority_context": "delegation-bagian1-real",
+          "project": "multi-agent-harness",
+          "created_at": "2026-09-01T05:17:44Z"
+        },
+        "execute_plan": {
+          "action": "analysis",
+          "target": "docs/phase-5/environment/live-bridge/",
+          "environment": "dev",
+          "expected_outcome": {
+            "target": "docs/phase-5/environment/live-bridge/"
+          },
+          "action_category": "internal_analysis",
+          "description": "objective 'research report on D4/D7 composition readiness' \u2192 action 'analysis'"
+        }
+      },
+      "flow_result": {
+        "flow_id": "prod-b8913385",
+        "objective": "research report on D4/D7 composition readiness",
+        "project": "multi-agent-harness",
+        "task_id": "task-1",
+        "outcome": "COMPLETE",
+        "phase": "close",
+        "final_state": "COMPLETE",
+        "version": 7,
+        "risk": "LOW",
+        "selected": [
+          "kai"
+        ],
+        "tasks": [
+          {
+            "task_id": "task-1",
+            "objective": "research report on D4/D7 composition readiness",
+            "assigned_role": "cto",
+            "parent_task": "",
+            "dependencies": [],
+            "expected_output": "",
+            "risk_metadata": "LOW",
+            "authorization_requirements": [],
+            "scope": [
+              "docs/phase-5/environment/live-bridge/"
+            ],
+            "project": "multi-agent-harness"
+          }
+        ],
+        "delegations": [
+          {
+            "id": "delegation-task-1-109898c3",
+            "principal": "human",
+            "delegate": "orchestrator",
+            "project": "multi-agent-harness",
+            "task": "task-1",
+            "action": "analysis",
+            "target": "docs/phase-5/environment/live-bridge/",
+            "environment": "dev",
+            "scope": {
+              "operations": [
+                "analysis",
+                "read",
+                "write"
+              ],
+              "resources": [
+                "docs/**",
+                "agents/**",
+                "multi-agent-harness/**"
+              ],
+              "environments": [
+                "dev"
+              ],
+              "maximum_cost": null
+            },
+            "prohibited_actions": [],
+            "requires_approval": [],
+            "expires_at": null,
+            "approval_reference": null,
+            "status": "ACTIVE",
+            "version": 1,
+            "created_at": "2026-09-01T05:17:44Z",
+            "updated_at": "2026-09-01T05:17:44Z",
+            "revoked_at": null
+          }
+        ],
+        "results": [
+          {
+            "task_id": "task-1:kai",
+            "role": "kai",
+            "provenance": {
+              "delegation_id": "delegation-task-1-109898c3",
+              "task_id": "task-1:kai",
+              "role": "kai",
+              "tool_name": "subagent_kai",
+              "persona": "role-kai",
+              "instance_max_depth": 1,
+              "background_mode": "continuable",
+              "provider": "spawn",
+              "actor": "orchestrator",
+              "session_id": "session-cd20d290-0805-426b-88e6-f72b932c493f",
+              "adapter_version": "dsh-integration-adapter-1.0",
+              "dsh_version_pin": "deepseek-harness-0.1.1-rc.2",
+              "run_id": "522d03a5-70e8-44cd-9f24-dd66d6412aea",
+              "started_at": "2026-09-01T05:17:44Z",
+              "settled_at": "2026-09-01T05:22:49Z",
+              "stop_reason": "completed",
+              "result_status": "SUCCEEDED"
+            },
+            "status": "SUCCEEDED",
+            "findings": [
+              "Live D4/D7 dispatch proven: this kai subagent was dispatched through the mounted subagent_kai tool instance (D4/D7 composition active).",
+              "7 role presets present at $DSH_HOME/.agent-presets/role-* (zeko, cto, cfo, kai, somad, badsector, nova).",
+              "7 tool-subagent-<id> rows in cordis.patch.yml with correct toolFilter (allow/deny disjoint, matching config).",
+              "Config validation: tests/validate_config.py reports 194 passed, 0 failed (mapping==policy==instance).",
+              "Deny-lists clean: zero VERIFIED_UNREGISTERED names, zero run_code, zero delegation tools in specialists.",
+              "Post-O5 invariants: somad/nova no write/edit; zeko/cto retain bash+write+edit; read-only roles deny all three.",
+              "0005 PENDING_HUMAN_APPROVAL record for 25-name removal (files already corrected, config valid)."
+            ],
+            "evidence": [
+              "config/role-preset-mapping.yaml (post-O5, 7 roles + orchestrator)",
+              "config/tool-subagent-instances.yaml (post-O5, 7 draft rows)",
+              "agents/kai/policy.yaml (deny list 14, read-only)",
+              "docs/phase-5/environment/live-bridge/0001-d4d7-live-bridge-readiness.md (readiness assessment)",
+              "tests/validate_config.py (194 passed, 0 failed)"
+            ],
+            "risks": [
+              "G10 raw-write residual for {zeko, cto} still OPEN/BLOCKING",
+              "G13 injection risk UNKNOWN (no adversarial live test)",
+              "0005 approval-record sign-off pending (files correct, record PENDING_HUMAN_APPROVAL)"
+            ],
+            "assumptions": [],
+            "unresolved_items": [
+              "G10 ({zeko, cto} raw-write), G13 (injection) remain OPEN",
+              "0005 approval-record sign-off",
+              "L3 independent verification (same-UID host blocks)"
+            ],
+            "actions_taken": [
+              "Dispatched real D4/D7 subagent_kai child from rendezvous bridge",
+              "Verified composition validity (presets, rows, config, deny hygiene)",
+              "Verified real child session identity (run_id=522d03a5-70e8-44cd-9f24-dd66d6412aea)",
+              "Provenance captured in front-door flow result"
+            ],
+            "recommendation": "D4/D7 composition is CONSISTENT and VALID. FRONT_DOOR_REAL_E2E chain verified: DSH Chat -> Front Door -> ProductionRun -> BoundedExecutor -> ExecutionFlow -> RealDSHBackend -> REAL subagent. Evidence captured in runs/bagian1/evidence.json. Proceed to restore bridge and close.",
+            "confidence": "HIGH",
+            "reported_at": "2026-09-01T05:22:48Z"
+          }
+        ],
+        "parallel": {
+          "safe": true,
+          "mode": "sequential",
+          "task_ids": [
+            "task-1:kai"
+          ],
+          "owners": [
+            "kai"
+          ],
+          "held_version": 4
+        },
+        "synthesis": {
+          "task_id": "task-1",
+          "objective": "research report on D4/D7 composition readiness",
+          "risk": "LOW",
+          "findings": [
+            "Live D4/D7 dispatch proven: this kai subagent was dispatched through the mounted subagent_kai tool instance (D4/D7 composition active).",
+            "7 role presets present at $DSH_HOME/.agent-presets/role-* (zeko, cto, cfo, kai, somad, badsector, nova).",
+            "7 tool-subagent-<id> rows in cordis.patch.yml with correct toolFilter (allow/deny disjoint, matching config).",
+            "Config validation: tests/validate_config.py reports 194 passed, 0 failed (mapping==policy==instance).",
+            "Deny-lists clean: zero VERIFIED_UNREGISTERED names, zero run_code, zero delegation tools in specialists.",
+            "Post-O5 invariants: somad/nova no write/edit; zeko/cto retain bash+write+edit; read-only roles deny all three.",
+            "0005 PENDING_HUMAN_APPROVAL record for 25-name removal (files already corrected, config valid)."
+          ],
+          "recommendations": [
+            "D4/D7 composition is CONSISTENT and VALID. FRONT_DOOR_REAL_E2E chain verified: DSH Chat -> Front Door -> ProductionRun -> BoundedExecutor -> ExecutionFlow -> RealDSHBackend -> REAL subagent. Evidence captured in runs/bagian1/evidence.json. Proceed to restore bridge and close."
+          ],
+          "assumptions": [],
+          "risks": [
+            "G10 raw-write residual for {zeko, cto} still OPEN/BLOCKING",
+            "G13 injection risk UNKNOWN (no adversarial live test)",
+            "0005 approval-record sign-off pending (files correct, record PENDING_HUMAN_APPROVAL)"
+          ],
+          "unresolved_items": [
+            "G10 ({zeko, cto} raw-write), G13 (injection) remain OPEN",
+            "0005 approval-record sign-off",
+            "L3 independent verification (same-UID host blocks)"
+          ],
+          "roles": [
+            "kai"
+          ]
+        },
+        "gates": [
+          {
+            "phase": "classify",
+            "gate": "risk_classify",
+            "decision": "ALLOW",
+            "reason": "model-assessed nuance applied over declared LOW",
+            "detail": {
+              "risk": "LOW",
+              "intrinsic": false,
+              "signals": []
+            }
+          },
+          {
+            "phase": "risk_gate",
+            "gate": "risk",
+            "decision": "ALLOW",
+            "reason": "model-assessed nuance applied over declared LOW",
+            "detail": {
+              "risk": "LOW",
+              "intrinsic": false,
+              "signals": []
+            }
+          },
+          {
+            "phase": "evidence_gate",
+            "gate": "evidence",
+            "decision": "ALLOW",
+            "reason": "evidence sufficient for action",
+            "detail": {
+              "rung": "SUFFICIENT_FOR_ACTION",
+              "evidence_present": true
+            }
+          },
+          {
+            "phase": "conflict_gate",
+            "gate": "conflict",
+            "decision": "ALLOW",
+            "reason": "all conflicts synthesized; disagreement preserved; no voting",
+            "detail": {
+              "action": "synthesize",
+              "detail": {
+                "conflicts": []
+              }
+            }
+          },
+          {
+            "phase": "adversarial_review",
+            "gate": "badsector_review",
+            "decision": "ALLOW",
+            "reason": "review not required for this action class",
+            "detail": {
+              "mandatory": false,
+              "risk": "LOW",
+              "action": "analysis"
+            }
+          },
+          {
+            "phase": "authority_gate",
+            "gate": "authority",
+            "decision": "ALLOW",
+            "reason": "",
+            "detail": {}
+          },
+          {
+            "phase": "verify",
+            "gate": "verification",
+            "decision": "ALLOW",
+            "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+            "detail": {
+              "action_category": "internal_analysis",
+              "independence": "self",
+              "required_evidence": [],
+              "human_confirmation_required": false,
+              "evidence": [
+                {
+                  "kind": "artifact",
+                  "source": "docs/phase-5/environment/live-bridge/#artifact",
+                  "verifier": "self:orchestrator",
+                  "independent": false,
+                  "human_confirmation": false
+                }
+              ]
+            }
+          }
+        ],
+        "steps": [
+          {
+            "phase": "intake",
+            "note": "intake accepted"
+          },
+          {
+            "phase": "understand",
+            "note": "normalize objective + require authority context"
+          },
+          {
+            "phase": "classify",
+            "note": "deterministic risk classification"
+          },
+          {
+            "phase": "risk_gate",
+            "note": "risk gate (non-downgradable HIGH)"
+          },
+          {
+            "phase": "decompose",
+            "note": "decompose objective into a scoped task"
+          },
+          {
+            "phase": "select",
+            "note": "select minimum specialist set"
+          },
+          {
+            "phase": "delegate",
+            "note": "issue scoped child delegation (orchestrator-only)"
+          },
+          {
+            "phase": "execute_subtasks",
+            "note": "delegate subtasks to specialists (parallel when independent)"
+          },
+          {
+            "phase": "collect",
+            "note": "collect structured results (data, not authority)"
+          },
+          {
+            "phase": "evidence_gate",
+            "note": "evidence sufficiency ladder"
+          },
+          {
+            "phase": "synthesize",
+            "note": "consolidate results (preserve disagreement)"
+          },
+          {
+            "phase": "conflict_gate",
+            "note": "detect + resolve conflicts (no voting)"
+          },
+          {
+            "phase": "adversarial_review",
+            "note": "BadSector review (PASS != authority)"
+          },
+          {
+            "phase": "authority_gate",
+            "note": "planning-time authority check"
+          },
+          {
+            "phase": "execute",
+            "note": "execution-time authority re-check + execute"
+          },
+          {
+            "phase": "verify",
+            "note": "verification gate (reported != verified)"
+          },
+          {
+            "phase": "close",
+            "note": "COMPLETE after verified outcome"
+          }
+        ],
+        "verification": {
+          "verdict": "PASSED",
+          "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+          "detail": {
+            "action_category": "internal_analysis",
+            "independence": "self",
+            "required_evidence": [],
+            "human_confirmation_required": false,
+            "evidence": [
+              {
+                "kind": "artifact",
+                "source": "docs/phase-5/environment/live-bridge/#artifact",
+                "verifier": "self:orchestrator",
+                "independent": false,
+                "human_confirmation": false
+              }
+            ]
+          }
+        },
+        "recovery": {},
+        "audit_ids": [
+          "event-000003",
+          "event-000027"
+        ],
+        "files_written": [],
+        "errors": [],
+        "started_at": "2026-09-01T05:17:44Z",
+        "finished_at": "2026-09-01T05:22:49Z"
+      },
+      "report": {
+        "outcome": "COMPLETE",
+        "objective": "research report on D4/D7 composition readiness",
+        "project": "multi-agent-harness",
+        "task_id": "task-1",
+        "flow_id": "prod-b8913385",
+        "gates": [
+          {
+            "phase": "classify",
+            "gate": "risk_classify",
+            "decision": "ALLOW",
+            "reason": "model-assessed nuance applied over declared LOW",
+            "detail": {
+              "risk": "LOW",
+              "intrinsic": false,
+              "signals": []
+            }
+          },
+          {
+            "phase": "risk_gate",
+            "gate": "risk",
+            "decision": "ALLOW",
+            "reason": "model-assessed nuance applied over declared LOW",
+            "detail": {
+              "risk": "LOW",
+              "intrinsic": false,
+              "signals": []
+            }
+          },
+          {
+            "phase": "evidence_gate",
+            "gate": "evidence",
+            "decision": "ALLOW",
+            "reason": "evidence sufficient for action",
+            "detail": {
+              "rung": "SUFFICIENT_FOR_ACTION",
+              "evidence_present": true
+            }
+          },
+          {
+            "phase": "conflict_gate",
+            "gate": "conflict",
+            "decision": "ALLOW",
+            "reason": "all conflicts synthesized; disagreement preserved; no voting",
+            "detail": {
+              "action": "synthesize",
+              "detail": {
+                "conflicts": []
+              }
+            }
+          },
+          {
+            "phase": "adversarial_review",
+            "gate": "badsector_review",
+            "decision": "ALLOW",
+            "reason": "review not required for this action class",
+            "detail": {
+              "mandatory": false,
+              "risk": "LOW",
+              "action": "analysis"
+            }
+          },
+          {
+            "phase": "authority_gate",
+            "gate": "authority",
+            "decision": "ALLOW",
+            "reason": "",
+            "detail": {}
+          },
+          {
+            "phase": "verify",
+            "gate": "verification",
+            "decision": "ALLOW",
+            "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+            "detail": {
+              "action_category": "internal_analysis",
+              "independence": "self",
+              "required_evidence": [],
+              "human_confirmation_required": false,
+              "evidence": [
+                {
+                  "kind": "artifact",
+                  "source": "docs/phase-5/environment/live-bridge/#artifact",
+                  "verifier": "self:orchestrator",
+                  "independent": false,
+                  "human_confirmation": false
+                }
+              ]
+            }
+          }
+        ],
+        "selected_roles": [
+          "kai"
+        ],
+        "synthesis": {
+          "task_id": "task-1",
+          "objective": "research report on D4/D7 composition readiness",
+          "risk": "LOW",
+          "findings": [
+            "Live D4/D7 dispatch proven: this kai subagent was dispatched through the mounted subagent_kai tool instance (D4/D7 composition active).",
+            "7 role presets present at $DSH_HOME/.agent-presets/role-* (zeko, cto, cfo, kai, somad, badsector, nova).",
+            "7 tool-subagent-<id> rows in cordis.patch.yml with correct toolFilter (allow/deny disjoint, matching config).",
+            "Config validation: tests/validate_config.py reports 194 passed, 0 failed (mapping==policy==instance).",
+            "Deny-lists clean: zero VERIFIED_UNREGISTERED names, zero run_code, zero delegation tools in specialists.",
+            "Post-O5 invariants: somad/nova no write/edit; zeko/cto retain bash+write+edit; read-only roles deny all three.",
+            "0005 PENDING_HUMAN_APPROVAL record for 25-name removal (files already corrected, config valid)."
+          ],
+          "recommendations": [
+            "D4/D7 composition is CONSISTENT and VALID. FRONT_DOOR_REAL_E2E chain verified: DSH Chat -> Front Door -> ProductionRun -> BoundedExecutor -> ExecutionFlow -> RealDSHBackend -> REAL subagent. Evidence captured in runs/bagian1/evidence.json. Proceed to restore bridge and close."
+          ],
+          "assumptions": [],
+          "risks": [
+            "G10 raw-write residual for {zeko, cto} still OPEN/BLOCKING",
+            "G13 injection risk UNKNOWN (no adversarial live test)",
+            "0005 approval-record sign-off pending (files correct, record PENDING_HUMAN_APPROVAL)"
+          ],
+          "unresolved_items": [
+            "G10 ({zeko, cto} raw-write), G13 (injection) remain OPEN",
+            "0005 approval-record sign-off",
+            "L3 independent verification (same-UID host blocks)"
+          ],
+          "roles": [
+            "kai"
+          ]
+        },
+        "verification": {
+          "verdict": "PASSED",
+          "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+          "detail": {
+            "action_category": "internal_analysis",
+            "independence": "self",
+            "required_evidence": [],
+            "human_confirmation_required": false,
+            "evidence": [
+              {
+                "kind": "artifact",
+                "source": "docs/phase-5/environment/live-bridge/#artifact",
+                "verifier": "self:orchestrator",
+                "independent": false,
+                "human_confirmation": false
+              }
+            ]
+          }
+        },
+        "files_written": [],
+        "errors": [],
+        "generated_at": "2026-09-01T05:22:49Z"
+      },
+      "errors": [],
+      "audit_ids": [
+        "event-000001",
+        "event-000002",
+        "event-000028",
+        "event-000030",
+        "event-000031"
+      ]
+    },
+    "report": {
+      "outcome": "COMPLETE",
+      "objective": "research report on D4/D7 composition readiness",
+      "project": "multi-agent-harness",
+      "task_id": "task-1",
+      "flow_id": "prod-b8913385",
+      "gates": [
+        {
+          "phase": "classify",
+          "gate": "risk_classify",
+          "decision": "ALLOW",
+          "reason": "model-assessed nuance applied over declared LOW",
+          "detail": {
+            "risk": "LOW",
+            "intrinsic": false,
+            "signals": []
+          }
+        },
+        {
+          "phase": "risk_gate",
+          "gate": "risk",
+          "decision": "ALLOW",
+          "reason": "model-assessed nuance applied over declared LOW",
+          "detail": {
+            "risk": "LOW",
+            "intrinsic": false,
+            "signals": []
+          }
+        },
+        {
+          "phase": "evidence_gate",
+          "gate": "evidence",
+          "decision": "ALLOW",
+          "reason": "evidence sufficient for action",
+          "detail": {
+            "rung": "SUFFICIENT_FOR_ACTION",
+            "evidence_present": true
+          }
+        },
+        {
+          "phase": "conflict_gate",
+          "gate": "conflict",
+          "decision": "ALLOW",
+          "reason": "all conflicts synthesized; disagreement preserved; no voting",
+          "detail": {
+            "action": "synthesize",
+            "detail": {
+              "conflicts": []
+            }
+          }
+        },
+        {
+          "phase": "adversarial_review",
+          "gate": "badsector_review",
+          "decision": "ALLOW",
+          "reason": "review not required for this action class",
+          "detail": {
+            "mandatory": false,
+            "risk": "LOW",
+            "action": "analysis"
+          }
+        },
+        {
+          "phase": "authority_gate",
+          "gate": "authority",
+          "decision": "ALLOW",
+          "reason": "",
+          "detail": {}
+        },
+        {
+          "phase": "verify",
+          "gate": "verification",
+          "decision": "ALLOW",
+          "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+          "detail": {
+            "action_category": "internal_analysis",
+            "independence": "self",
+            "required_evidence": [],
+            "human_confirmation_required": false,
+            "evidence": [
+              {
+                "kind": "artifact",
+                "source": "docs/phase-5/environment/live-bridge/#artifact",
+                "verifier": "self:orchestrator",
+                "independent": false,
+                "human_confirmation": false
+              }
+            ]
+          }
+        }
+      ],
+      "selected_roles": [
+        "kai"
+      ],
+      "synthesis": {
+        "task_id": "task-1",
+        "objective": "research report on D4/D7 composition readiness",
+        "risk": "LOW",
+        "findings": [
+          "Live D4/D7 dispatch proven: this kai subagent was dispatched through the mounted subagent_kai tool instance (D4/D7 composition active).",
+          "7 role presets present at $DSH_HOME/.agent-presets/role-* (zeko, cto, cfo, kai, somad, badsector, nova).",
+          "7 tool-subagent-<id> rows in cordis.patch.yml with correct toolFilter (allow/deny disjoint, matching config).",
+          "Config validation: tests/validate_config.py reports 194 passed, 0 failed (mapping==policy==instance).",
+          "Deny-lists clean: zero VERIFIED_UNREGISTERED names, zero run_code, zero delegation tools in specialists.",
+          "Post-O5 invariants: somad/nova no write/edit; zeko/cto retain bash+write+edit; read-only roles deny all three.",
+          "0005 PENDING_HUMAN_APPROVAL record for 25-name removal (files already corrected, config valid)."
+        ],
+        "recommendations": [
+          "D4/D7 composition is CONSISTENT and VALID. FRONT_DOOR_REAL_E2E chain verified: DSH Chat -> Front Door -> ProductionRun -> BoundedExecutor -> ExecutionFlow -> RealDSHBackend -> REAL subagent. Evidence captured in runs/bagian1/evidence.json. Proceed to restore bridge and close."
+        ],
+        "assumptions": [],
+        "risks": [
+          "G10 raw-write residual for {zeko, cto} still OPEN/BLOCKING",
+          "G13 injection risk UNKNOWN (no adversarial live test)",
+          "0005 approval-record sign-off pending (files correct, record PENDING_HUMAN_APPROVAL)"
+        ],
+        "unresolved_items": [
+          "G10 ({zeko, cto} raw-write), G13 (injection) remain OPEN",
+          "0005 approval-record sign-off",
+          "L3 independent verification (same-UID host blocks)"
+        ],
+        "roles": [
+          "kai"
+        ]
+      },
+      "verification": {
+        "verdict": "PASSED",
+        "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+        "detail": {
+          "action_category": "internal_analysis",
+          "independence": "self",
+          "required_evidence": [],
+          "human_confirmation_required": false,
+          "evidence": [
+            {
+              "kind": "artifact",
+              "source": "docs/phase-5/environment/live-bridge/#artifact",
+              "verifier": "self:orchestrator",
+              "independent": false,
+              "human_confirmation": false
+            }
+          ]
+        }
+      },
+      "files_written": [],
+      "errors": [],
+      "generated_at": "2026-09-01T05:22:49Z"
+    },
+    "errors": [],
+    "audit_ids": [
+      "event-000001",
+      "event-000002",
+      "event-000028",
+      "event-000030",
+      "event-000031"
+    ]
+  },
+  "dsh_session_id": "session-cd20d290-0805-426b-88e6-f72b932c493f",
+  "backend_kind": "REAL",
+  "bridge_marker": "1"
+}

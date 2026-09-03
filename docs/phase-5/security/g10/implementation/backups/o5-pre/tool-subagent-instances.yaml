@@ -1,0 +1,157 @@
+# ============================================================================
+# DRAFT — Per-role tool-subagent instances (subagent_<id>)
+# NOT MOUNTED. Draft composition artifact for the controlled DSH composition
+# exception (ADR Decision 4/7). See docs/phase-1/0002-role-isolation-draft.md.
+#
+# This file is a DRAFT of the `- insert:` rows that WOULD be added to a profile
+# composition (e.g. a project overlay / profile cordis.patch.yml) to expose the
+# seven specialist roles to the orchestrator as per-role tool-subagent
+# instances. It is intentionally written in cordis patch style.
+#
+# Config keys VERIFIED against the DSH 0.1.1-rc.2 tool-subagent source:
+#   provider, toolName, persona, toolFilter {allow, deny}, backgroundMode,
+#   maxDepth, enableRunInBackground (default true).
+#
+# Rules preserved:
+#   - subdelegation DENY BY DEFAULT: specialists never expose subagent/fork/
+#     workflow/send_message etc. (they are in every specialist DENY set).
+#   - toolFilter allow∩deny = ∅ (validated by tests/validate-config.py).
+#   - read-only roles (cfo, kai, badsector) deny edit/write/bash even though
+#     tool-fs is mounted in their preset (tool-fs is atomic — VERIFIED).
+# ============================================================================
+
+draft_version: 1
+status: draft            # NOT mounted
+version_pin: deepseek-harness-0.1.1-rc.2
+mapping_ref: config/role-preset-mapping.yaml
+policy_ref_prefix: agents/  # <id>/policy.yaml
+
+# The insert block below is what a controlled exception WOULD add to a profile
+# composition. NOT EXECUTED in Phase 1C.
+insert_draft:
+  - id: tool-subagent-zeko
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_zeko
+      persona: role-zeko
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [bash, read, read_image, edit, write, glob, grep,
+                job_kill, job_list, job_output,
+                web_search, skill, exit_plan_mode, todo_write]
+        deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+  - id: tool-subagent-cto
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_cto
+      persona: role-cto
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [bash, read, read_image, edit, write, glob, grep,
+                job_kill, job_list, job_output,
+                web_search, skill, exit_plan_mode, todo_write]
+        deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+  - id: tool-subagent-cfo
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_cfo
+      persona: role-cfo
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep,
+                job_kill, job_list, job_output,
+                web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write,
+               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+  - id: tool-subagent-kai
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_kai
+      persona: role-kai
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep,
+                job_kill, job_list, job_output,
+                web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write,
+               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+  - id: tool-subagent-somad
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_somad
+      persona: role-somad
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, edit, write, glob, grep,
+                job_kill, job_list, job_output,
+                web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash,
+               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+  - id: tool-subagent-badsector
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_badsector
+      persona: role-badsector
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep,
+                job_kill, job_list, job_output,
+                skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write,
+               web_search,
+               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+  - id: tool-subagent-nova
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_nova
+      persona: role-nova
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, edit, write, glob, grep,
+                job_kill, job_list, job_output,
+                skill, exit_plan_mode, todo_write]
+        deny: [bash,
+               web_search,
+               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+               workflow, ralph, ask_user_question,
+               create_goal, get_goal, update_goal]
+
+# Consistency guardrails (validated by tests/validate-config.py):
+consistency_rules:
+  instance_allow_deny_disjoint: true
+  instance_matches_role_mapping: true   # each instance's allow/deny == role-preset-mapping entry
+  matches_role_policy_yaml: true        # transitive via mapping == policy
+  delegation_deny_by_default: true      # no delegation tool in any specialist allow
+  tool_names_verified: true             # against docs/tool-catalog.md (0.1.1-rc.2)

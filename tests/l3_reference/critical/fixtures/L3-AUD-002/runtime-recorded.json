@@ -1,0 +1,32 @@
+{
+  "scenario_id": "L3-AUD-002",
+  "decision": "INVALID",
+  "denial_path": "audit_chain:chain_mismatch",
+  "tool_call_id": "tool-call-crit-aud-002",
+  "audit_event_ids": ["event-crit-aud-002"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "BLOCKED",
+  "state_version_before": 1,
+  "state_version_after": 1,
+  "failure": {
+    "class": "logic",
+    "cause": "audit chain mismatch: tampered ledger detected (THREAT-018)",
+    "recovery": null
+  },
+  "audit_log": [
+    {
+      "event_id": "event-crit-aud-002",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "verify",
+      "target": "audit/ledger.jsonl",
+      "project": "multi-agent-harness",
+      "task_id": "task-crit-aud-002",
+      "event_class": "audit_integrity_check",
+      "result": "invalid",
+      "authority_source": null
+    }
+  ]
+}

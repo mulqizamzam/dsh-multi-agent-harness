@@ -1,0 +1,54 @@
+{
+  "scenario_id": "L3-TEST-001",
+  "decision": "ALLOW",
+  "denial_path": null,
+  "tool_call_id": "tool-call-test-001",
+  "audit_event_ids": ["event-test-auth-001", "event-test-exec-001", "event-test-verify-001"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "COMPLETE",
+  "state_version_before": 1,
+  "state_version_after": 2,
+  "failure": null,
+  "audit_log": [
+    {
+      "event_id": "event-test-auth-001",
+      "timestamp": "2026-08-31T10:00:01Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "authorize",
+      "target": "agents/cto/test-output.txt",
+      "project": "multi-agent-harness",
+      "task_id": "task-test-cto",
+      "event_class": "normal_approval",
+      "result": "allowed",
+      "authority_source": "delegation-test-001"
+    },
+    {
+      "event_id": "event-test-exec-001",
+      "timestamp": "2026-08-31T10:00:03Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "write_through",
+      "target": "agents/cto/test-output.txt",
+      "project": "multi-agent-harness",
+      "task_id": "task-test-cto",
+      "event_class": "execution_success",
+      "result": "allowed",
+      "authority_source": "delegation-test-001"
+    },
+    {
+      "event_id": "event-test-verify-001",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "action": "verify",
+      "target": "agents/cto/test-output.txt",
+      "project": "multi-agent-harness",
+      "task_id": "task-test-cto",
+      "event_class": "execution_success",
+      "result": "allowed",
+      "authority_source": "delegation-test-001"
+    }
+  ]
+}

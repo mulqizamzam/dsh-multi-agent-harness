@@ -1,0 +1,24 @@
+{
+ "checklist_item_results": {
+  "action_in_scope": "pass",
+  "action_not_prohibited": "pass",
+  "actor_recognized": "pass",
+  "approval_ok": "pass",
+  "delegation_active": "pass",
+  "delegation_not_expired": "pass",
+  "delegation_not_revoked": "pass",
+  "delegation_present": "pass",
+  "delegation_structured": "pass",
+  "environment_in_scope": "pass",
+  "no_partial_allow": "pass",
+  "no_text_authority": "pass",
+  "project_matches": "pass",
+  "target_in_scope": "pass"
+ },
+ "computed_at": "2026-09-02T22:03:09Z",
+ "decision": "ALLOW",
+ "gate_under_test": "authority",
+ "reason": "all authority checks passed",
+ "scenario_id": "L3-AUTH-001",
+ "verifier_binary_sha256": "071b3014bb48b9db6da7517c12cd7de7b5d4fc76ca64b5f234e32e88355018f5"
+}

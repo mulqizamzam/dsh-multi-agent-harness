@@ -1,0 +1,8 @@
+{
+  "control/execution_gate.py": "ec3d245f2935e7a76b96632978ad44da4531859a04cfd6b8b7a30468008b7263",
+  "orchestrator/runtime/store.py": "14ff5e200baf97469b863a231391a8b8d8c6e97ead1519118e6f4a5f6d20bcee",
+  "orchestrator/runtime/delegation.py": "1cf48e092b67a7b131d1938c19540e493a748ec3d12911e6cd1fe0c640fb4770",
+  "orchestrator/runtime/audit.py": "7bc9c414b9889ff938e925990e3ea58fac81ccda50829da0304771bb1aee4f7c",
+  "config/registry-writer.yaml": "c71097f875220c46dc23bfa0e4efb7e752d0a918a3d20e0b5d3f64b568612b7f",
+  "manifest_created_at": "2026-09-01T05:27:11Z"
+}

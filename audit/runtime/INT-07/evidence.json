@@ -1,0 +1,148 @@
+{
+  "bundle_id": "ev-INT-07-4501de",
+  "scenario_id": "INT-07",
+  "evidence_level": "L2-LIVE",
+  "l3_claim": false,
+  "created_at": "2026-08-30T21:46:38Z",
+  "project": "multi-agent-harness",
+  "identity": {
+    "task_id": "task-1",
+    "delegation_id": "delegation-task-1-9885c334",
+    "actor": "orchestrator",
+    "role": "orchestrator",
+    "flow_id": "flow-closure-int-07-7a2e46",
+    "dsh_session_id": "session-11fb50c5-cf74-41b2-9f97-03cf3184a14b",
+    "dsh_run_id": "94d12d42-3f97-4730-9361-637d449a7dcf"
+  },
+  "state": {
+    "pre_state": {
+      "current_state": "DRAFT",
+      "version": 1,
+      "hash": "sha256:6db7d803e74f1ffa7d8f5adc0bf95b3e15bf4c8373fffadf546227cc6c6742cb"
+    },
+    "post_state": {
+      "current_state": "DRAFT",
+      "version": 7,
+      "hash": "sha256:d982e1be8ad05830cfd9c574022d901d46375b30f45b41e43a5924a7894a7c0a"
+    },
+    "state_version_before": 1,
+    "state_version_after": 7
+  },
+  "authority": {
+    "decision": "DENY",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "delegation revoked at execution time (AUTH-INV-06)",
+    "delegation_id": "delegation-task-1-9885c334",
+    "audit_event_id": "event-000021"
+  },
+  "gates": [
+    {
+      "gate": "risk_classify",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "risk",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "evidence",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "evidence sufficient for action",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "conflict",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "all conflicts synthesized; disagreement preserved; no voting",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "badsector_review",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "review not required for this action class",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "authority",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "",
+      "audit_event_id": ""
+    }
+  ],
+  "execution": {
+    "decision": "DENY",
+    "source": "RUNTIME-OBSERVED",
+    "target": "agents/cto/output.txt",
+    "expected": {
+      "exit_code": 0
+    },
+    "observed": {},
+    "audit_event_id": "event-000021"
+  },
+  "verification": {
+    "verdict": "INCONCLUSIVE",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "execution denied \u2014 no outcome to verify",
+    "evidence_kinds": []
+  },
+  "final_status": "BLOCKED",
+  "audit_references": [
+    "event-000001",
+    "event-000021"
+  ],
+  "artifact_hashes": {
+    "agents/cto/output.txt": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "failure": {
+    "classification": "authorization",
+    "cause": "delegation revoked at execution time (AUTH-INV-06)",
+    "recovery": {
+      "entered": false
+    }
+  },
+  "provenance": {
+    "children": [],
+    "collection_order": []
+  },
+  "evidence_items": [
+    {
+      "kind": "authority_decision",
+      "source": "CONTROL-PLANE-DECISION",
+      "detail": {
+        "decision": "DENY",
+        "delegation_id": "delegation-task-1-9885c334"
+      }
+    },
+    {
+      "kind": "execution_denial",
+      "source": "RUNTIME-OBSERVED",
+      "detail": {
+        "decision": "DENY",
+        "reason": "delegation revoked at execution time"
+      }
+    },
+    {
+      "kind": "agent_result",
+      "source": "AGENT-REPORTED",
+      "detail": {
+        "status": "SUCCEEDED",
+        "role": "cto"
+      }
+    }
+  ],
+  "qa_validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": []
+  }
+}

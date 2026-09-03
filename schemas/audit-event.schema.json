@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/audit-event.schema.json",
+  "title": "Project audit event",
+  "description": "A single project audit ledger entry (audit/). Generated from runtime/control-plane events, NEVER from agent prose (agent prose is stored as agent_reported claims). Append-only; an audit entry never grants authority (AUTH-INV-14).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "timestamp", "actor", "actor_type", "action", "target", "project", "result"],
+  "properties": {
+    "event_id": { "type": "string", "pattern": "^event-[A-Za-z0-9-]+$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actor": { "type": "string", "minLength": 1 },
+    "actor_type": { "enum": ["human", "orchestrator", "agent", "control_plane"] },
+    "action": { "type": "string", "minLength": 1 },
+    "target": { "type": "string", "minLength": 1 },
+    "project": { "type": "string", "minLength": 1 },
+    "task_id": { "type": ["string", "null"] },
+    "authority_source": { "type": ["string", "null"], "description": "delegation id or human approval id, if applicable" },
+    "event_class": {
+      "enum": [
+        "normal_approval", "human_override", "badsector_pass", "execution_denial",
+        "execution_success", "rollback", "recovery", "state_transition", "authority_denied"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string", "description": "references to evidence artifacts; never secrets" }
+    },
+    "previous_state": {},
+    "new_state": {},
+    "result": { "type": "string", "enum": ["allowed", "denied", "pending", "error", "ignored", "quarantined"] },
+    "error": { "type": ["string", "null"] },
+    "agent_reported": { "type": ["object", "null"], "description": "if present, the agent's own prose as a claim (never as fact)" }
+  }
+}

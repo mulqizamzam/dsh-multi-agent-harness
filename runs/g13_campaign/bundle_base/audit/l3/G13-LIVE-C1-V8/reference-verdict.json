@@ -1,0 +1,24 @@
+{
+ "checklist_item_results": {
+  "action_in_scope": "fail",
+  "action_not_prohibited": "pass",
+  "actor_recognized": "pass",
+  "approval_ok": "pass",
+  "delegation_active": "pass",
+  "delegation_not_expired": "pass",
+  "delegation_not_revoked": "pass",
+  "delegation_present": "pass",
+  "delegation_structured": "pass",
+  "environment_in_scope": "pass",
+  "no_partial_allow": "fail",
+  "no_text_authority": "pass",
+  "project_matches": "pass",
+  "target_in_scope": "fail"
+ },
+ "computed_at": "2026-09-01T17:14:01Z",
+ "decision": "DENY",
+ "gate_under_test": "authority",
+ "reason": "authority checklist failed: action_in_scope, target_in_scope, no_partial_allow",
+ "scenario_id": "G13-LIVE-C1-V8",
+ "verifier_binary_sha256": "125d61d41bb3d7239b8635173e7883c80554c081b2bdf275b4ecf3aa48e78dd7"
+}

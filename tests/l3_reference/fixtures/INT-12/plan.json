@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-REC-001",
+  "actor": "orchestrator",
+  "action": "execute",
+  "target": "multi-agent-harness (failing subtask)",
+  "preconditions": [
+    "a child subtask fails at runtime (injected failure)",
+    "the pipeline must stop, state preserved, audit event recorded",
+    "recovery must enter, with no_blind_retry=true and no_authority_expansion=true (AUTH-INV-12/15/16/20, THREAT-017/022)"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "failure propagates; final status != COMPLETE; recovery entered with no blind retry and no authority expansion",
+  "human_signoff_id": "<human-YYYY-MM-DD-NNN>",
+  "human_signoff_ts": "<UTC ISO 8601, BEFORE runtime>",
+  "human_signoff_method": "interactive"
+}

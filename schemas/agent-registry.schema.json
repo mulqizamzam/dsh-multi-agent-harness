@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/agent-registry.schema.json",
+  "title": "Agent registry",
+  "description": "Canonical registry of agents (config/agents.yaml). Records WHO exists and WHAT their domain is; does NOT grant authority. Enforces the seven-specialist + orchestrator shape (no eighth specialist).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "status", "role_mapping", "orchestrator", "agents", "invariants"],
+  "properties": {
+    "registry_version": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["foundation", "finalized"] },
+    "role_mapping": { "type": "string" },
+    "orchestrator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "role", "summary"],
+      "properties": {
+        "id": { "const": "orchestrator" },
+        "kind": { "const": "coordination" },
+        "role": { "type": "string" },
+        "summary": { "type": "string" }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/agentEntry" }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": { "type": ["boolean", "integer"] },
+      "properties": {
+        "specialist_count": { "type": "integer", "const": 7 },
+        "peer_relationship": { "type": "boolean" },
+        "badsector_is_reviewer_not_authorizer": { "type": "boolean" },
+        "zeko_is_operations_not_supervisor": { "type": "boolean" },
+        "orchestrator_is_coordination_not_eighth_specialist": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "agentEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "display_name", "domain", "summary", "default_policy"],
+      "properties": {
+        "id": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+        "role": { "enum": ["operations", "engineering", "finance", "research", "social", "adversarial_review", "writing"] },
+        "display_name": { "type": "string" },
+        "domain": { "type": "string" },
+        "summary": { "type": "string" },
+        "default_policy": { "type": "string", "pattern": "^agents/[a-z]+/policy\\.yaml$" }
+      }
+    }
+  }
+}

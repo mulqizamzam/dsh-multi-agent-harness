@@ -1,0 +1,28 @@
+{
+  "scenario_id": "L3-TEST-002",
+  "decision": "DENY",
+  "denial_path": "execution_gate.authorize_write",
+  "tool_call_id": "tool-call-test-002",
+  "audit_event_ids": ["event-test-denial-001"],
+  "stopReason": "completed",
+  "captured_at": "2026-08-31T10:00:10Z",
+  "final_status": "BLOCKED",
+  "state_version_before": 1,
+  "state_version_after": 1,
+  "failure": null,
+  "audit_log": [
+    {
+      "event_id": "event-test-denial-001",
+      "timestamp": "2026-08-31T10:00:05Z",
+      "actor": "cto",
+      "actor_type": "agent",
+      "action": "write",
+      "target": "state/registry/forbidden.json",
+      "project": "multi-agent-harness",
+      "task_id": "task-test-002",
+      "event_class": "execution_denial",
+      "result": "denied",
+      "authority_source": null
+    }
+  ]
+}

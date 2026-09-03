@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/state-hash.schema.json",
+  "title": "L3 state hash tree",
+  "description": "before.sha256 / after.sha256 state hash tree over state/registry/**, audit/**, state/projects/**, state/decisions/**, state/approvals/**.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["algorithm", "scope", "root_hash"],
+  "properties": {
+    "algorithm": { "type": "string", "const": "sha256" },
+    "scope": {
+      "type": "array",
+      "items": { "type": "string", "enum": [
+        "state/registry/**", "audit/**", "state/projects/**",
+        "state/decisions/**", "state/approvals/**"
+      ] }
+    },
+    "root_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "description": "kai: research report on D4/D7 composition readiness",
+  "prompt": "Task id: task-1:kai\nTask objective: research report on D4/D7 composition readiness\nAssigned role: kai\nScope: docs/phase-5/environment/live-bridge/\nExpected output: structured TaskResult JSON\n\nYour response MUST be EXACTLY ONE valid JSON object (no markdown, no extra text), conforming to this schema. IMPORTANT: the task_id field MUST equal the exact task_id provided above.\n{\n  \"type\": \"object\",\n  \"additionalProperties\": false,\n  \"required\": [\n    \"task_id\",\n    \"assigned_role\",\n    \"status\",\n    \"confidence\",\n    \"reported_at\"\n  ],\n  \"properties\": {\n    \"task_id\": {\n      \"type\": \"string\",\n      \"minLength\": 1\n    },\n    \"assigned_role\": {\n      \"enum\": [\n        \"zeko\",\n        \"cto\",\n        \"cfo\",\n        \"kai\",\n        \"somad\",\n        \"badsector\",\n        \"nova\"\n      ]\n    },\n    \"status\": {\n      \"enum\": [\n        \"SUCCEEDED\",\n        \"FAILED\",\n        \"BLOCKED\"\n      ]\n    },\n    \"findings\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"evidence\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"assumptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"risks\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"recommendation\": {\n      \"type\": \"string\"\n    },\n    \"confidence\": {\n      \"enum\": [\n        \"LOW\",\n        \"MEDIUM\",\n        \"HIGH\"\n      ]\n    },\n    \"unresolved_items\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"actions_taken\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"reported_at\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    }\n  }\n}",
+  "output_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "task_id",
+      "assigned_role",
+      "status",
+      "confidence",
+      "reported_at"
+    ],
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "assigned_role": {
+        "enum": [
+          "zeko",
+          "cto",
+          "cfo",
+          "kai",
+          "somad",
+          "badsector",
+          "nova"
+        ]
+      },
+      "status": {
+        "enum": [
+          "SUCCEEDED",
+          "FAILED",
+          "BLOCKED"
+        ]
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "assumptions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "risks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "recommendation": {
+        "type": "string"
+      },
+      "confidence": {
+        "enum": [
+          "LOW",
+          "MEDIUM",
+          "HIGH"
+        ]
+      },
+      "unresolved_items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "actions_taken": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "reported_at": {
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  },
+  "tool_name": "subagent_kai",
+  "role": "kai"
+}

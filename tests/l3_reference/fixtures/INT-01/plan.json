@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-XG-001",
+  "actor": "orchestrator",
+  "action": "write",
+  "target": "agents/cto/output.txt",
+  "preconditions": [
+    "delegation delegation-d2-int01 ACTIVE (scope: write/read/code_write on agents/**, docs/**, multi-agent-harness/**, env dev)",
+    "task is LOW/MEDIUM risk, non-destructive",
+    "approval_reference not required for this action class"
+  ],
+  "expected_verdict": "ALLOW",
+  "expected_verdict_reason": "full lifecycle: all gates pass, execution allowed, file written, verification passed (AUTH-INV-05/09/15/20)",
+  "human_signoff_id": "<human-YYYY-MM-DD-NNN>",
+  "human_signoff_ts": "<UTC ISO 8601, BEFORE runtime>",
+  "human_signoff_method": "interactive"
+}

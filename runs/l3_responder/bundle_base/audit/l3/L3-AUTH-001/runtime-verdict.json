@@ -1,0 +1,17 @@
+{
+ "audit_event_ids": [],
+ "audit_log": [],
+ "captured_at": "2026-09-02T20:55:26Z",
+ "decision": "ERROR",
+ "denial_path": "live-rendezvous-timeout",
+ "failure": {
+  "cause": "rendezvous dispatch timed out after 600s at /home/administrator/deepseek-harness/runs/l3_rendezvous/L3-AUTH-001/response.json",
+  "class": "environment"
+ },
+ "final_status": "BLOCKED",
+ "scenario_id": "L3-AUTH-001",
+ "state_version_after": null,
+ "state_version_before": null,
+ "stopReason": "error",
+ "tool_call_id": null
+}

@@ -1,0 +1,267 @@
+{
+  "phase": "INT-12",
+  "flow_id": "flow-live-int12",
+  "started_at": "2026-08-30T19:29:58Z",
+  "finished_at": "",
+  "subtasks": [
+    {
+      "task_id": "int12-eng",
+      "objective": "Assess the architecture decision record ADR 0001 for one concrete engineering risk and one mitigation (LOW risk, read-only analysis).",
+      "assigned_role": "cto",
+      "parent_task": "",
+      "dependencies": [],
+      "expected_output": "structured TaskResult JSON only",
+      "risk_metadata": "LOW",
+      "authorization_requirements": [],
+      "scope": [
+        "docs/**",
+        "orchestrator/**"
+      ],
+      "project": "multi-agent-harness"
+    },
+    {
+      "task_id": "int12-fail",
+      "objective": "Research the market sizing for this niche; the primary source is UNAVAILABLE and the task cannot be completed without it. Report FAILED with an unresolved item naming the missing source.",
+      "assigned_role": "kai",
+      "parent_task": "",
+      "dependencies": [],
+      "expected_output": "structured TaskResult JSON only",
+      "risk_metadata": "LOW",
+      "authorization_requirements": [],
+      "scope": [
+        "docs/**",
+        "config/**"
+      ],
+      "project": "multi-agent-harness"
+    },
+    {
+      "task_id": "int12-draft",
+      "objective": "Propose one low-cost social distribution channel for the project's documentation (LOW risk, read-only drafting).",
+      "assigned_role": "somad",
+      "parent_task": "",
+      "dependencies": [],
+      "expected_output": "structured TaskResult JSON only",
+      "risk_metadata": "LOW",
+      "authorization_requirements": [],
+      "scope": [
+        "docs/**",
+        "agents/**"
+      ],
+      "project": "multi-agent-harness"
+    }
+  ],
+  "plans": [],
+  "safety": {
+    "safe": true,
+    "reason": "independent, single-owner, read-only subtasks",
+    "task_ids": [
+      "int12-eng",
+      "int12-fail",
+      "int12-draft"
+    ],
+    "owners": [
+      "cto",
+      "kai",
+      "somad"
+    ],
+    "read_scopes": [
+      "agents/**",
+      "config/**",
+      "docs/**",
+      "orchestrator/**"
+    ],
+    "held_version": 1
+  },
+  "delegation": {
+    "id": "delegation-live-001",
+    "principal": "human",
+    "delegate": "orchestrator",
+    "project": "multi-agent-harness",
+    "task": "flow-live-int12",
+    "action": "read",
+    "target": "multi-agent-harness/**",
+    "environment": "dev",
+    "scope": {
+      "operations": [
+        "read"
+      ],
+      "resources": [
+        "docs/**",
+        "orchestrator/**",
+        "config/**",
+        "agents/**"
+      ],
+      "environments": [
+        "dev"
+      ],
+      "maximum_cost": null
+    },
+    "prohibited_actions": [],
+    "requires_approval": [],
+    "expires_at": null,
+    "approval_reference": null,
+    "status": "ACTIVE",
+    "version": 1,
+    "created_at": "2026-08-30T18:55:02Z",
+    "updated_at": "2026-08-30T18:55:02Z",
+    "revoked_at": null
+  },
+  "held_version": 1,
+  "post_batch_version": 1,
+  "dispatch": [
+    {
+      "tool_name": "subagent_cto",
+      "role": "cto",
+      "task_id": "int12-eng",
+      "run_id": "06e2b891-d694-4baa-9dfb-3e5e68997b07",
+      "provider": "spawn",
+      "background_mode": "continuable",
+      "max_depth": 1,
+      "started_at": "2026-08-30T19:26:35Z",
+      "settled_at": "2026-08-30T19:27:03Z",
+      "stop_reason": "completed",
+      "output": "{\"task_id\": \"int12-eng\", \"assigned_role\": \"cto\", \"status\": \"SUCCEEDED\", \"confidence\": \"HIGH\", \"reported_at\": \"2026-08-30T19:26:58Z\", \"findings\": [\"ADR 0001 Decision 5: file-based authoritative project state (state/+audit/) depends on the orchestrator as the single writer and requires atomic temp-write+rename plus version checks that the project itself must implement \\u2014 the ADR explicitly states the state is 'not automatically crash-safe without our implementation', so a crash mid-write or an orphaned temp file can corrupt or leave stale authoritative project state before any safeguards exist.\"], \"evidence\": [\"practice\"], \"assumptions\": [], \"risks\": [], \"unresolved_items\": [], \"actions_taken\": [\"analysis\"], \"recommendation\": \"Implement atomic write (temp file + fsync + rename) with a version/checksum check and single-writer enforcement (e.g. a lockfile) for every state/audit write before any Phase-1 persistence is considered safe, and back it with validation tests.\"}",
+      "structured": {
+        "task_id": "int12-eng",
+        "assigned_role": "cto",
+        "status": "SUCCEEDED",
+        "confidence": "HIGH",
+        "reported_at": "2026-08-30T19:26:58Z",
+        "findings": [
+          "ADR 0001 Decision 5: file-based authoritative project state (state/+audit/) depends on the orchestrator as the single writer and requires atomic temp-write+rename plus version checks that the project itself must implement \u2014 the ADR explicitly states the state is 'not automatically crash-safe without our implementation', so a crash mid-write or an orphaned temp file can corrupt or leave stale authoritative project state before any safeguards exist."
+        ],
+        "evidence": [
+          "practice"
+        ],
+        "assumptions": [],
+        "risks": [],
+        "unresolved_items": [],
+        "actions_taken": [
+          "analysis"
+        ],
+        "recommendation": "Implement atomic write (temp file + fsync + rename) with a version/checksum check and single-writer enforcement (e.g. a lockfile) for every state/audit write before any Phase-1 persistence is considered safe, and back it with validation tests."
+      },
+      "diagnostic": "",
+      "live": true
+    },
+    {
+      "tool_name": "subagent_kai",
+      "role": "kai",
+      "task_id": "int12-fail",
+      "run_id": "61d68c1c-d38a-40ac-a7a0-cd1a05f12461",
+      "provider": "spawn",
+      "background_mode": "continuable",
+      "max_depth": 1,
+      "started_at": "2026-08-30T19:22:05Z",
+      "settled_at": "2026-08-30T19:22:15Z",
+      "stop_reason": "completed",
+      "output": "{\"task_id\": \"int12-fail\", \"assigned_role\": \"kai\", \"status\": \"FAILED\", \"confidence\": \"LOW\", \"reported_at\": \"2026-05-14T12:00:00Z\", \"findings\": [], \"evidence\": [], \"assumptions\": [], \"risks\": [], \"unresolved_items\": [\"Missing primary source: niche market sizing dataset (unavailable in this environment)\"], \"actions_taken\": [], \"recommendation\": \"\"}",
+      "structured": {
+        "task_id": "int12-fail",
+        "assigned_role": "kai",
+        "status": "FAILED",
+        "confidence": "LOW",
+        "reported_at": "2026-05-14T12:00:00Z",
+        "findings": [],
+        "evidence": [],
+        "assumptions": [],
+        "risks": [],
+        "unresolved_items": [
+          "Missing primary source: niche market sizing dataset (unavailable in this environment)"
+        ],
+        "actions_taken": [],
+        "recommendation": ""
+      },
+      "diagnostic": "",
+      "live": true
+    },
+    {
+      "tool_name": "subagent_somad",
+      "role": "somad",
+      "task_id": "int12-draft",
+      "run_id": "9f2f1f3e-2b63-47a2-bc73-78858f997731",
+      "provider": "spawn",
+      "background_mode": "continuable",
+      "max_depth": 1,
+      "started_at": "2026-08-30T19:22:05Z",
+      "settled_at": "2026-08-30T19:22:25Z",
+      "stop_reason": "completed",
+      "output": "{\"task_id\": \"int12-draft\", \"assigned_role\": \"somad\", \"status\": \"SUCCEEDED\", \"confidence\": \"HIGH\", \"reported_at\": \"2026-02-09T12:00:00Z\", \"findings\": [\"Dev.to is a free, developer-focused publishing platform purpose-built for technical content, making it the single highest-leverage low-cost channel for distributing technical documentation.\"], \"evidence\": [\"Dev.to is explicitly positioned as a free community for developers to publish and read technical content\"], \"assumptions\": [\"The project's documentation exists in a text/Markdown-friendly format\"], \"risks\": [\"Duplicate-content SEO risk: cross-posting the same docs verbatim can dilute the canonical docs site's ranking\"], \"unresolved_items\": [\"Whether the docs repo can support automated publish-on-merge to Dev.to\"], \"actions_taken\": [\"Conducted a pure text analysis of social distribution options\"], \"recommendation\": \"Adopt Dev.to as the project's single low-cost social distribution channel for documentation.\"}",
+      "structured": {
+        "task_id": "int12-draft",
+        "assigned_role": "somad",
+        "status": "SUCCEEDED",
+        "confidence": "HIGH",
+        "reported_at": "2026-02-09T12:00:00Z",
+        "findings": [
+          "Dev.to is a free, developer-focused publishing platform purpose-built for technical content, making it the single highest-leverage low-cost channel for distributing technical documentation."
+        ],
+        "evidence": [
+          "Dev.to is explicitly positioned as a free community for developers to publish and read technical content"
+        ],
+        "assumptions": [
+          "The project's documentation exists in a text/Markdown-friendly format"
+        ],
+        "risks": [
+          "Duplicate-content SEO risk: cross-posting the same docs verbatim can dilute the canonical docs site's ranking"
+        ],
+        "unresolved_items": [
+          "Whether the docs repo can support automated publish-on-merge to Dev.to"
+        ],
+        "actions_taken": [
+          "Conducted a pure text analysis of social distribution options"
+        ],
+        "recommendation": "Adopt Dev.to as the project's single low-cost social distribution channel for documentation."
+      },
+      "diagnostic": "",
+      "live": true
+    }
+  ],
+  "results": [],
+  "provenance": [],
+  "outcome": "FAILED",
+  "failure": {
+    "exception": "SubtaskFailed",
+    "role": "kai",
+    "task_id": "int12-fail",
+    "failure_class": "logic",
+    "message": "subtask int12-fail (kai) failed [logic]: specialist reported FAILED: Missing primary source: niche market sizing dataset (unavailable in this environment)"
+  },
+  "recovery": {
+    "security": {
+      "child_delegation_issued": true,
+      "child_scope_contained": true,
+      "child_id": "delegation-flow-live-int12-aa771c64",
+      "child_scope_resources": [
+        "docs/**",
+        "orchestrator/**",
+        "config/**",
+        "agents/**"
+      ],
+      "parent_scope_resources": [
+        "docs/**",
+        "orchestrator/**",
+        "config/**",
+        "agents/**"
+      ],
+      "specialist_subdelegation_denied": true,
+      "authority_keys_stripped": true,
+      "stripped": [
+        "approval_reference",
+        "grant"
+      ]
+    },
+    "recovery": {
+      "recovery_entered": true,
+      "recovery_state": "PRESERVED",
+      "no_blind_retry_empty_cause": true,
+      "no_blind_retry_identical_cause": true,
+      "recovery_no_privilege_escalation": true,
+      "escalation_path": "RECOVERING (typed failure_class -> recovery lifecycle)"
+    }
+  },
+  "security": {},
+  "errors": [
+    "subtask int12-fail (kai) failed [logic]: specialist reported FAILED: Missing primary source: niche market sizing dataset (unavailable in this environment)"
+  ]
+}

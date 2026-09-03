@@ -1,0 +1,2 @@
+{"detail": {"target": "state/registry/delegations.json", "version": 1}, "event_class": "daemon_self_audit", "event_id": "daemon-registry_write-b69750d6c7b2", "method": "registry_write", "timestamp": "2026-09-02T22:08:25.443813Z"}
+{"detail": {"target": "state/registry/revocations.json", "version": 1}, "event_class": "daemon_self_audit", "event_id": "daemon-registry_write-96acdf5ecb51", "method": "registry_write", "timestamp": "2026-09-02T22:08:25.464828Z"}

@@ -1,0 +1,61 @@
+{
+  "scenario_id": "L3-TEST-001",
+  "gate_under_test": "authority",
+  "oracle_classes_used": ["O1", "O4"],
+  "oracle_rationale": "reference re-implementation + Human-signed expectation",
+  "replayable": true,
+  "target_is_protected": false,
+  "environment": "dev",
+  "project": "multi-agent-harness",
+  "oracle_context": {
+    "actor": "orchestrator",
+    "action": "code_write",
+    "target": "agents/cto/test-output.txt",
+    "delegation": {
+      "id": "delegation-test-001",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "scope": {
+        "operations": ["write", "read", "code_write"],
+        "resources": ["agents/cto/**", "agents/**"],
+        "environments": ["dev"]
+      },
+      "status": "ACTIVE",
+      "version": 1,
+      "expires_at": ""
+    },
+    "revocation_list": [],
+    "environment": "dev",
+    "project": "multi-agent-harness",
+    "approval_reference": "",
+    "now": "2026-08-31T10:00:00Z"
+  },
+  "delegation_chain": [
+    {
+      "principal": "human",
+      "delegate": "orchestrator",
+      "delegation_id": "delegation-test-001",
+      "action": "write",
+      "target": "agents/cto/test-output.txt",
+      "scope": {"operations": ["write", "read", "code_write"]},
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-31T00:00:00Z",
+      "revoked_at": null
+    }
+  ],
+  "children": [
+    {
+      "task_id": "task-test-cto",
+      "role": "cto",
+      "run_id": "run-test-cto-001",
+      "tool_name": "subagent_cto",
+      "stop_reason": "completed",
+      "source": "RUNTIME-OBSERVED",
+      "started_at": "2026-08-31T10:00:00Z",
+      "settled_at": "2026-08-31T10:00:05Z"
+    }
+  ],
+  "collection_order": ["task-test-cto"]
+}

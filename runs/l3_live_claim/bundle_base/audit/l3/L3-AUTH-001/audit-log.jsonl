@@ -1,0 +1,1 @@
+{"action": "code_write", "actor": "orchestrator", "actor_type": "orchestrator", "authority_source": "delegation-crit-auth-001", "event_class": "gate_authority", "event_id": "event-live-auth-001", "project": "multi-agent-harness", "result": "allowed", "target": "agents/cto/output.txt", "task_id": "task-crit-auth-001", "timestamp": "2026-09-02T06:28:00Z"}

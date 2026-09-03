@@ -1,0 +1,17 @@
+{
+  "scenario_id": "L3-AUD-002",
+  "actor": "verifier",
+  "action": "verify",
+  "target": "audit/ledger.jsonl",
+  "preconditions": [
+    "audit ledger has been TAMPERED (one event mutated)",
+    "chain sidecar computed over the ORIGINAL (untampered) ledger",
+    "re-computation against the sidecar must detect the mismatch (INVALID)",
+    "verifier-independent chain re-computation must not be fooled by the forged entry"
+  ],
+  "expected_verdict": "INVALID",
+  "expected_verdict_reason": "audit integrity: tampered ledger detected by chain hash mismatch (L3-AUD-002, THREAT-018)",
+  "human_signoff_id": "human-2026-08-31-110",
+  "human_signoff_ts": "2026-08-31T09:00:00Z",
+  "human_signoff_method": "interactive"
+}

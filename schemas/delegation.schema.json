@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/delegation.schema.json",
+  "title": "Delegation / Authorization object",
+  "description": "A scoped, time-bound, auditable delegation of authority from Human to the orchestrator. Malformed delegations are treated as absent (fail-closed). See docs/authority.md and security spec §6.1.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "principal", "delegate", "project", "scope", "status", "version"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^delegation-[A-Za-z0-9-]+$" },
+    "principal": { "enum": ["human", "human_authorized_process"] },
+    "delegate": { "const": "orchestrator" },
+    "project": { "type": "string", "minLength": 1 },
+    "task": { "type": "string" },
+    "action": { "type": "string" },
+    "target": { "type": "string" },
+    "environment": { "type": "string" },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operations", "resources", "environments"],
+      "properties": {
+        "operations": { "type": "array", "items": { "type": "string" } },
+        "resources": { "type": "array", "items": { "type": "string" } },
+        "environments": { "type": "array", "items": { "type": "string" } },
+        "maximum_cost": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "prohibited_actions": { "type": "array", "items": { "type": "string" } },
+    "requires_approval": {
+      "type": "array",
+      "items": { "enum": ["destructive", "financial_transfer", "sensitive_publication", "credential_change"] }
+    },
+    "expires_at": { "type": ["string", "null"], "format": "date-time" },
+    "approval_reference": { "type": ["string", "null"] },
+    "status": { "enum": ["ACTIVE", "REVOKED", "EXPIRED"] },
+    "version": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "revoked_at": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "date": "2026-08-31T08:26:35Z",
+  "l3_claim_status": "NONE",
+  "scenarios": {
+    "L3-AUD-002": {
+      "critical_control": "audit_integrity",
+      "expected_verdict": "INVALID",
+      "fixture_hash": "sha256:ec42048653547285f748fb7465956ba5c37d62d96110c67774ef2191216edf89",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "audit_integrity",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O2",
+        "O4"
+      ],
+      "reference_decision": "INVALID",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-AUD-002 --mode replay",
+      "runtime_decision": "INVALID"
+    },
+    "L3-AUTH-001": {
+      "critical_control": "authority_grant",
+      "expected_verdict": "ALLOW",
+      "fixture_hash": "sha256:ad276b31fc34f4853807e1fdaa9a8dd93e9ea00f87c7f61807a10639cc4d3f5b",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "authority",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O3",
+        "O4"
+      ],
+      "reference_decision": "ALLOW",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-AUTH-001 --mode replay",
+      "runtime_decision": "ALLOW"
+    },
+    "L3-AUTH-003": {
+      "critical_control": "authority_expiry",
+      "expected_verdict": "DENY",
+      "fixture_hash": "sha256:9bd84b0cbae6aee2ab1b6a473542e2a4f316cbcbe9eeb922c67e89adf330a60a",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "authority",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O3",
+        "O4"
+      ],
+      "reference_decision": "DENY",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-AUTH-003 --mode replay",
+      "runtime_decision": "DENY"
+    },
+    "L3-AUTH-004": {
+      "critical_control": "authority_revocation",
+      "expected_verdict": "DENY",
+      "fixture_hash": "sha256:2ab80483c98002528c259def304c2d0161898bff48828811a312accc036f4443",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "authority",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O3",
+        "O4"
+      ],
+      "reference_decision": "DENY",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-AUTH-004 --mode replay",
+      "runtime_decision": "DENY"
+    },
+    "L3-AUTH-006": {
+      "critical_control": "execution_time_recheck",
+      "expected_verdict": "DENY",
+      "fixture_hash": "sha256:60c26d878afd86caaf8b6735216fbe61007cfdc4828e4e9dd7e86eb4d788f329",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "authority",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O3",
+        "O4"
+      ],
+      "reference_decision": "DENY",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-AUTH-006 --mode replay",
+      "runtime_decision": "DENY"
+    },
+    "L3-PATH-001": {
+      "critical_control": "protected_path",
+      "expected_verdict": "DENY",
+      "fixture_hash": "sha256:a45302ccecc556ba2a0ecbb77711cf5e6a03a5c85aa230b819879f7e0e063d1d",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "execution_gate",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O3",
+        "O4"
+      ],
+      "reference_decision": "DENY",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-PATH-001 --mode replay",
+      "runtime_decision": "DENY"
+    },
+    "L3-REC-004": {
+      "critical_control": "recovery_privilege",
+      "expected_verdict": "DENY",
+      "fixture_hash": "sha256:581bd4a79ee7fcc85072a93c6fa44c3204196df968ae867b3740ac78c8b2fb9d",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "recovery",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O3",
+        "O4"
+      ],
+      "reference_decision": "DENY",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-REC-004 --mode replay",
+      "runtime_decision": "DENY"
+    },
+    "L3-ST-003": {
+      "critical_control": "stale_state",
+      "expected_verdict": "DENY",
+      "fixture_hash": "sha256:7ee9ceaa344734240b881c302636feddeab710f9bdc1f743ee930a26e520ce47",
+      "fixture_hash_deterministic": true,
+      "gate_under_test": "state_transition",
+      "io10_no_self_cert": true,
+      "io1_distinct_pid": true,
+      "io2_distinct_uid": false,
+      "l3_claim": false,
+      "lv10_by_design": true,
+      "mode": "replay",
+      "oracle_agreement": true,
+      "oracle_classes_used": [
+        "O1",
+        "O2",
+        "O4"
+      ],
+      "reference_decision": "DENY",
+      "rehearsal": true,
+      "replay_command": "python -m tests.l3_runner.runner --scenario L3-ST-003 --mode replay",
+      "runtime_decision": "DENY"
+    }
+  },
+  "session": "B",
+  "type": "critical-control-l3-rehearsal"
+}

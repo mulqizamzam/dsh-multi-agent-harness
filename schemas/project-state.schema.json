@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/project-state.schema.json",
+  "title": "Project state document",
+  "description": "Authoritative project state (state/). Written only by the orchestrator (single-writer), atomically, with monotonic version + CAS. State is DATA — approval-like fields here are records, never authority (AUTH-INV-07/08).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["id", "name", "objective", "status", "created_at", "updated_at", "version", "current_state"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string" },
+    "status": { "enum": ["pending", "active", "blocked", "complete"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "integer", "minimum": 1 },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "active_delegations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "tasks": { "type": "array", "items": { "type": "object" } },
+    "agents": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "zeko": { "$ref": "#/$defs/agentStatus" },
+        "cto": { "$ref": "#/$defs/agentStatus" },
+        "cfo": { "$ref": "#/$defs/agentStatus" },
+        "kai": { "$ref": "#/$defs/agentStatus" },
+        "somad": { "$ref": "#/$defs/agentStatus" },
+        "badsector": { "$ref": "#/$defs/agentStatus" },
+        "nova": { "$ref": "#/$defs/agentStatus" }
+      }
+    },
+    "decisions": { "type": "array", "items": { "type": "object" } },
+    "risks": { "type": "array", "items": { "type": "object" } },
+    "evidence": { "type": "array", "items": { "type": "object" } },
+    "approvals": { "type": "array", "items": { "type": "object" } },
+    "events": { "type": "array", "items": { "type": "object" } },
+    "current_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "next_action"],
+      "properties": {
+        "phase": { "type": "string" },
+        "next_action": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "agentStatus": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "status": { "type": "string" }
+      }
+    }
+  }
+}

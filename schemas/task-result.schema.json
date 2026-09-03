@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/task-result.schema.json",
+  "title": "Task result contract",
+  "description": "Structured result a specialist returns to the orchestrator (orchestrator/foundation/contracts.py TaskResult). Claims/data only — never authority.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "assigned_role", "status", "confidence", "reported_at"],
+  "properties": {
+    "task_id": { "type": "string", "minLength": 1 },
+    "assigned_role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+    "status": { "enum": ["SUCCEEDED", "FAILED", "BLOCKED"] },
+    "findings": { "type": "array", "items": { "type": "string" } },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "recommendation": { "type": "string" },
+    "confidence": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+    "unresolved_items": { "type": "array", "items": { "type": "string" } },
+    "actions_taken": { "type": "array", "items": { "type": "string" } },
+    "reported_at": { "type": "string", "format": "date-time" }
+  }
+}

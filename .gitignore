@@ -1,0 +1,5 @@
+# Test tooling artifacts (not part of the project)
+.venv-tests/
+.pytest_cache/
+__pycache__/
+*.pyc

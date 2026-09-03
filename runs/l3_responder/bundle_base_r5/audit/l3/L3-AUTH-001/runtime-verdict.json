@@ -1,0 +1,30 @@
+{
+ "audit_event_ids": [
+  "event-l3-auth-001-d85e424f"
+ ],
+ "audit_log": [
+  {
+   "action": "code_write",
+   "actor": "orchestrator",
+   "actor_type": "orchestrator",
+   "authority_source": "delegation-crit-auth-001",
+   "event_class": "gate_authority",
+   "event_id": "event-l3-auth-001-d85e424f",
+   "project": "multi-agent-harness",
+   "result": "allowed",
+   "target": "agents/cto/output.txt",
+   "task_id": "task-crit-auth-001",
+   "timestamp": "2026-09-02T22:13:40Z"
+  }
+ ],
+ "captured_at": "2026-09-02T22:13:40Z",
+ "decision": "ALLOW",
+ "denial_path": "",
+ "failure": null,
+ "final_status": "COMPLETE",
+ "scenario_id": "L3-AUTH-001",
+ "state_version_after": null,
+ "state_version_before": null,
+ "stopReason": "completed",
+ "tool_call_id": "45ff72ba-a8a7-4518-a2f4-bd48936584c2"
+}

@@ -1,0 +1,70 @@
+{
+ "captured_at": "2026-09-01T17:14:01Z",
+ "claim_gate": {
+  "failures": [
+   "P2-uid-separation: orchestrator_uid=1000 verifier_uid=1000",
+   "IO-all-pass",
+   "evidence-bundle-complete: missing=['oracle-classes.json', 'verdict-match.json']"
+  ],
+  "l3_claim": false,
+  "satisfied": {
+   "IO-all-pass": {
+    "detail": "",
+    "pass": false
+   },
+   "P1-runtime": {
+    "detail": "runtime-verdict.json present=True decision='DENY'",
+    "pass": true
+   },
+   "P2-independent-observer": {
+    "detail": "orchestrator_pid=3 verifier_pid=62",
+    "pass": true
+   },
+   "P2-uid-separation": {
+    "detail": "orchestrator_uid=1000 verifier_uid=1000",
+    "pass": false
+   },
+   "P3-external-oracle": {
+    "detail": "oracle_classes_used=['O1', 'O4']",
+    "pass": true
+   },
+   "P4-reproducible-replay": {
+    "detail": "fixture_hash=set verifier_sha=set schema_sha=set",
+    "pass": true
+   },
+   "evidence-bundle-complete": {
+    "detail": "missing=['oracle-classes.json', 'verdict-match.json']",
+    "pass": false
+   },
+   "human-signed-plan": {
+    "detail": "plan.json present=True signoff=2026-09-01T14:57:51Z runtime=2026-09-01T18:00:00Z precedes=True",
+    "pass": true
+   },
+   "no-unresolved-unknown": {
+    "detail": "unknowns=none",
+    "pass": true
+   },
+   "verdict-agreement": {
+    "detail": "runtime='DENY' reference='DENY'",
+    "pass": true
+   }
+  }
+ },
+ "delta_summary": "",
+ "evidence_checks": {
+  "evidence_provenance": "pass",
+  "evidence_provenance_detail": "delegation_chain=True children=True",
+  "replay_metadata": "pass",
+  "replay_metadata_detail": "fixture+verifier+schema pins=True",
+  "state_hashes": "pass",
+  "state_hashes_detail": "before=present(5492da6a...) after=present(5492da6a...)"
+ },
+ "failure_class": "L3-INDEPENDENCE-VIOLATION",
+ "independent_observer_id": "verifier-process-62",
+ "l3_claim": false,
+ "match": true,
+ "reference_decision": "DENY",
+ "replay_command": "python -m tests.l3_runner.runner --scenario G13-LIVE-C2-V3 --mode replay",
+ "runtime_decision": "DENY",
+ "scenario_id": "G13-LIVE-C2-V3"
+}

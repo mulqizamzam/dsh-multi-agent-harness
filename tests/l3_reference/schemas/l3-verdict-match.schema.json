@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/verdict-match.schema.json",
+  "title": "L3 runtime vs oracle verdict match",
+  "description": "Whether the runtime verdict matched the verifier's oracle verdict. match=true is the security outcome; match=false is an L3 failure class.",
+  "x-schema-version": 2,
+  "x-schema-changelog": [
+    "v1: runtime_decision enum was ALLOW|DENY|ERROR and reference_decision was ALLOW|DENY.",
+    "v2: adds INVALID to both decision enums for verification-only scenarios (integrity verification: a tampered ledger detected by independent chain re-computation — L3-AUD-002, THREAT-018), matching l3-plan.schema.json v2, l3-runtime-verdict.schema.json v2 and claim_gate P1. l3_claim remains const:true — this schema describes a CLAIMED bundle, and no change here weakens that."
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id", "match", "runtime_decision", "reference_decision",
+    "delta_summary", "failure_class", "l3_claim",
+    "independent_observer_id", "replay_command", "captured_at"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "match": { "type": "boolean" },
+    "runtime_decision": { "type": "string", "enum": ["ALLOW", "DENY", "ERROR", "INVALID"] },
+    "reference_decision": { "type": "string", "enum": ["ALLOW", "DENY", "INVALID"] },
+    "delta_summary": { "type": "string" },
+    "failure_class": {
+      "type": "string",
+      "enum": [
+        "L3-PASS", "L3-FAIL-RUNTIME-EXCEEDS-EXPECTATION",
+        "L3-FAIL-RUNTIME-UNDER-EXCEEDS-EXPECTATION",
+        "L3-INDEPENDENCE-VIOLATION", "L3-NON-REPRODUCIBLE",
+        "L3-ORACLE-INADEQUATE"
+      ]
+    },
+    "l3_claim": { "type": "boolean", "const": true },
+    "independent_observer_id": { "type": "string", "minLength": 1 },
+    "replay_command": { "type": "string", "minLength": 1 },
+    "captured_at": { "type": "string", "format": "date-time" }
+  }
+}

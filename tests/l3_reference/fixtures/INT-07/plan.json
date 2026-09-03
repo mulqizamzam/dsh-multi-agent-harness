@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-AUTH-004",
+  "actor": "orchestrator",
+  "action": "write",
+  "target": "agents/cto/output.txt",
+  "preconditions": [
+    "delegation delegation-d2-int07 ACTIVE at planning time",
+    "delegation placed in state/registry/revocations.json BEFORE execution",
+    "execution-time re-check must observe the revocation (AUTH-INV-05/06, THREAT-009/024)"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "execution-time authority re-check observes revocation; no mutation may occur (before.sha256 == after.sha256)",
+  "human_signoff_id": "<human-YYYY-MM-DD-NNN>",
+  "human_signoff_ts": "<UTC ISO 8601, BEFORE runtime>",
+  "human_signoff_method": "interactive"
+}

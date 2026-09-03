@@ -1,0 +1,374 @@
+{
+  "flow_id": "flow-closure-int-01-39eb4a",
+  "objective": "engineering analysis",
+  "project": "multi-agent-harness",
+  "task_id": "task-1",
+  "outcome": "COMPLETE",
+  "phase": "close",
+  "final_state": "COMPLETE",
+  "version": 7,
+  "risk": "MEDIUM",
+  "selected": [
+    "cto"
+  ],
+  "tasks": [
+    {
+      "task_id": "task-1",
+      "objective": "engineering analysis",
+      "assigned_role": "cto",
+      "parent_task": "",
+      "dependencies": [],
+      "expected_output": "module written and verified",
+      "risk_metadata": "MEDIUM",
+      "authorization_requirements": [],
+      "scope": [
+        "agents/**"
+      ],
+      "project": "multi-agent-harness"
+    }
+  ],
+  "delegations": [
+    {
+      "id": "delegation-task-1-379909f4",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "task": "task-1",
+      "action": "write",
+      "target": "agents/cto/output.txt",
+      "environment": "dev",
+      "scope": {
+        "operations": [
+          "write",
+          "read",
+          "code_write"
+        ],
+        "resources": [
+          "agents/**",
+          "docs/**",
+          "multi-agent-harness/**"
+        ],
+        "environments": [
+          "dev"
+        ],
+        "maximum_cost": null
+      },
+      "prohibited_actions": [],
+      "requires_approval": [],
+      "expires_at": null,
+      "approval_reference": null,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-30T21:36:46Z",
+      "updated_at": "2026-08-30T21:36:46Z",
+      "revoked_at": null
+    }
+  ],
+  "results": [
+    {
+      "task_id": "task-1:cto",
+      "role": "cto",
+      "provenance": {
+        "delegation_id": "delegation-task-1-379909f4",
+        "task_id": "task-1:cto",
+        "role": "cto",
+        "tool_name": "subagent_cto",
+        "persona": "role-cto",
+        "instance_max_depth": 1,
+        "background_mode": "continuable",
+        "provider": "spawn",
+        "actor": "orchestrator",
+        "session_id": "session-11fb50c5-cf74-41b2-9f97-03cf3184a14b",
+        "adapter_version": "dsh-integration-adapter-1.0",
+        "dsh_version_pin": "deepseek-harness-0.1.1-rc.2",
+        "run_id": "30446fa4-e80f-444b-9fb1-f650fbb9fb21",
+        "started_at": "2026-08-30T21:36:46Z",
+        "settled_at": "2026-08-30T21:36:46Z",
+        "stop_reason": "completed",
+        "result_status": "SUCCEEDED"
+      },
+      "status": "SUCCEEDED",
+      "findings": [
+        "All 7 specialist agents (zeko, cto, cfo, kai, somad, badsector, nova) have finalized, mutually consistent Phase 1A artifacts: AGENT.md role contracts, policy.yaml declarative policies, and agent.cordis.yml preset drafts, all version-pinned to DeepSeek Harness 0.1.1-rc.2.",
+        "The least-privilege capability architecture is correctly realized across three layers (permissions.yaml matrix, per-role policy.yaml, role-preset-mapping.yaml toolFilter): read-only roles (cfo, kai, badsector) deny bash/edit/write, badsector has no execution path and never authorizes, subdelegation is DENY BY DEFAULT for all specialists, and only the orchestrator holds delegation tools.",
+        "The 7 agent.cordis.yml presets and config/tool-subagent-instances.yaml are DRAFT and NOT mounted (mount_required: false, ADR Decision 4/7 is HUMAN_PENDING), so the role contracts are specification-complete but not yet deployed as DSH Agent Presets/tool-subagent instances."
+      ],
+      "evidence": [
+        "tests/validate-config.py --root . reports '194 passed, 0 failed', including schema validation for all 7 policy.yaml files, allow\u2229deny=\u2205 for every role, tool names verified against the DSH 0.1.1-rc.2 catalog, no delegation tools in any specialist, and instance==mapping==policy consistency.",
+        "config/agents.yaml registers exactly 7 specialist agents with peer_relationship: true, badsector_is_reviewer_not_authorizer: true, and orchestrator_is_coordination_not_eighth_specialist: true.",
+        "config/permissions.yaml defines 13 capability dimensions \u00d7 7 agents with the normalized yes/scoped/review/approval/scoped_approval/no vocabulary.",
+        "config/role-preset-mapping.yaml and config/tool-subagent-instances.yaml both mark status: draft / NOT MOUNTED with draft_artifacts.mount_required: false."
+      ],
+      "risks": [
+        "spec-to-runtime gap: until ADR Decision 4/7 (HUMAN_PENDING) executes the controlled composition exception, the validated role definitions are not enforced at runtime.",
+        "Minor declared-level inconsistency: cto/policy.yaml lists financial_analysis: 'scoped' while cto/AGENT.md states financial_* as 'no'.",
+        "unmounted_candidates (lsp, str_replace_editor for cto; web_fetch for kai) remain unavailable until a controlled composition exception is granted."
+      ],
+      "assumptions": [
+        "The standalone validate-config.py result is the authoritative config-validation evidence.",
+        "The intended runtime boundary is the declared toolFilter/allow-deny sets in the mapping files.",
+        "docs/phase-1/0002-role-isolation-draft.md is the canonical register for the controlled composition exception."
+      ],
+      "unresolved_items": [
+        "Deployment of the 7 role presets and subagent_<id> instances pending the HUMAN_PENDING controlled DSH composition exception (ADR Decision 4/7).",
+        "Reconciliation of the cto financial_analysis level discrepancy between AGENT.md (no) and policy.yaml/permissions.yaml (scoped).",
+        "Independent pytest unit-test run pending a Python environment with pytest installed."
+      ],
+      "actions_taken": [
+        "Read all 7 agents/<id>/AGENT.md, policy.yaml, and agent.cordis.yml role artifacts.",
+        "Read the supporting config layer.",
+        "Executed tests/validate-config.py against the repo root and confirmed all 194 config/invariant checks pass with exit code 0."
+      ],
+      "recommendation": "The agents/** engineering surface is spec-complete, internally consistent, and passes all 194 validation checks; proceed to Phase 1C execution of the controlled DSH composition exception (ADR Decision 4/7, HUMAN_PENDING) to mount the 7 role presets and subagent_<id> instances, and first reconcile the minor cto financial_analysis capability discrepancy.",
+      "confidence": "HIGH",
+      "reported_at": "2026-08-31T01:58:00Z"
+    }
+  ],
+  "parallel": {
+    "safe": true,
+    "mode": "sequential",
+    "task_ids": [
+      "task-1:cto"
+    ],
+    "owners": [
+      "cto"
+    ],
+    "held_version": 4
+  },
+  "synthesis": {
+    "task_id": "task-1",
+    "objective": "engineering analysis",
+    "risk": "MEDIUM",
+    "findings": [
+      "All 7 specialist agents (zeko, cto, cfo, kai, somad, badsector, nova) have finalized, mutually consistent Phase 1A artifacts: AGENT.md role contracts, policy.yaml declarative policies, and agent.cordis.yml preset drafts, all version-pinned to DeepSeek Harness 0.1.1-rc.2.",
+      "The least-privilege capability architecture is correctly realized across three layers (permissions.yaml matrix, per-role policy.yaml, role-preset-mapping.yaml toolFilter): read-only roles (cfo, kai, badsector) deny bash/edit/write, badsector has no execution path and never authorizes, subdelegation is DENY BY DEFAULT for all specialists, and only the orchestrator holds delegation tools.",
+      "The 7 agent.cordis.yml presets and config/tool-subagent-instances.yaml are DRAFT and NOT mounted (mount_required: false, ADR Decision 4/7 is HUMAN_PENDING), so the role contracts are specification-complete but not yet deployed as DSH Agent Presets/tool-subagent instances."
+    ],
+    "recommendations": [
+      "The agents/** engineering surface is spec-complete, internally consistent, and passes all 194 validation checks; proceed to Phase 1C execution of the controlled DSH composition exception (ADR Decision 4/7, HUMAN_PENDING) to mount the 7 role presets and subagent_<id> instances, and first reconcile the minor cto financial_analysis capability discrepancy."
+    ],
+    "assumptions": [
+      "The standalone validate-config.py result is the authoritative config-validation evidence.",
+      "The intended runtime boundary is the declared toolFilter/allow-deny sets in the mapping files.",
+      "docs/phase-1/0002-role-isolation-draft.md is the canonical register for the controlled composition exception."
+    ],
+    "risks": [
+      "spec-to-runtime gap: until ADR Decision 4/7 (HUMAN_PENDING) executes the controlled composition exception, the validated role definitions are not enforced at runtime.",
+      "Minor declared-level inconsistency: cto/policy.yaml lists financial_analysis: 'scoped' while cto/AGENT.md states financial_* as 'no'.",
+      "unmounted_candidates (lsp, str_replace_editor for cto; web_fetch for kai) remain unavailable until a controlled composition exception is granted."
+    ],
+    "unresolved_items": [
+      "Deployment of the 7 role presets and subagent_<id> instances pending the HUMAN_PENDING controlled DSH composition exception (ADR Decision 4/7).",
+      "Reconciliation of the cto financial_analysis level discrepancy between AGENT.md (no) and policy.yaml/permissions.yaml (scoped).",
+      "Independent pytest unit-test run pending a Python environment with pytest installed."
+    ],
+    "roles": [
+      "cto"
+    ]
+  },
+  "gates": [
+    {
+      "phase": "classify",
+      "gate": "risk_classify",
+      "decision": "ALLOW",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "detail": {
+        "risk": "MEDIUM",
+        "intrinsic": false,
+        "signals": []
+      }
+    },
+    {
+      "phase": "risk_gate",
+      "gate": "risk",
+      "decision": "ALLOW",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "detail": {
+        "risk": "MEDIUM",
+        "intrinsic": false,
+        "signals": []
+      }
+    },
+    {
+      "phase": "evidence_gate",
+      "gate": "evidence",
+      "decision": "ALLOW",
+      "reason": "evidence sufficient for action",
+      "detail": {
+        "rung": "SUFFICIENT_FOR_ACTION",
+        "evidence_present": true
+      }
+    },
+    {
+      "phase": "conflict_gate",
+      "gate": "conflict",
+      "decision": "ALLOW",
+      "reason": "all conflicts synthesized; disagreement preserved; no voting",
+      "detail": {
+        "action": "synthesize",
+        "detail": {
+          "conflicts": []
+        }
+      }
+    },
+    {
+      "phase": "adversarial_review",
+      "gate": "badsector_review",
+      "decision": "ALLOW",
+      "reason": "review not required for this action class",
+      "detail": {
+        "mandatory": false,
+        "risk": "MEDIUM",
+        "action": "write"
+      }
+    },
+    {
+      "phase": "authority_gate",
+      "gate": "authority",
+      "decision": "ALLOW",
+      "reason": "",
+      "detail": {}
+    },
+    {
+      "phase": "verify",
+      "gate": "verification",
+      "decision": "ALLOW",
+      "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+      "detail": {
+        "action_category": "code_change",
+        "independence": "self",
+        "required_evidence": [
+          "test",
+          "build"
+        ],
+        "human_confirmation_required": false,
+        "evidence": [
+          {
+            "kind": "test",
+            "source": "agents/cto/output.txt#test",
+            "verifier": "self:orchestrator",
+            "independent": false,
+            "human_confirmation": false
+          },
+          {
+            "kind": "build",
+            "source": "agents/cto/output.txt#build",
+            "verifier": "self:orchestrator",
+            "independent": false,
+            "human_confirmation": false
+          }
+        ]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "phase": "intake",
+      "note": "intake accepted"
+    },
+    {
+      "phase": "understand",
+      "note": "normalize objective + require authority context"
+    },
+    {
+      "phase": "classify",
+      "note": "deterministic risk classification"
+    },
+    {
+      "phase": "risk_gate",
+      "note": "risk gate (non-downgradable HIGH)"
+    },
+    {
+      "phase": "decompose",
+      "note": "decompose objective into a scoped task"
+    },
+    {
+      "phase": "select",
+      "note": "select minimum specialist set"
+    },
+    {
+      "phase": "delegate",
+      "note": "issue scoped child delegation (orchestrator-only)"
+    },
+    {
+      "phase": "execute_subtasks",
+      "note": "delegate subtasks to specialists (parallel when independent)"
+    },
+    {
+      "phase": "collect",
+      "note": "collect structured results (data, not authority)"
+    },
+    {
+      "phase": "evidence_gate",
+      "note": "evidence sufficiency ladder"
+    },
+    {
+      "phase": "synthesize",
+      "note": "consolidate results (preserve disagreement)"
+    },
+    {
+      "phase": "conflict_gate",
+      "note": "detect + resolve conflicts (no voting)"
+    },
+    {
+      "phase": "adversarial_review",
+      "note": "BadSector review (PASS != authority)"
+    },
+    {
+      "phase": "authority_gate",
+      "note": "planning-time authority check"
+    },
+    {
+      "phase": "execute",
+      "note": "execution-time authority re-check + execute"
+    },
+    {
+      "phase": "verify",
+      "note": "verification gate (reported != verified)"
+    },
+    {
+      "phase": "close",
+      "note": "COMPLETE after verified outcome"
+    }
+  ],
+  "verification": {
+    "verdict": "PASSED",
+    "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+    "detail": {
+      "action_category": "code_change",
+      "independence": "self",
+      "required_evidence": [
+        "test",
+        "build"
+      ],
+      "human_confirmation_required": false,
+      "evidence": [
+        {
+          "kind": "test",
+          "source": "agents/cto/output.txt#test",
+          "verifier": "self:orchestrator",
+          "independent": false,
+          "human_confirmation": false
+        },
+        {
+          "kind": "build",
+          "source": "agents/cto/output.txt#build",
+          "verifier": "self:orchestrator",
+          "independent": false,
+          "human_confirmation": false
+        }
+      ]
+    }
+  },
+  "recovery": {},
+  "audit_ids": [
+    "event-000001",
+    "event-000025"
+  ],
+  "files_written": [
+    "agents/cto/output.txt"
+  ],
+  "errors": [],
+  "started_at": "2026-08-30T21:36:46Z",
+  "finished_at": "2026-08-30T21:36:46Z"
+}

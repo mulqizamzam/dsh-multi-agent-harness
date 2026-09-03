@@ -1,0 +1,35 @@
+{
+  "action": "analysis",
+  "approval_reference": null,
+  "created_at": "2026-09-01T04:39:03Z",
+  "delegate": "orchestrator",
+  "environment": "dev",
+  "expires_at": null,
+  "id": "delegation-bagian1-real",
+  "principal": "human",
+  "prohibited_actions": [],
+  "project": "multi-agent-harness",
+  "requires_approval": [],
+  "revoked_at": null,
+  "scope": {
+    "environments": [
+      "dev"
+    ],
+    "maximum_cost": null,
+    "operations": [
+      "analysis",
+      "read",
+      "write"
+    ],
+    "resources": [
+      "docs/**",
+      "agents/**",
+      "multi-agent-harness/**"
+    ]
+  },
+  "status": "ACTIVE",
+  "target": "docs/**",
+  "task": "task-bagian1",
+  "updated_at": "2026-09-01T04:39:03Z",
+  "version": 1
+}

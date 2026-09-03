@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/task.schema.json",
+  "title": "Task decomposition contract",
+  "description": "A decomposed unit of work assigned to exactly one specialist (orchestrator/foundation/contracts.py Task).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "objective", "assigned_role", "risk_metadata", "project"],
+  "properties": {
+    "task_id": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "assigned_role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+    "parent_task": { "type": "string" },
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "expected_output": { "type": "string" },
+    "risk_metadata": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+    "authorization_requirements": {
+      "type": "array",
+      "items": { "enum": ["destructive", "financial_transfer", "sensitive_publication", "credential_change"] }
+    },
+    "scope": { "type": "array", "items": { "type": "string" } },
+    "project": { "type": "string", "minLength": 1 }
+  }
+}

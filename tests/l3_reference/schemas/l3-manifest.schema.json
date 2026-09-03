@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/manifest.schema.json",
+  "title": "L3 evidence bundle manifest",
+  "description": "Per-bundle integrity manifest for an L3 evidence bundle at audit/l3/<L3-scenario-id>/. Lists every required evidence file with its sha256.",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scenario_id", "dsh_version", "created_at", "files"],
+  "properties": {
+    "scenario_id": { "type": "string", "pattern": "^L3-[A-Z]+-[0-9]{3}$" },
+    "dsh_version": { "type": "string", "const": "0.1.1-rc.2" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "env.json", "plan.json", "before.sha256", "after.sha256",
+        "runtime-verdict.json", "audit-log.jsonl", "reference-verdict.json",
+        "oracle-classes.json", "provenance.json", "replay.json",
+        "verifier-independence.json", "verdict-match.json"
+      ],
+      "propertyNames": { "enum": [
+        "env.json", "plan.json", "before.sha256", "after.sha256",
+        "runtime-verdict.json", "audit-log.jsonl", "reference-verdict.json",
+        "oracle-classes.json", "provenance.json", "replay.json",
+        "verifier-independence.json", "verdict-match.json"
+      ] },
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha256"],
+          "properties": {
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        }
+      }
+    }
+  }
+}

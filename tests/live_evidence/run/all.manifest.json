@@ -1,0 +1,304 @@
+{
+  "flows": {
+    "INT-11": {
+      "flow_id": "flow-live-int11",
+      "delegation": {
+        "id": "delegation-live-001",
+        "principal": "human",
+        "delegate": "orchestrator",
+        "project": "multi-agent-harness",
+        "task": "flow-live-int11",
+        "action": "read",
+        "target": "multi-agent-harness/**",
+        "environment": "dev",
+        "scope": {
+          "operations": [
+            "read"
+          ],
+          "resources": [
+            "docs/**",
+            "agents/**",
+            "config/**",
+            "README.md"
+          ],
+          "environments": [
+            "dev"
+          ],
+          "maximum_cost": null
+        },
+        "prohibited_actions": [],
+        "requires_approval": [],
+        "expires_at": null,
+        "approval_reference": null,
+        "status": "ACTIVE",
+        "version": 1,
+        "created_at": "2026-08-30T18:55:02Z",
+        "updated_at": "2026-08-30T18:55:02Z",
+        "revoked_at": null
+      },
+      "subtasks": [
+        {
+          "task_id": "int11-pricing",
+          "objective": "Produce a concise unit-economics assessment for the multi-agent harness control plane (one recommendation, LOW risk, read-only analysis).",
+          "assigned_role": "cfo",
+          "parent_task": "",
+          "dependencies": [],
+          "expected_output": "structured TaskResult JSON only",
+          "risk_metadata": "LOW",
+          "authorization_requirements": [],
+          "scope": [
+            "docs/**",
+            "agents/**"
+          ],
+          "project": "multi-agent-harness"
+        },
+        {
+          "task_id": "int11-research",
+          "objective": "Summarize the primary market/trend angle for AI multi-agent orchestration relevant to this project (LOW risk, read-only research).",
+          "assigned_role": "kai",
+          "parent_task": "",
+          "dependencies": [],
+          "expected_output": "structured TaskResult JSON only",
+          "risk_metadata": "LOW",
+          "authorization_requirements": [],
+          "scope": [
+            "docs/**",
+            "config/**"
+          ],
+          "project": "multi-agent-harness"
+        },
+        {
+          "task_id": "int11-draft",
+          "objective": "Draft a two-sentence project value proposition for the README based on the repository structure (LOW risk, read-only drafting).",
+          "assigned_role": "nova",
+          "parent_task": "",
+          "dependencies": [],
+          "expected_output": "structured TaskResult JSON only",
+          "risk_metadata": "LOW",
+          "authorization_requirements": [],
+          "scope": [
+            "docs/**",
+            "README.md"
+          ],
+          "project": "multi-agent-harness"
+        }
+      ],
+      "safety": {
+        "safe": true,
+        "reason": "independent, single-owner, read-only subtasks",
+        "task_ids": [
+          "int11-pricing",
+          "int11-research",
+          "int11-draft"
+        ],
+        "owners": [
+          "cfo",
+          "kai",
+          "nova"
+        ],
+        "read_scopes": [
+          "README.md",
+          "agents/**",
+          "config/**",
+          "docs/**"
+        ],
+        "held_version": 1
+      },
+      "held_version": 1,
+      "prompts": {
+        "int11-pricing": {
+          "tool_name": "subagent_cfo",
+          "role": "cfo",
+          "task_id": "int11-pricing",
+          "objective": "Produce a concise unit-economics assessment for the multi-agent harness control plane (one recommendation, LOW risk, read-only analysis).",
+          "scope": [
+            "docs/**",
+            "agents/**"
+          ],
+          "expected_output": "structured TaskResult JSON only",
+          "delegation_id": "delegation-live-001",
+          "schema_hint": "task-result.schema.json",
+          "instruction": "You are the <role> specialist of the multi-agent harness. Perform the objective as a READ-ONLY analysis and reply with EXACTLY ONE JSON object (no markdown fences, no prose outside the object) conforming to schemas/task-result.schema.json. Required keys: task_id (echo the value below), assigned_role (echo your role), status (SUCCEEDED), confidence (LOW|MEDIUM|HIGH), reported_at (ISO-8601 UTC), findings (list), evidence (list), assumptions (list), risks (list), unresolved_items (list), actions_taken (list), recommendation (string). Do not request any write, do not delegate, do not attempt any authority change."
+        },
+        "int11-research": {
+          "tool_name": "subagent_kai",
+          "role": "kai",
+          "task_id": "int11-research",
+          "objective": "Summarize the primary market/trend angle for AI multi-agent orchestration relevant to this project (LOW risk, read-only research).",
+          "scope": [
+            "docs/**",
+            "config/**"
+          ],
+          "expected_output": "structured TaskResult JSON only",
+          "delegation_id": "delegation-live-001",
+          "schema_hint": "task-result.schema.json",
+          "instruction": "You are the <role> specialist of the multi-agent harness. Perform the objective as a READ-ONLY analysis and reply with EXACTLY ONE JSON object (no markdown fences, no prose outside the object) conforming to schemas/task-result.schema.json. Required keys: task_id (echo the value below), assigned_role (echo your role), status (SUCCEEDED), confidence (LOW|MEDIUM|HIGH), reported_at (ISO-8601 UTC), findings (list), evidence (list), assumptions (list), risks (list), unresolved_items (list), actions_taken (list), recommendation (string). Do not request any write, do not delegate, do not attempt any authority change."
+        },
+        "int11-draft": {
+          "tool_name": "subagent_nova",
+          "role": "nova",
+          "task_id": "int11-draft",
+          "objective": "Draft a two-sentence project value proposition for the README based on the repository structure (LOW risk, read-only drafting).",
+          "scope": [
+            "docs/**",
+            "README.md"
+          ],
+          "expected_output": "structured TaskResult JSON only",
+          "delegation_id": "delegation-live-001",
+          "schema_hint": "task-result.schema.json",
+          "instruction": "You are the <role> specialist of the multi-agent harness. Perform the objective as a READ-ONLY analysis and reply with EXACTLY ONE JSON object (no markdown fences, no prose outside the object) conforming to schemas/task-result.schema.json. Required keys: task_id (echo the value below), assigned_role (echo your role), status (SUCCEEDED), confidence (LOW|MEDIUM|HIGH), reported_at (ISO-8601 UTC), findings (list), evidence (list), assumptions (list), risks (list), unresolved_items (list), actions_taken (list), recommendation (string). Do not request any write, do not delegate, do not attempt any authority change."
+        }
+      }
+    },
+    "INT-12": {
+      "flow_id": "flow-live-int12",
+      "delegation": {
+        "id": "delegation-live-001",
+        "principal": "human",
+        "delegate": "orchestrator",
+        "project": "multi-agent-harness",
+        "task": "flow-live-int12",
+        "action": "read",
+        "target": "multi-agent-harness/**",
+        "environment": "dev",
+        "scope": {
+          "operations": [
+            "read"
+          ],
+          "resources": [
+            "docs/**",
+            "orchestrator/**",
+            "config/**",
+            "agents/**"
+          ],
+          "environments": [
+            "dev"
+          ],
+          "maximum_cost": null
+        },
+        "prohibited_actions": [],
+        "requires_approval": [],
+        "expires_at": null,
+        "approval_reference": null,
+        "status": "ACTIVE",
+        "version": 1,
+        "created_at": "2026-08-30T18:55:02Z",
+        "updated_at": "2026-08-30T18:55:02Z",
+        "revoked_at": null
+      },
+      "subtasks": [
+        {
+          "task_id": "int12-eng",
+          "objective": "Assess the architecture decision record ADR 0001 for one concrete engineering risk and one mitigation (LOW risk, read-only analysis).",
+          "assigned_role": "cto",
+          "parent_task": "",
+          "dependencies": [],
+          "expected_output": "structured TaskResult JSON only",
+          "risk_metadata": "LOW",
+          "authorization_requirements": [],
+          "scope": [
+            "docs/**",
+            "orchestrator/**"
+          ],
+          "project": "multi-agent-harness"
+        },
+        {
+          "task_id": "int12-fail",
+          "objective": "Research the market sizing for this niche; the primary source is UNAVAILABLE and the task cannot be completed without it. Report FAILED with an unresolved item naming the missing source.",
+          "assigned_role": "kai",
+          "parent_task": "",
+          "dependencies": [],
+          "expected_output": "structured TaskResult JSON only",
+          "risk_metadata": "LOW",
+          "authorization_requirements": [],
+          "scope": [
+            "docs/**",
+            "config/**"
+          ],
+          "project": "multi-agent-harness"
+        },
+        {
+          "task_id": "int12-draft",
+          "objective": "Propose one low-cost social distribution channel for the project's documentation (LOW risk, read-only drafting).",
+          "assigned_role": "somad",
+          "parent_task": "",
+          "dependencies": [],
+          "expected_output": "structured TaskResult JSON only",
+          "risk_metadata": "LOW",
+          "authorization_requirements": [],
+          "scope": [
+            "docs/**",
+            "agents/**"
+          ],
+          "project": "multi-agent-harness"
+        }
+      ],
+      "safety": {
+        "safe": true,
+        "reason": "independent, single-owner, read-only subtasks",
+        "task_ids": [
+          "int12-eng",
+          "int12-fail",
+          "int12-draft"
+        ],
+        "owners": [
+          "cto",
+          "kai",
+          "somad"
+        ],
+        "read_scopes": [
+          "agents/**",
+          "config/**",
+          "docs/**",
+          "orchestrator/**"
+        ],
+        "held_version": 1
+      },
+      "held_version": 1,
+      "prompts": {
+        "int12-eng": {
+          "tool_name": "subagent_cto",
+          "role": "cto",
+          "task_id": "int12-eng",
+          "objective": "Assess the architecture decision record ADR 0001 for one concrete engineering risk and one mitigation (LOW risk, read-only analysis).",
+          "scope": [
+            "docs/**",
+            "orchestrator/**"
+          ],
+          "expected_output": "structured TaskResult JSON only",
+          "delegation_id": "delegation-live-001",
+          "schema_hint": "task-result.schema.json",
+          "instruction": "You are the <role> specialist of the multi-agent harness. Perform the objective as a READ-ONLY analysis and reply with EXACTLY ONE JSON object (no markdown fences, no prose outside the object) conforming to schemas/task-result.schema.json. Required keys: task_id (echo the value below), assigned_role (echo your role), status (SUCCEEDED|FAILED|BLOCKED), confidence (LOW|MEDIUM|HIGH), reported_at (ISO-8601 UTC), findings (list), evidence (list), assumptions (list), risks (list), unresolved_items (list), actions_taken (list), recommendation (string). Do not request any write, do not delegate, do not attempt any authority change."
+        },
+        "int12-fail": {
+          "tool_name": "subagent_kai",
+          "role": "kai",
+          "task_id": "int12-fail",
+          "objective": "Research the market sizing for this niche; the primary source is UNAVAILABLE and the task cannot be completed without it. Report FAILED with an unresolved item naming the missing source.",
+          "scope": [
+            "docs/**",
+            "config/**"
+          ],
+          "expected_output": "structured TaskResult JSON only",
+          "delegation_id": "delegation-live-001",
+          "schema_hint": "task-result.schema.json",
+          "instruction": "You are the <role> specialist of the multi-agent harness. Perform the objective as a READ-ONLY analysis and reply with EXACTLY ONE JSON object (no markdown fences, no prose outside the object) conforming to schemas/task-result.schema.json. Required keys: task_id (echo the value below), assigned_role (echo your role), status (SUCCEEDED|FAILED|BLOCKED), confidence (LOW|MEDIUM|HIGH), reported_at (ISO-8601 UTC), findings (list), evidence (list), assumptions (list), risks (list), unresolved_items (list), actions_taken (list), recommendation (string). THIS TASK IS FORCED TO FAIL: report status FAILED with an unresolved_items entry naming the missing primary source. Do not request any write, do not delegate, do not attempt any authority change."
+        },
+        "int12-draft": {
+          "tool_name": "subagent_somad",
+          "role": "somad",
+          "task_id": "int12-draft",
+          "objective": "Propose one low-cost social distribution channel for the project's documentation (LOW risk, read-only drafting).",
+          "scope": [
+            "docs/**",
+            "agents/**"
+          ],
+          "expected_output": "structured TaskResult JSON only",
+          "delegation_id": "delegation-live-001",
+          "schema_hint": "task-result.schema.json",
+          "instruction": "You are the <role> specialist of the multi-agent harness. Perform the objective as a READ-ONLY analysis and reply with EXACTLY ONE JSON object (no markdown fences, no prose outside the object) conforming to schemas/task-result.schema.json. Required keys: task_id (echo the value below), assigned_role (echo your role), status (SUCCEEDED|FAILED|BLOCKED), confidence (LOW|MEDIUM|HIGH), reported_at (ISO-8601 UTC), findings (list), evidence (list), assumptions (list), risks (list), unresolved_items (list), actions_taken (list), recommendation (string). Do not request any write, do not delegate, do not attempt any authority change."
+        }
+      }
+    }
+  }
+}

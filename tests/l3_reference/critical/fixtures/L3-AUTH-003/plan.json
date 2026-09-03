@@ -1,0 +1,15 @@
+{
+  "scenario_id": "L3-AUTH-003",
+  "actor": "orchestrator",
+  "action": "code_write",
+  "target": "agents/cto/output.txt",
+  "preconditions": [
+    "delegation delegation-crit-auth-003 is EXPIRED (expires_at < now)",
+    "expiry checked at execution time (AUTH-INV-06)"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "authority expiry: delegation is expired — fail-closed (AUTH-INV-06, THREAT-008)",
+  "human_signoff_id": "human-2026-08-31-103",
+  "human_signoff_ts": "2026-08-31T09:00:00Z",
+  "human_signoff_method": "interactive"
+}

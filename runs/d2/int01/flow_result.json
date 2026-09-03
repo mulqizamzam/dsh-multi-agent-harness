@@ -1,0 +1,339 @@
+{
+  "flow_id": "flow-d2-int01-1788116312",
+  "objective": "engineering",
+  "project": "multi-agent-harness",
+  "task_id": "task-1",
+  "outcome": "COMPLETE",
+  "phase": "close",
+  "final_state": "COMPLETE",
+  "version": 7,
+  "risk": "MEDIUM",
+  "selected": [
+    "cto"
+  ],
+  "tasks": [
+    {
+      "task_id": "task-1",
+      "objective": "engineering",
+      "assigned_role": "cto",
+      "parent_task": "",
+      "dependencies": [],
+      "expected_output": "module written and verified",
+      "risk_metadata": "MEDIUM",
+      "authorization_requirements": [],
+      "scope": [
+        "agents/**"
+      ],
+      "project": "multi-agent-harness"
+    }
+  ],
+  "delegations": [
+    {
+      "id": "delegation-task-1-eba0b9a0",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "task": "task-1",
+      "action": "write",
+      "target": "agents/cto/output.txt",
+      "environment": "dev",
+      "scope": {
+        "operations": [
+          "write",
+          "read",
+          "code_write"
+        ],
+        "resources": [
+          "agents/**",
+          "docs/**",
+          "multi-agent-harness/**"
+        ],
+        "environments": [
+          "dev"
+        ],
+        "maximum_cost": null
+      },
+      "prohibited_actions": [],
+      "requires_approval": [],
+      "expires_at": null,
+      "approval_reference": null,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-30T18:58:32Z",
+      "updated_at": "2026-08-30T18:58:32Z",
+      "revoked_at": null
+    }
+  ],
+  "results": [
+    {
+      "task_id": "task-1:cto",
+      "role": "cto",
+      "provenance": {
+        "delegation_id": "delegation-task-1-eba0b9a0",
+        "task_id": "task-1:cto",
+        "role": "cto",
+        "tool_name": "subagent_cto",
+        "persona": "role-cto",
+        "instance_max_depth": 1,
+        "background_mode": "continuable",
+        "provider": "spawn",
+        "actor": "orchestrator",
+        "session_id": "session-90581a7b-ed2c-4fa1-b43f-55bd98eb4d3c",
+        "adapter_version": "dsh-integration-adapter-1.0",
+        "dsh_version_pin": "deepseek-harness-0.1.1-rc.2",
+        "run_id": "fake-2161062f7a9a",
+        "started_at": "2026-08-30T18:58:32Z",
+        "settled_at": "2026-08-30T18:58:32Z",
+        "stop_reason": "completed",
+        "result_status": "SUCCEEDED"
+      },
+      "status": "SUCCEEDED",
+      "findings": [
+        "cto: analysis"
+      ],
+      "evidence": [
+        "artifact:cto:analysis"
+      ],
+      "risks": [],
+      "assumptions": [],
+      "unresolved_items": [],
+      "actions_taken": [],
+      "recommendation": "write module",
+      "confidence": "MEDIUM",
+      "reported_at": "2026-08-30T18:58:32Z"
+    }
+  ],
+  "parallel": {
+    "safe": true,
+    "mode": "sequential",
+    "task_ids": [
+      "task-1:cto"
+    ],
+    "owners": [
+      "cto"
+    ],
+    "held_version": 4
+  },
+  "synthesis": {
+    "task_id": "task-1",
+    "objective": "engineering",
+    "risk": "MEDIUM",
+    "findings": [
+      "cto: analysis"
+    ],
+    "recommendations": [
+      "write module"
+    ],
+    "assumptions": [],
+    "risks": [],
+    "unresolved_items": [],
+    "roles": [
+      "cto"
+    ]
+  },
+  "gates": [
+    {
+      "phase": "classify",
+      "gate": "risk_classify",
+      "decision": "ALLOW",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "detail": {
+        "risk": "MEDIUM",
+        "intrinsic": false,
+        "signals": []
+      }
+    },
+    {
+      "phase": "risk_gate",
+      "gate": "risk",
+      "decision": "ALLOW",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "detail": {
+        "risk": "MEDIUM",
+        "intrinsic": false,
+        "signals": []
+      }
+    },
+    {
+      "phase": "evidence_gate",
+      "gate": "evidence",
+      "decision": "ALLOW",
+      "reason": "evidence sufficient for action",
+      "detail": {
+        "rung": "SUFFICIENT_FOR_ACTION",
+        "evidence_present": true
+      }
+    },
+    {
+      "phase": "conflict_gate",
+      "gate": "conflict",
+      "decision": "ALLOW",
+      "reason": "all conflicts synthesized; disagreement preserved; no voting",
+      "detail": {
+        "action": "synthesize",
+        "detail": {
+          "conflicts": []
+        }
+      }
+    },
+    {
+      "phase": "adversarial_review",
+      "gate": "badsector_review",
+      "decision": "ALLOW",
+      "reason": "review not required for this action class",
+      "detail": {
+        "mandatory": false,
+        "risk": "MEDIUM",
+        "action": "write"
+      }
+    },
+    {
+      "phase": "authority_gate",
+      "gate": "authority",
+      "decision": "ALLOW",
+      "reason": "",
+      "detail": {}
+    },
+    {
+      "phase": "verify",
+      "gate": "verification",
+      "decision": "ALLOW",
+      "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+      "detail": {
+        "action_category": "code_change",
+        "independence": "self",
+        "required_evidence": [
+          "test",
+          "build"
+        ],
+        "human_confirmation_required": false,
+        "evidence": [
+          {
+            "kind": "test",
+            "source": "agents/cto/output.txt#test",
+            "verifier": "self:orchestrator",
+            "independent": false,
+            "human_confirmation": false
+          },
+          {
+            "kind": "build",
+            "source": "agents/cto/output.txt#build",
+            "verifier": "self:orchestrator",
+            "independent": false,
+            "human_confirmation": false
+          }
+        ]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "phase": "intake",
+      "note": "intake accepted"
+    },
+    {
+      "phase": "understand",
+      "note": "normalize objective + require authority context"
+    },
+    {
+      "phase": "classify",
+      "note": "deterministic risk classification"
+    },
+    {
+      "phase": "risk_gate",
+      "note": "risk gate (non-downgradable HIGH)"
+    },
+    {
+      "phase": "decompose",
+      "note": "decompose objective into a scoped task"
+    },
+    {
+      "phase": "select",
+      "note": "select minimum specialist set"
+    },
+    {
+      "phase": "delegate",
+      "note": "issue scoped child delegation (orchestrator-only)"
+    },
+    {
+      "phase": "execute_subtasks",
+      "note": "delegate subtasks to specialists (parallel when independent)"
+    },
+    {
+      "phase": "collect",
+      "note": "collect structured results (data, not authority)"
+    },
+    {
+      "phase": "evidence_gate",
+      "note": "evidence sufficiency ladder"
+    },
+    {
+      "phase": "synthesize",
+      "note": "consolidate results (preserve disagreement)"
+    },
+    {
+      "phase": "conflict_gate",
+      "note": "detect + resolve conflicts (no voting)"
+    },
+    {
+      "phase": "adversarial_review",
+      "note": "BadSector review (PASS != authority)"
+    },
+    {
+      "phase": "authority_gate",
+      "note": "planning-time authority check"
+    },
+    {
+      "phase": "execute",
+      "note": "execution-time authority re-check + execute"
+    },
+    {
+      "phase": "verify",
+      "note": "verification gate (reported != verified)"
+    },
+    {
+      "phase": "close",
+      "note": "COMPLETE after verified outcome"
+    }
+  ],
+  "verification": {
+    "verdict": "PASSED",
+    "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+    "detail": {
+      "action_category": "code_change",
+      "independence": "self",
+      "required_evidence": [
+        "test",
+        "build"
+      ],
+      "human_confirmation_required": false,
+      "evidence": [
+        {
+          "kind": "test",
+          "source": "agents/cto/output.txt#test",
+          "verifier": "self:orchestrator",
+          "independent": false,
+          "human_confirmation": false
+        },
+        {
+          "kind": "build",
+          "source": "agents/cto/output.txt#build",
+          "verifier": "self:orchestrator",
+          "independent": false,
+          "human_confirmation": false
+        }
+      ]
+    }
+  },
+  "recovery": {},
+  "audit_ids": [
+    "event-000001",
+    "event-000025"
+  ],
+  "files_written": [
+    "agents/cto/output.txt"
+  ],
+  "errors": [],
+  "started_at": "2026-08-30T18:58:32Z",
+  "finished_at": "2026-08-30T18:58:32Z"
+}

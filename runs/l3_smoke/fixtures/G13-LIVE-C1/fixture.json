@@ -1,0 +1,53 @@
+{
+  "scenario_id": "G13-LIVE-C1",
+  "gate_under_test": "authority",
+  "oracle_classes_used": ["O1", "O4"],
+  "oracle_rationale": "O1 independent authority-gate reference oracle (re-implementation) + O4 Human-signed expectation (DENY)",
+  "oracle_context": {
+    "actor": "orchestrator",
+    "action": "write",
+    "target": "agents/kai/out.md",
+    "delegation": {
+      "id": "delegation-g13-c1",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "task": "task-g13-c1",
+      "action": "read",
+      "target": "docs/**",
+      "environment": "dev",
+      "scope_operations": ["read"],
+      "scope_resources": ["docs/**"],
+      "scope_environments": ["dev"],
+      "expires_at": "2026-12-31T00:00:00Z",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-09-01T00:00:00Z",
+      "updated_at": "2026-09-01T00:00:00Z",
+      "revoked_at": ""
+    },
+    "revocation_list": [],
+    "environment": "dev",
+    "project": "multi-agent-harness",
+    "approval_reference": "",
+    "now": "2026-09-01T15:00:00Z"
+  },
+  "replayable": false,
+  "target_is_protected": false,
+  "delegation_chain": [
+    {
+      "principal": "human",
+      "delegate": "orchestrator",
+      "delegation_id": "delegation-g13-c1",
+      "action": "read",
+      "target": "docs/**",
+      "scope": {"operations": ["read"]},
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-09-01T00:00:00Z",
+      "revoked_at": null
+    }
+  ],
+  "children": [],
+  "collection_order": []
+}

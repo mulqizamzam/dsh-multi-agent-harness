@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-TEST-001",
+  "actor": "orchestrator",
+  "action": "code_write",
+  "target": "agents/cto/test-output.txt",
+  "preconditions": [
+    "delegation delegation-test-001 ACTIVE (scope: write/read on agents/**, env dev)",
+    "task is LOW risk, non-destructive",
+    "no approval_reference required"
+  ],
+  "expected_verdict": "ALLOW",
+  "expected_verdict_reason": "synthetic test: all gates pass, execution allowed",
+  "human_signoff_id": "human-2026-08-31-001",
+  "human_signoff_ts": "2026-08-31T00:00:00Z",
+  "human_signoff_method": "interactive"
+}

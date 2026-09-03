@@ -1,0 +1,29 @@
+{
+  "run_id": "94d12d42-3f97-4730-9361-637d449a7dcf",
+  "stop_reason": "completed",
+  "output": "CTO engineering analysis of agents/** scope complete...",
+  "structured": {
+    "task_id": "task-1:cto",
+    "assigned_role": "cto",
+    "status": "SUCCEEDED",
+    "confidence": "HIGH",
+    "reported_at": "2026-08-30T21:39:35Z",
+    "findings": [
+      "Role framework is structurally complete and machine-validated: all 7 specialists have AGENT.md + policy.yaml, delegation tools denied for all specialists (subdelegation DENY BY DEFAULT, max_depth 1), orchestrator owns 7 gates and is single writer of state/audit, config validation passes 194 checks (exit 0) and 5 unit tests pass.",
+      "Capability-level inconsistencies exist that the validator does not catch: CTO AGENT.md asserts financial_* = no (ISO-001) with invariant no_financial_capability, but CTO policy.yaml grants financial_analysis: scoped (matching permissions.yaml).",
+      "Control-plane integration is deferred: per-role presets (agent.cordis.yml) and tool-subagent instances are DRAFT (NOT MOUNTED); mounting requires a controlled DSH composition exception per ADR D4/D7 (HUMAN_PENDING)."
+    ],
+    "evidence": [
+      "agents/cto/AGENT.md line 32: financial_* = no, line 48: invariant no_financial_capability; agents/cto/policy.yaml line 19: financial_analysis: scoped, line 56: no_financial_capability: true",
+      "config/permissions.yaml line 70: financial_transaction: zeko: scoped; agents/zeko/policy.yaml line 20: financial_transaction: no, line 52: prohibited_actions includes financial_transaction",
+      "tests/validate-config.py exit 0 with 194 PASS checks; tests/unit/test_config.py 5 passed",
+      "All 7 agents/** files exist: 21 files total; config/role-preset-mapping.yaml defines all 7 roles with tool_filter allow∩deny=∅, max_depth 1, delegation tools denied.",
+      "orchestrator/contract.md defines 15-phase lifecycle with 7 gates; config/tool-subagent-instances.yaml status: draft, NOT mounted."
+    ],
+    "assumptions": ["policy.yaml and permissions.yaml are the operative control-plane inputs; AGENT.md is the human-readable contract, not the enforcement source."],
+    "risks": ["Capability drift between AGENT.md narrative and policy.yaml/permissions.yaml can silently accumulate.", "Draft presets not mounted means role isolation is currently aspirational.", "The CTO financial_analysis inconsistency could cause ambiguity or denial during gate enforcement if reconciliation is deferred."],
+    "unresolved_items": ["CTO AGENT.md financial_* = no contradicts policy.yaml financial_analysis: scoped — resolve which is source of truth.", "Zeko permissions.yaml grants financial_transaction: scoped but zeko policy.yaml denies it.", "BadSector has web_research: scoped in AGENT.md/permissions/policy but web_search is denied in its tool_filter."],
+    "actions_taken": ["Read all 7 AGENT.md files and policy.yaml files.", "Read config/agents.yaml, config/permissions.yaml, config/role-preset-mapping.yaml, config/tool-subagent-instances.yaml.", "Ran tests/validate-config.py (exit 0, 194 PASS) and python3 -m pytest tests/unit/test_config.py -q (5 passed)."],
+    "recommendation": "Resolve the two financial capability inconsistencies before the controlled mount. Extend tests/validate_config.py to assert each role's policy.yaml capabilities block matches its row in config/permissions.yaml. Proceed with the ADR D4/D7 controlled mounting only after reconciliation."
+  }
+}

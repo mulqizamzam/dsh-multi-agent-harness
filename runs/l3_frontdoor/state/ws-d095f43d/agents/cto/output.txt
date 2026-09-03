@@ -1,0 +1,7 @@
+{
+  "audit_event_id": "event-l3-auth-001-d85e424f",
+  "authority_source": "delegation-crit-auth-001",
+  "scenario_id": "L3-AUTH-001",
+  "written_at": "2026-09-02T22:13:40Z",
+  "written_by": "l3-frontdoor-responder/1.0"
+}

@@ -1,0 +1,93 @@
+# ============================================================================
+# AGENT REGISTRY — multi-agent-harness
+# Phase 1 (Foundation)
+#
+# This file is the canonical registry of agents in the system (PRD Appendix B).
+# It lists WHO exists and WHAT their domain is. It does NOT grant authority:
+# technical capability boundaries live in `permissions.yaml` + `agents/<id>/policy.yaml`;
+# project/action authority lives in `authority.yaml`.
+#
+# Registry, permissions, and authority are separate concerns (PRD §6).
+#
+# Phase 1A finalization (2026-08-29): the 7 role definitions
+# (agents/<id>/AGENT.md + policy.yaml) and the role→preset/toolFilter mapping
+# (config/role-preset-mapping.yaml) now exist; `default_policy` references
+# below resolve to real files. This registry records WHO exists and WHAT their
+# domain is; it does NOT grant authority.
+# ============================================================================
+
+registry_version: 2
+status: finalized
+role_mapping: config/role-preset-mapping.yaml
+
+# Orchestrator is a coordination/delegation layer, NOT an eighth specialist
+# (PRD §4, Phase-1 instruction). It is registered here for completeness but
+# carries no specialist domain.
+orchestrator:
+  id: orchestrator
+  kind: coordination
+  role: Orchestrator
+  summary: >
+    Coordination and delegation layer. Converts objectives into scoped tasks,
+    selects the minimum relevant specialist set, delegates with explicit
+    authority boundaries, collects and synthesizes results, and enforces gates.
+    Does NOT execute specialist work. Has no permanent authority.
+
+# The seven specialist peers (PRD §5). No specialist manages another.
+agents:
+  - id: zeko
+    role: operations
+    display_name: Zeko
+    domain: Operations & Infrastructure
+    summary: server/runtime monitoring, process health, logs, deployment operations, operational recovery
+    default_policy: agents/zeko/policy.yaml
+
+  - id: cto
+    role: engineering
+    display_name: CTO
+    domain: Coding & System Architecture
+    summary: coding, architecture, testing, technical feasibility, security, performance, implementation
+    default_policy: agents/cto/policy.yaml
+
+  - id: cfo
+    role: finance
+    display_name: CFO
+    domain: Finance, Pricing & Economics
+    summary: pricing, unit economics, cost, margin, budget, ROI, financial scenario analysis
+    default_policy: agents/cfo/policy.yaml
+
+  - id: kai
+    role: research
+    display_name: Kai
+    domain: Research, News & Trends
+    summary: news, market research, competitor research, trend detection, evidence gathering
+    default_policy: agents/kai/policy.yaml
+
+  - id: somad
+    role: social
+    display_name: Somad
+    domain: Social Media & Distribution
+    summary: social strategy, content, campaigns, editorial calendar, audience analysis, distribution
+    default_policy: agents/somad/policy.yaml
+
+  - id: badsector
+    role: adversarial_review
+    display_name: BadSector
+    domain: Adversarial Review / Validation
+    summary: challenge assumptions, red-team plans, identify failure modes, detect contradictions, verify evidence
+    default_policy: agents/badsector/policy.yaml
+
+  - id: nova
+    role: writing
+    display_name: Nova
+    domain: Writing & Novel
+    summary: novel writing, editing, continuity, character consistency, worldbuilding, style review
+    default_policy: agents/nova/policy.yaml
+
+# Registry invariants (enforced by tests/validate-config.py)
+invariants:
+  specialist_count: 7
+  peer_relationship: true            # no specialist manages another
+  badsector_is_reviewer_not_authorizer: true
+  zeko_is_operations_not_supervisor: true
+  orchestrator_is_coordination_not_eighth_specialist: true

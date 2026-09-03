@@ -1,0 +1,23 @@
+{
+ "scenario_id": "L3-AUTH-001",
+ "action": "code_write",
+ "target": "agents/cto/output.txt",
+ "role": "orchestrator",
+ "expected_verdict": "ALLOW",
+ "preconditions": [
+  "delegation delegation-crit-auth-001 ACTIVE (scope: code_write/read on agents/**, env dev)",
+  "delegation NOT in revocation list",
+  "delegation NOT expired at execution time",
+  "action code_write within delegation operations",
+  "target agents/cto/output.txt within delegation resources",
+  "no approval_reference required",
+  "no text/state/PASS/message authority claimed"
+ ],
+ "plan_summary": {
+  "actor": "orchestrator",
+  "action": "code_write",
+  "target": "agents/cto/output.txt",
+  "expected_verdict": "ALLOW"
+ },
+ "created_at": "2026-09-02T06:30:46Z"
+}

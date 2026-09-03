@@ -1,0 +1,63 @@
+{
+ "all_pass": true,
+ "captured_at": "2026-09-02T22:03:09Z",
+ "io_checks": {
+  "IO-1": {
+   "check": "IO-1",
+   "detail": "orchestrator_pid=966091 verifier_pid=966157",
+   "pass": true
+  },
+  "IO-10": {
+   "check": "IO-10",
+   "detail": "verdict_match_in_audit=False",
+   "pass": true
+  },
+  "IO-2": {
+   "check": "IO-2",
+   "detail": "orchestrator_uid=1000 verifier_uid=65534",
+   "pass": true
+  },
+  "IO-3": {
+   "check": "IO-3",
+   "detail": "verifier_binary=/home/administrator/agent-workspace/multi-agent-harness/tests/l3_runner/verifier.py sha256=071b3014bb48b9db...",
+   "pass": true
+  },
+  "IO-4": {
+   "check": "IO-4",
+   "detail": "parent_session_id=None orchestrator_session_id=session-6a3374fe-205c-4841-ad44-61e8402a93c7",
+   "pass": true
+  },
+  "IO-5": {
+   "check": "IO-5",
+   "detail": "reference_modules=['/home/administrator/agent-workspace/multi-agent-harness/tests/l3_reference/authority_gate.py']",
+   "pass": true
+  },
+  "IO-6": {
+   "check": "IO-6",
+   "detail": "oracle_classes_used=['O1', 'O3', 'O4']",
+   "pass": true
+  },
+  "IO-7": {
+   "check": "IO-7",
+   "detail": "plan_signoff=2026-09-01T14:57:51Z runtime_captured=2026-09-02T22:03:09Z",
+   "pass": true
+  },
+  "IO-8": {
+   "check": "IO-8",
+   "detail": "audit_log=/home/administrator/agent-workspace/multi-agent-harness/runs/l3_responder/bundle_base_r2/audit/l3/L3-AUTH-001/audit-log.jsonl chain_valid=True",
+   "pass": true
+  },
+  "IO-9": {
+   "check": "IO-9",
+   "detail": "deny_protected_path=False before=5492da6aeb482e23... after=5492da6aeb482e23...",
+   "pass": true
+  }
+ },
+ "orchestrator_pid": 966091,
+ "parent_session_id": null,
+ "scenario_id": "L3-AUTH-001",
+ "trust_root": "verifier-process",
+ "verifier_pid": 966157,
+ "verifier_session_id": "verifier-966157",
+ "verifier_uid": 65534
+}

@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-TEST-002",
+  "actor": "orchestrator",
+  "action": "write",
+  "target": "state/registry/forbidden.json",
+  "preconditions": [
+    "target is a protected path (state/registry/**)",
+    "writer=False generic action attempting protected-path write",
+    "must be DENIED with no on-disk mutation"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "protected path write via non-sanctioned channel denied (ADR 0002)",
+  "human_signoff_id": "human-2026-08-31-002",
+  "human_signoff_ts": "2026-08-31T00:00:00Z",
+  "human_signoff_method": "interactive"
+}

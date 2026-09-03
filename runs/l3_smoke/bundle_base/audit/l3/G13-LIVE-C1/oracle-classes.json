@@ -1,0 +1,8 @@
+{
+ "oracle_classes_used": [
+  "O1",
+  "O4"
+ ],
+ "rationale": "O1 independent authority-gate reference oracle (re-implementation) + O4 Human-signed expectation (DENY)",
+ "scenario_id": "G13-LIVE-C1"
+}

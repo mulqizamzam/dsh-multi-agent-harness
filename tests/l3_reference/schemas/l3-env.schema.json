@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/l3/env.schema.json",
+  "title": "L3 evidence environment snapshot",
+  "description": "Environment snapshot for an L3 evidence bundle (plan 0003 §6 env.json).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dsh_version", "os", "python_version", "sandbox_mode",
+    "approval_policy", "permission_preset", "utc_offset_seconds", "seed"
+  ],
+  "properties": {
+    "dsh_version": { "type": "string", "const": "0.1.1-rc.2" },
+    "os": { "type": "string", "minLength": 1 },
+    "python_version": { "type": "string", "minLength": 1 },
+    "sandbox_mode": { "type": "string", "enum": ["workspace-write", "danger-full-access", "read-only"] },
+    "approval_policy": { "type": "string", "enum": ["ask", "never", "auto"] },
+    "permission_preset": { "type": "string", "minLength": 1 },
+    "utc_offset_seconds": { "type": "integer" },
+    "seed": { "type": ["integer", "null"] }
+  }
+}

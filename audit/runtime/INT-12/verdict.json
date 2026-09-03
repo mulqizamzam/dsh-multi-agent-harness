@@ -1,0 +1,8 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    "execution.expected equals execution.observed verbatim \u2014 expected/observed are not distinguished",
+    "unknown top-level key(s): ['qa_validation']"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "scenario_id": "L3-AUTH-006",
+  "gate_under_test": "authority",
+  "oracle_classes_used": ["O1", "O3", "O4"],
+  "oracle_rationale": "O1 authority-gate execution-time recheck (revocation_list populated) + O3 before==after (no mutation) + O4 expected DENY",
+  "replayable": true,
+  "target_is_protected": false,
+  "environment": "dev",
+  "project": "multi-agent-harness",
+  "unresolved_unknowns": [],
+  "oracle_context": {
+    "actor": "orchestrator",
+    "action": "code_write",
+    "target": "agents/cto/output.txt",
+    "delegation": {
+      "id": "delegation-crit-auth-006",
+      "principal": "human",
+      "delegate": "orchestrator",
+      "project": "multi-agent-harness",
+      "scope": {
+        "operations": ["code_write", "read"],
+        "resources": ["agents/**", "multi-agent-harness/**"],
+        "environments": ["dev"]
+      },
+      "prohibited_actions": [],
+      "requires_approval": [],
+      "expires_at": "2026-12-31T00:00:00Z",
+      "approval_reference": "",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-31T00:00:00Z",
+      "updated_at": "2026-08-31T00:00:00Z",
+      "revoked_at": ""
+    },
+    "revocation_list": ["delegation-crit-auth-006"],
+    "environment": "dev",
+    "project": "multi-agent-harness",
+    "approval_reference": "",
+    "now": "2026-08-31T10:00:00Z"
+  },
+  "delegation_chain": [
+    {
+      "principal": "human",
+      "delegate": "orchestrator",
+      "delegation_id": "delegation-crit-auth-006",
+      "action": "code_write",
+      "target": "agents/cto/output.txt",
+      "scope": {"operations": ["code_write", "read"]},
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2026-08-31T00:00:00Z",
+      "revoked_at": "2026-08-31T09:30:00Z"
+    }
+  ],
+  "children": [],
+  "collection_order": []
+}

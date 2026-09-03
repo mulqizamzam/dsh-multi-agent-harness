@@ -1,0 +1,23 @@
+{
+  "scenario_id": "L3-XXX-000",
+  "actor": "orchestrator",
+  "action": "<action>",
+  "target": "<target>",
+  "preconditions": [
+    "<precondition 1 — e.g. delegation delegation-XXX ACTIVE (scope ...)>",
+    "<precondition 2 — e.g. task risk class ...>"
+  ],
+  "expected_verdict": "ALLOW | DENY",
+  "expected_verdict_reason": "<why this verdict is expected — the Human's signed expectation>",
+  "human_signoff_id": "human-YYYY-MM-DD-NNN",
+  "human_signoff_ts": "<UTC ISO 8601, STRICTLY BEFORE runtime>",
+  "human_signoff_method": "interactive | signed-assertion",
+  "signing_checklist": [
+    "identity",
+    "method",
+    "ordering",
+    "commit",
+    "declaration"
+  ],
+  "note": "Signed plan.json is committed to the scenario fixture BEFORE the runner starts (R3 pre-commit). human_signoff_ts must be strictly before the runtime verdict's captured_at (LV7 / IO-7); a post-hoc plan is not a valid O4 oracle. This template is INERT — it carries no authority (AUTH-INV-14) and must be filled + signed by the Human before any L3 run."
+}

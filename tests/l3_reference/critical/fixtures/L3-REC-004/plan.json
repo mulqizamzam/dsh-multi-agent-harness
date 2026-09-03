@@ -1,0 +1,16 @@
+{
+  "scenario_id": "L3-REC-004",
+  "actor": "orchestrator",
+  "action": "recovery",
+  "target": "recovery:re-execute",
+  "preconditions": [
+    "recovery attempted after an execution failure",
+    "recovery must NOT acquire privilege beyond the original action (AUTH-INV-12, THREAT-017)",
+    "attempt_action outside the original authority scope"
+  ],
+  "expected_verdict": "DENY",
+  "expected_verdict_reason": "recovery privilege bounding: recovery attempting an action outside the original authority is DENIED (AUTH-INV-12, REC-004)",
+  "human_signoff_id": "human-2026-08-31-108",
+  "human_signoff_ts": "2026-08-31T09:00:00Z",
+  "human_signoff_method": "interactive"
+}

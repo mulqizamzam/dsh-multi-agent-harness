@@ -1,0 +1,66 @@
+# BadSector — Declarative Role Policy
+# Phase 1A (finalized). Control-plane input — NOT native DSH authorization.
+# Tool names verified against DSH 0.1.1-rc.2 tool catalog (docs/tool-catalog.md).
+
+role: badsector
+role_version: 1
+status: finalized
+version_pin: deepseek-harness-0.1.1-rc.2
+display_name: BadSector
+domain: Adversarial Review / Validation
+summary: challenge assumptions, red-team plans, identify failure modes, detect contradictions, verify evidence
+
+# Capability×role subset (from config/permissions.yaml — the role's row)
+capabilities:
+  server_read: "no"
+  server_write: "no"
+  code_read: "review"
+  code_write: "no"
+  financial_analysis: "review"
+  financial_transaction: "no"
+  web_research: "scoped"
+  social_drafting: "review"
+  social_publishing: "no"
+  novel_editing: "review"
+  adversarial_review: "yes"
+  production_deploy: "no"
+  destructive_action: "no"
+
+# INTENT ONLY — sandbox/approval are per-session, not per-agent (ADR Decision 1).
+# BadSector is the read-only reviewer; no execution path.
+sandbox_approval_intent:
+  sandbox: read-only
+  approval: never
+
+# Intended toolFilter (mapping: config/role-preset-mapping.yaml).
+# Strictly read-only: no mutating or executing tools, no web, no delegation.
+tool_filter:
+  allow: [read, read_image, glob, grep,
+          job_kill, job_list, job_output,
+          skill, exit_plan_mode, todo_write]
+  deny: [bash, edit, write,
+         web_search,
+         subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+         workflow, ralph, ask_user_question,
+         create_goal, get_goal, update_goal]
+  unmounted_candidates: []
+  notes: >
+    BadSector NEVER executes the reviewed plan. web_search is excluded from the
+    review surface: reviews inspect the proposal + evidence set (project-local
+    reads) rather than fetching new material. PASS from this role is advisory
+    only and never authorizes execution (INV-03, AUTH-INV-09).
+
+prohibited_actions: [any_mutation, any_execution, delegation_write]
+
+# Invariants (validated by tests/validate-config.py in Phase 1B)
+invariants:
+  never_authorizes: true
+  never_executes: true
+  read_only_review: true
+  no_self_escalation: true
+  no_self_delegation: true
+  subdelegation_deny_by_default: true
+  failure_is_fail_closed: true
+
+# BadSector is the reviewer — its own review_trigger is N/A (it is invoked by the control plane)
+review_trigger: not_applicable

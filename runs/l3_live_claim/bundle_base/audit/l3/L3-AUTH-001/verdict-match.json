@@ -1,0 +1,66 @@
+{
+ "captured_at": "2026-09-02T06:31:14Z",
+ "claim_gate": {
+  "failures": [],
+  "l3_claim": true,
+  "satisfied": {
+   "IO-all-pass": {
+    "detail": "",
+    "pass": true
+   },
+   "P1-runtime": {
+    "detail": "runtime-verdict.json present=True decision='ALLOW'",
+    "pass": true
+   },
+   "P2-independent-observer": {
+    "detail": "orchestrator_pid=775534 verifier_pid=775554",
+    "pass": true
+   },
+   "P2-uid-separation": {
+    "detail": "orchestrator_uid=1000 verifier_uid=65534",
+    "pass": true
+   },
+   "P3-external-oracle": {
+    "detail": "oracle_classes_used=['O1', 'O3', 'O4']",
+    "pass": true
+   },
+   "P4-reproducible-replay": {
+    "detail": "fixture_hash=set verifier_sha=set schema_sha=set",
+    "pass": true
+   },
+   "evidence-bundle-complete": {
+    "detail": "missing=none",
+    "pass": true
+   },
+   "human-signed-plan": {
+    "detail": "plan.json present=True signoff=2026-09-01T14:57:51Z runtime=2026-09-02T06:28:00Z precedes=True",
+    "pass": true
+   },
+   "no-unresolved-unknown": {
+    "detail": "unknowns=none",
+    "pass": true
+   },
+   "verdict-agreement": {
+    "detail": "runtime='ALLOW' reference='ALLOW'",
+    "pass": true
+   }
+  }
+ },
+ "delta_summary": "",
+ "evidence_checks": {
+  "evidence_provenance": "pass",
+  "evidence_provenance_detail": "delegation_chain=True children=True",
+  "replay_metadata": "pass",
+  "replay_metadata_detail": "fixture+verifier+schema pins=True",
+  "state_hashes": "pass",
+  "state_hashes_detail": "before=present(5492da6a...) after=present(5492da6a...)"
+ },
+ "failure_class": "L3-PASS",
+ "independent_observer_id": "verifier-process-775554",
+ "l3_claim": true,
+ "match": true,
+ "reference_decision": "ALLOW",
+ "replay_command": "python -m tests.l3_runner.runner --scenario L3-AUTH-001 --mode replay",
+ "runtime_decision": "ALLOW",
+ "scenario_id": "L3-AUTH-001"
+}
