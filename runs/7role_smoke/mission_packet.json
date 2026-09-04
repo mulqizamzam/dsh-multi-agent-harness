@@ -1,0 +1,137 @@
+{
+  "mission_id": "mission-7role-smoke-0001",
+  "objective": "7-role bounded smoke: metrics + verdict",
+  "context_refs": [],
+  "constraints": [],
+  "tasks": [
+    {
+      "task_id": "nova",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "nova",
+      "role": "nova",
+      "objective": "facts/research: bounded smoke context for CTO decision",
+      "depends_on": [],
+      "context_refs": [
+        "docs/AGENTS.md"
+      ],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [],
+      "rework_of": "",
+      "rework_cycle": 0
+    },
+    {
+      "task_id": "cfo",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "cfo",
+      "role": "cfo",
+      "objective": "resource/cost recommendation for one bounded mission",
+      "depends_on": [],
+      "context_refs": [],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [],
+      "rework_of": "",
+      "rework_cycle": 0
+    },
+    {
+      "task_id": "cto",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "cto",
+      "role": "cto",
+      "objective": "technical decision: reuse organization layer as-is",
+      "depends_on": [
+        "nova"
+      ],
+      "context_refs": [
+        "nova"
+      ],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [],
+      "rework_of": "",
+      "rework_cycle": 0
+    },
+    {
+      "task_id": "kai",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "kai",
+      "role": "kai",
+      "objective": "implementation: harmless smoke artifact under runs/",
+      "depends_on": [
+        "cto"
+      ],
+      "context_refs": [
+        "cto"
+      ],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [
+        "test",
+        "artifact"
+      ],
+      "rework_of": "",
+      "rework_cycle": 0
+    },
+    {
+      "task_id": "bad",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "badsector",
+      "role": "badsector",
+      "objective": "adversarial review of kai artifact",
+      "depends_on": [
+        "kai"
+      ],
+      "context_refs": [
+        "kai"
+      ],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [],
+      "rework_of": "",
+      "rework_cycle": 0
+    },
+    {
+      "task_id": "som",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "somad",
+      "role": "somad",
+      "objective": "independent verification of kai artifact",
+      "depends_on": [
+        "kai"
+      ],
+      "context_refs": [
+        "kai"
+      ],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [],
+      "rework_of": "",
+      "rework_cycle": 0
+    },
+    {
+      "task_id": "zeko",
+      "mission_id": "mission-7role-smoke-0001",
+      "owner": "zeko",
+      "role": "zeko",
+      "objective": "integration/release readiness",
+      "depends_on": [
+        "bad",
+        "som"
+      ],
+      "context_refs": [],
+      "output_schema": "",
+      "timeout": null,
+      "max_attempts": 1,
+      "required_evidence": [],
+      "rework_of": "",
+      "rework_cycle": 0
+    }
+  ]
+}

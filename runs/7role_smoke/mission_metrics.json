@@ -1,0 +1,219 @@
+{
+  "mission_id": "mission-7role-smoke-0001",
+  "started_at": "2026-09-04T02:59:36.961424+00:00",
+  "completed_at": "2026-09-04T02:59:37.236150+00:00",
+  "duration_ms": 274.72591400146484,
+  "task_count": 7,
+  "completed_tasks": 7,
+  "blocked_tasks": 0,
+  "failed_tasks": 0,
+  "escalated_tasks": 0,
+  "rework_cycles": 0,
+  "roles_invoked": [
+    "badsector",
+    "cfo",
+    "cto",
+    "kai",
+    "nova",
+    "somad",
+    "zeko"
+  ],
+  "roles_completed": [
+    "badsector",
+    "cfo",
+    "cto",
+    "kai",
+    "nova",
+    "somad",
+    "zeko"
+  ],
+  "waves": 5,
+  "parallel_tasks_peak": 2,
+  "verification_passed": 2,
+  "verification_failed": 0,
+  "per_role_metrics": [
+    {
+      "role": "badsector",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.044
+    },
+    {
+      "role": "cfo",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.037
+    },
+    {
+      "role": "cto",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.04
+    },
+    {
+      "role": "kai",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.065
+    },
+    {
+      "role": "nova",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.053
+    },
+    {
+      "role": "somad",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.035
+    },
+    {
+      "role": "zeko",
+      "tasks": 1,
+      "completed": 1,
+      "blocked": 0,
+      "failed": 0,
+      "total_attempts": 1,
+      "rework_cycles_triggered": 0,
+      "total_duration_ms": 0.042
+    }
+  ],
+  "per_task_metrics": [
+    {
+      "task_id": "nova",
+      "owner": "nova",
+      "role": "nova",
+      "status": "done",
+      "attempts": 1,
+      "wave": 0,
+      "duration_ms": 0.053,
+      "rework_cycles": 0
+    },
+    {
+      "task_id": "cfo",
+      "owner": "cfo",
+      "role": "cfo",
+      "status": "done",
+      "attempts": 1,
+      "wave": 0,
+      "duration_ms": 0.037,
+      "rework_cycles": 0
+    },
+    {
+      "task_id": "cto",
+      "owner": "cto",
+      "role": "cto",
+      "status": "done",
+      "attempts": 1,
+      "wave": 1,
+      "duration_ms": 0.04,
+      "rework_cycles": 0
+    },
+    {
+      "task_id": "kai",
+      "owner": "kai",
+      "role": "kai",
+      "status": "done",
+      "attempts": 1,
+      "wave": 2,
+      "duration_ms": 0.065,
+      "rework_cycles": 0
+    },
+    {
+      "task_id": "bad",
+      "owner": "badsector",
+      "role": "badsector",
+      "status": "done",
+      "attempts": 1,
+      "wave": 3,
+      "duration_ms": 0.044,
+      "rework_cycles": 0
+    },
+    {
+      "task_id": "som",
+      "owner": "somad",
+      "role": "somad",
+      "status": "done",
+      "attempts": 1,
+      "wave": 3,
+      "duration_ms": 0.035,
+      "rework_cycles": 0
+    },
+    {
+      "task_id": "zeko",
+      "owner": "zeko",
+      "role": "zeko",
+      "status": "done",
+      "attempts": 1,
+      "wave": 4,
+      "duration_ms": 0.042,
+      "rework_cycles": 0
+    }
+  ],
+  "cfo_estimates": {
+    "resource_recommendation": "ESTIMATED: resource recommendation \u2014 reviewers (badsector, somad) are read-only and can run concurrently with zero write contention; sequencing them in one wave is the resource-optimal bound under the existing ParallelExecutor.",
+    "cost_estimate": "ESTIMATED: budget note \u2014 rework budget is bounded at 2 cycles per worker task (MAX_REWORK_CYCLES=2 in orchestrator/organization/rework.py); worst-case review loop for the implementation task is 2 rework cycles then escalate, so plan capacity for at most 2 re-review dispatches, not an open retry loop.",
+    "budget_note": "",
+    "findings": [
+      "ESTIMATED: resource recommendation \u2014 run the remaining waves with the existing DEFAULT_MAX_WORKERS bound (max 4 workers); waves 0 and 3 are maximal independent sets of size 2, so no wave needs more than 2 concurrent workers; no additional spawning beyond the fixed role set.",
+      "NO-DATA: no token/cost telemetry is available in this run; no cost figures are asserted. Any token/cost number would be invented.",
+      "ESTIMATED: budget note \u2014 rework budget is bounded at 2 cycles per worker task (MAX_REWORK_CYCLES=2 in orchestrator/organization/rework.py); worst-case review loop for the implementation task is 2 rework cycles then escalate, so plan capacity for at most 2 re-review dispatches, not an open retry loop.",
+      "ESTIMATED: resource recommendation \u2014 reviewers (badsector, somad) are read-only and can run concurrently with zero write contention; sequencing them in one wave is the resource-optimal bound under the existing ParallelExecutor.",
+      "OBSERVED: the mission is bounded to 1 run with each specialist invoked exactly once for the canonical smoke (7 dispatches plus at most 2 bounded rework re-dispatches)."
+    ],
+    "risks": [
+      "R: ESTIMATED figures in this handoff must never be merged into OBSERVED mission metrics; estimates could be mistaken for observations if the fields are combined.",
+      "R: if rework exceeds the 2-cycle budget the mission must escalate rather than continue consuming resources."
+    ]
+  },
+  "_data_classification": {
+    "observed": [
+      "mission_id",
+      "started_at",
+      "completed_at",
+      "duration_ms",
+      "task_count",
+      "completed_tasks",
+      "blocked_tasks",
+      "failed_tasks",
+      "escalated_tasks",
+      "rework_cycles",
+      "roles_invoked",
+      "roles_completed",
+      "waves",
+      "parallel_tasks_peak",
+      "verification_passed",
+      "verification_failed",
+      "per_role_metrics",
+      "per_task_metrics"
+    ],
+    "estimated": [
+      "cfo_estimates"
+    ]
+  }
+}

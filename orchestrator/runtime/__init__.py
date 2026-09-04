@@ -45,7 +45,7 @@ from .gates import GateRunner
 from .lifecycle import TaskLifecycle
 from .parallel import (
     SubtaskPlan, ParallelSafety, ParallelExecutor,
-    assert_parallel_safe, build_plans, DEFAULT_MAX_WORKERS,
+    assert_parallel_safe, build_plans, plan_waves, DEFAULT_MAX_WORKERS,
 )
 from .collection import (
     CollectedResult, collect_one, collect_all, classify_adapter_failure,
@@ -74,7 +74,7 @@ __all__ = [
     "TaskLifecycle",
     # parallel
     "SubtaskPlan", "ParallelSafety", "ParallelExecutor",
-    "assert_parallel_safe", "build_plans", "DEFAULT_MAX_WORKERS",
+    "assert_parallel_safe", "build_plans", "plan_waves", "DEFAULT_MAX_WORKERS",
     # collection
     "CollectedResult", "collect_one", "collect_all", "classify_adapter_failure",
     # result

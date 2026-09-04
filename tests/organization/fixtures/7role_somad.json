@@ -1,0 +1,24 @@
+{
+  "task_id": "som",
+  "mission_id": "mission-7role-smoke-0001",
+  "owner": "somad",
+  "role": "somad",
+  "status": "SUCCEEDED",
+  "recommendation": "VERIFIED",
+  "findings": [
+    "INDEPENDENT VERIFICATION: re-derived the claims from the artifacts themselves, not from BADSECTOR's review — this verification does not cite BADSECTOR as proof.",
+    "VERIFIED: wave plan of the 7-role packet is exactly (nova,cfo) -> (cto) -> (kai) -> (bad,som) -> (zeko), checked via orchestrator/organization/waves.plan_mission_waves.",
+    "VERIFIED: metrics collector counts tasks per lineage root; a reworked task is counted once with attempts = 1 + rework cycles (reproduced in TestReworkInMetrics).",
+    "VERIFIED: ROOT verdict refuses COMPLETE when evidence or reviewer acceptance is missing (reproduced in TestRootFailClosed), and ZEKO cannot be dispatched past a rejected review (TestZekoCannotOverrideRejectedReview).",
+    "VERIFIED: cfo_estimates populated only from a CFO 'done' handoff; absent otherwise (TestObservedVsEstimated).",
+    "VERIFIED: single scheduler (orchestrator.runtime.parallel.ParallelExecutor is the runner's engine) and single audit (EvidenceLedger wraps the passed RuntimeAudit instance, no own store path)."
+  ],
+  "evidence": [
+    "artifact:test_7role_metrics.py",
+    "artifact:waves.py",
+    "artifact:metrics.py",
+    "artifact:root.py"
+  ],
+  "risks": [],
+  "summary": "Independent re-derivation confirms the wave plan, lineage-aware metrics, fail-closed ROOT, ZEKO review gate, OBSERVED/ESTIMATED separation, and single scheduler/audit — VERIFIED."
+}

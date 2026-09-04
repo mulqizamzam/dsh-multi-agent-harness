@@ -226,6 +226,302 @@ class TestParallelExecution:
         assert result.parallel.get("held_version", 0) >= 1
 
 
+class TestPlanWaves:
+    def test_plan_waves_chain(self):
+        """A dependency chain t1->t2->t3 yields three single-member waves."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo")
+        t2 = Task(task_id="t-2", objective="b", assigned_role="kai",
+                  dependencies=("t-1",))
+        t3 = Task(task_id="t-3", objective="c", assigned_role="cto",
+                  dependencies=("t-2",))
+        waves = plan_waves(build_plans([t1, t2, t3]))
+        assert len(waves) == 3
+        assert [w[0].task_id for w in waves] == ["t-1", "t-2", "t-3"]
+
+    def test_plan_waves_diamond(self):
+        """Diamond t1->[t2,t3]->t4 yields 3 waves [t1],[t2,t3],[t4]."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo")
+        t2 = Task(task_id="t-2", objective="b", assigned_role="kai",
+                  dependencies=("t-1",))
+        t3 = Task(task_id="t-3", objective="c", assigned_role="cto",
+                  dependencies=("t-1",))
+        t4 = Task(task_id="t-4", objective="d", assigned_role="somad",
+                  dependencies=("t-2", "t-3"))
+        waves = plan_waves(build_plans([t1, t2, t3, t4]))
+        assert len(waves) == 3
+        assert len(waves[0]) == 1 and len(waves[1]) == 2 and len(waves[2]) == 1
+        assert {p.task_id for p in waves[1]} == {"t-2", "t-3"}
+
+    def test_plan_waves_cycle_refused(self):
+        """A cycle t1<->t2 is refused fail-closed."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo",
+                  dependencies=("t-2",))
+        t2 = Task(task_id="t-2", objective="b", assigned_role="kai",
+                  dependencies=("t-1",))
+        with pytest.raises(ParallelUnsafe, match="cycle"):
+            plan_waves(build_plans([t1, t2]))
+
+    def test_plan_waves_self_cycle_refused(self):
+        """A self-dependency is a cycle and is refused."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo",
+                  dependencies=("t-1",))
+        with pytest.raises(ParallelUnsafe, match="cycle"):
+            plan_waves(build_plans([t1]))
+
+    def test_external_dependency_unsatisfied_fails_closed(self):
+        """An out-of-batch depends_on not in completed is unsatisfied and
+        fails CLOSED — no silent 'already satisfied' assumption."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo",
+                  dependencies=("external-99",))
+        plans = build_plans([t1])
+        with pytest.raises(ParallelUnsafe, match="unsatisfied external"):
+            plan_waves(plans)
+
+    def test_external_dependency_with_completed_proven(self):
+        """An out-of-batch dependency that IS in the proven completed set
+        is considered satisfied and the wave plans succeed."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo",
+                  dependencies=("external-99",))
+        plans = build_plans([t1])
+        waves = plan_waves(plans, completed={"external-99"})
+        assert len(waves) == 1
+        assert waves[0][0].task_id == "t-1"
+
+    def test_external_dependency_explicit_empty_set_still_fails(self):
+        """Passing completed=set() explicitly still fails for an external dep
+        — empty provenance is not a proof."""
+        from orchestrator.runtime import plan_waves
+        t1 = Task(task_id="t-1", objective="a", assigned_role="cfo",
+                  dependencies=("external-99",))
+        with pytest.raises(ParallelUnsafe, match="unsatisfied external"):
+            plan_waves(build_plans([t1]), completed=set())
+
+
+class TestInterWaveCAS:
+    def test_unrelated_writer_between_waves_fails_closed(self, ws, subtask_runner):
+        """An unrelated writer that increments lifecycle version between
+        wave N and wave N+1 causes the flow to fail CLOSED (StaleStateDetected
+        -> BLOCKED). Each wave establishes a new CAS epoch."""
+        from orchestrator.runtime import plan_waves
+        from orchestrator.foundation.contracts import Delegation
+        from orchestrator.runtime.store import encode_project_state
+        from control.execution_gate import project_write
+        from orchestrator.runtime.store import RuntimeStore
+
+        provider = MemoryDelegationProvider(make_delegation(
+            scope_operations=("write", "read", "code_write"),
+            scope_resources=("agents/**", "docs/**", "multi-agent-harness/**"),
+        ))
+
+        flow = ExecutionFlow(base=ws, provider=provider,
+                             subtask_runner=subtask_runner,
+                             flow_id="test-cas-wave")
+        # Force a 2-wave DAG: t1(cfo) -> t2(kai). Patch _subtask to carry
+        # the dependency and select_agents to return the chain.
+        from orchestrator.foundation.contracts import Task as T
+        import orchestrator.runtime.flow as flow_mod
+        orig_select = flow_mod.select_agents
+        orig_subtask = ExecutionFlow._subtask
+
+        def fake_select(task):
+            return ["cfo", "kai"]
+
+        def patched_subtask(self, task, role):
+            deps = {"kai": ("task-1:cfo",)}.get(role, ())
+            return T(task_id=f"{task.task_id}:{role}",
+                     objective=task.objective, assigned_role=role,
+                     parent_task=task.task_id,
+                     scope=tuple(task.scope or ()),
+                     expected_output=task.expected_output,
+                     risk_metadata=task.risk_metadata,
+                     project=task.project, dependencies=deps)
+
+        flow_mod.select_agents = fake_select
+        ExecutionFlow._subtask = patched_subtask
+
+        subtask_runner.add("cfo", make_subtask_result(
+            "task-1:cfo", "cfo", recommendation="ok",
+            findings=("cfo",), evidence=("e:cfo",)))
+        subtask_runner.add("kai", make_subtask_result(
+            "task-1:kai", "kai", recommendation="ok",
+            findings=("kai",), evidence=("e:kai",)))
+
+        # Intercept between waves: after the first wave completes, bump the
+        # on-disk version via a direct project_write so the next wave's
+        # inter-wave check_current(held) sees a drift.
+        orig_dispatch = flow._dispatch_subtasks
+        bumped = {"done": False}
+
+        def bumping_dispatch(subtasks, plans, delegation, runner,
+                             held, **kw):
+            res = orig_dispatch(subtasks, plans, delegation, runner, held, **kw)
+            if not bumped["done"]:
+                bumped["done"] = True
+                store = flow._get_store()
+                ps = store.load_project_state()
+                # Bump via daemon CAS (version must match)
+                cur = store.current_version()
+                # Write a benign doc that increments version
+                from copy import deepcopy
+                doc = encode_project_state(ps)
+                # Force version bump by writing with expected cur
+                project_write(store.state_rel, doc, base=store.base,
+                              expected_version=cur)
+            return res
+
+        flow._dispatch_subtasks = bumping_dispatch
+        try:
+            result = flow.run(make_intake(objective="pricing"),
+                              execute_plan=make_execute_plan(target="docs/pricing.md"))
+        finally:
+            flow_mod.select_agents = orig_select
+            ExecutionFlow._subtask = orig_subtask
+
+        assert result.outcome == BLOCKED, result.to_dict()
+        assert result.phase in ("execute_subtasks", "execute"), result.phase
+        # No successful collect for the second wave; audit recorded the conflict
+        events = flow._get_audit().read()
+        assert any(e.get("event_class") == "version_conflict" for e in events)
+
+    def test_each_wave_new_cas_epoch_no_bump_succeeds(self, ws, subtask_runner,
+                                                      action_executor):
+        """Without an intervening writer, two waves with a new CAS epoch per
+        wave complete successfully — the epoch re-read is not itself a failure."""
+        provider = MemoryDelegationProvider(make_delegation(
+            scope_operations=("write", "read", "code_write"),
+            scope_resources=("agents/**", "docs/**", "multi-agent-harness/**"),
+        ))
+        flow = ExecutionFlow(base=ws, provider=provider,
+                             subtask_runner=subtask_runner,
+                             executor=action_executor,
+                             flow_id="test-cas-epoch-ok")
+        from orchestrator.foundation.contracts import Task as T
+        import orchestrator.runtime.flow as flow_mod
+        orig_select = flow_mod.select_agents
+        orig_subtask = ExecutionFlow._subtask
+
+        def fake_select(task):
+            return ["cfo", "kai"]
+
+        def patched_subtask(self, task, role):
+            deps = {"kai": ("task-1:cfo",)}.get(role, ())
+            return T(task_id=f"{task.task_id}:{role}",
+                     objective=task.objective, assigned_role=role,
+                     parent_task=task.task_id,
+                     scope=tuple(task.scope or ()),
+                     expected_output=task.expected_output,
+                     risk_metadata=task.risk_metadata,
+                     project=task.project, dependencies=deps)
+
+        flow_mod.select_agents = fake_select
+        ExecutionFlow._subtask = patched_subtask
+        subtask_runner.add("cfo", make_subtask_result(
+            "task-1:cfo", "cfo", recommendation="ok",
+            findings=("cfo",), evidence=("e:cfo",)))
+        subtask_runner.add("kai", make_subtask_result(
+            "task-1:kai", "kai", recommendation="ok",
+            findings=("kai",), evidence=("e:kai",)))
+        try:
+            result = flow.run(make_intake(objective="pricing"),
+                              execute_plan=make_execute_plan(target="docs/pricing.md"))
+        finally:
+            flow_mod.select_agents = orig_select
+            ExecutionFlow._subtask = orig_subtask
+        assert result.outcome == COMPLETE, result.to_dict()
+        assert len(result.results) == 2
+
+
+class TestWaveObservability:
+    def test_flow_parallel_exposes_waves_single_wave(self, ws, subtask_runner,
+                                                     action_executor):
+        """FlowResult.parallel exposes waves[] even for a single-wave run,
+        preserving the existing safe/mode/owners contract."""
+        provider = MemoryDelegationProvider(make_delegation(
+            scope_operations=("write", "read", "code_write"),
+            scope_resources=("agents/**", "docs/**", "multi-agent-harness/**"),
+        ))
+        flow = ExecutionFlow(base=ws, provider=provider,
+                             subtask_runner=subtask_runner,
+                             executor=action_executor,
+                             flow_id="test-wave-obs1")
+        subtask_runner.add("cfo", make_subtask_result(
+            "task-1:cfo", "cfo", recommendation="ok",
+            findings=("cfo",), evidence=("e:cfo",)))
+        subtask_runner.add("kai", make_subtask_result(
+            "task-1:kai", "kai", recommendation="ok",
+            findings=("kai",), evidence=("e:kai",)))
+        result = flow.run(make_intake(objective="pricing"),
+                          execute_plan=make_execute_plan(target="docs/pricing.md"))
+        assert result.outcome == COMPLETE
+        assert result.parallel.get("safe") is True
+        assert result.parallel.get("mode") == "parallel"
+        assert "waves" in result.parallel
+        assert result.parallel.get("wave_count") == 1
+        waves = result.parallel["waves"]
+        assert len(waves) == 1
+        assert waves[0]["mode"] == "parallel"
+        assert set(waves[0]["owners"]) == {"cfo", "kai"}
+
+    def test_flow_parallel_exposes_waves_multi_wave(self, ws, subtask_runner,
+                                                    action_executor):
+        """A 2-wave DAG exposes two wave records with wave_index/mode/held_version."""
+        provider = MemoryDelegationProvider(make_delegation(
+            scope_operations=("write", "read", "code_write"),
+            scope_resources=("agents/**", "docs/**", "multi-agent-harness/**"),
+        ))
+        flow = ExecutionFlow(base=ws, provider=provider,
+                             subtask_runner=subtask_runner,
+                             executor=action_executor,
+                             flow_id="test-wave-obs2")
+        from orchestrator.foundation.contracts import Task as T
+        import orchestrator.runtime.flow as flow_mod
+        orig_select = flow_mod.select_agents
+        orig_subtask = ExecutionFlow._subtask
+
+        def fake_select(task):
+            return ["cfo", "kai"]
+
+        def patched_subtask(self, task, role):
+            deps = {"kai": ("task-1:cfo",)}.get(role, ())
+            return T(task_id=f"{task.task_id}:{role}",
+                     objective=task.objective, assigned_role=role,
+                     parent_task=task.task_id,
+                     scope=tuple(task.scope or ()),
+                     expected_output=task.expected_output,
+                     risk_metadata=task.risk_metadata,
+                     project=task.project, dependencies=deps)
+
+        flow_mod.select_agents = fake_select
+        ExecutionFlow._subtask = patched_subtask
+        subtask_runner.add("cfo", make_subtask_result(
+            "task-1:cfo", "cfo", recommendation="ok",
+            findings=("cfo",), evidence=("e:cfo",)))
+        subtask_runner.add("kai", make_subtask_result(
+            "task-1:kai", "kai", recommendation="ok",
+            findings=("kai",), evidence=("e:kai",)))
+        try:
+            result = flow.run(make_intake(objective="pricing"),
+                              execute_plan=make_execute_plan(target="docs/pricing.md"))
+        finally:
+            flow_mod.select_agents = orig_select
+            ExecutionFlow._subtask = orig_subtask
+        assert result.outcome == COMPLETE, result.to_dict()
+        assert result.parallel.get("wave_count") == 2
+        waves = result.parallel["waves"]
+        assert len(waves) == 2
+        assert waves[0]["wave_index"] == 0
+        assert waves[1]["wave_index"] == 1
+        # Each wave carries held_version
+        assert all("held_version" in w for w in waves)
+        assert all(w["safe"] is True for w in waves)
+
+
 class TestParallelFailure:
     def test_one_failure_propagates(self, ws):
         """A failure in one parallel subtask propagates — no partial success

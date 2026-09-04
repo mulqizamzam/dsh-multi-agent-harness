@@ -1,0 +1,1 @@
+{"detail": {"target": "state/projects/multi-agent-harness.json", "version": 1}, "event_class": "daemon_self_audit", "event_id": "daemon-project_write-d2499d594232", "method": "project_write", "timestamp": "2026-09-03T18:44:34.876221Z"}

@@ -1,0 +1,25 @@
+{
+  "task_id": "bad",
+  "mission_id": "mission-7role-smoke-0001",
+  "owner": "badsector",
+  "role": "badsector",
+  "status": "SUCCEEDED",
+  "recommendation": "PASS",
+  "findings": [
+    "ATTACK SURFACE REVIEWED: scope — the smoke fixture set (tests/organization/fixtures/7role_*.json) and the smoke driver (runs/7role_smoke_driver.py).",
+    "CHECK PASSED: no authority-bearing keys in the smoke payloads (no delegation, authorization, approval, signature, policy, permission, token, secret, credential keys) — build_task_context's boundary would reject them.",
+    "CHECK PASSED: the driver does not write outside runs/7role_smoke/; fixture files are static JSON with no executable content.",
+    "CHECK PASSED: no second scheduler and no second audit store introduced — driver reuses MissionRunner/ParallelExecutor/RuntimeAudit.",
+    "CHECK PASSED: OBSERVED and ESTIMATED remain separated — cfo_estimates is a distinct section and is excluded from OBSERVED classification in MissionMetrics.to_dict().",
+    "CHECK PASSED: fail-closed paths intact — reviewer verdicts are typed (not prose-parsed), ROOT refuses COMPLETE without done+evidence+accepted reviews, rework budget is 2 then escalate."
+  ],
+  "evidence": [
+    "artifact:7role_kai.json",
+    "artifact:7role_driver.py",
+    "artifact:test_7role_metrics.py"
+  ],
+  "risks": [
+    "R: the smoke proves the organization layer, not model-level subagent identity; treated as a known blocker rather than a review finding against the artifact."
+  ],
+  "summary": "Adversarial review of the smoke artifact set found no scope escape, no authority injection, no second scheduler/audit, no OBSERVED/ESTIMATED merge — verdict PASS."
+}

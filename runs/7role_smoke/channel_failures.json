@@ -1,0 +1,15 @@
+{
+  "mission_id": "mission-7role-smoke-0001",
+  "channel": "per-role subagent_* delegation tools (session tool-subagent instances)",
+  "root_cause": "Persona composition NOT MOUNTED: config/role-preset-mapping.yaml is DRAFT/NOT MOUNTED; mounting is the controlled DSH composition exception, HUMAN_PENDING (ADR Decision 4/7). Direct subagent_* invocations fail deterministically across roles and modes.",
+  "attempts": [
+    {"wave": 0, "role": "nova", "mode": "background", "run_id": "271fae1d-ec9e-41f8-8adc-678afbb5cf55", "result": "failed before finishing; no closing message"},
+    {"wave": 0, "role": "cfo", "mode": "background", "run_id": "be0eed6f-8c6f-4718-855e-32b992b4e013", "result": "failed before finishing; no closing message"},
+    {"wave": 0, "role": "nova", "mode": "background", "run_id": "878f33af-77ba-4255-8f1a-97ba47d0aaa8", "result": "failed before finishing; no closing message"},
+    {"wave": 0, "role": "cfo", "mode": "background", "run_id": "8fcbdf7b-ffed-4f99-8618-496b33af1301", "result": "failed before finishing; no closing message"},
+    {"wave": "probe", "role": "zeko", "mode": "foreground", "run_id": null, "result": "Error: subagent run failed"},
+    {"wave": "probe", "role": "cto", "mode": "foreground", "run_id": null, "result": "Error: subagent run failed"}
+  ],
+  "summary": "6/6 deterministic channel failures (2x nova, 2x cfo, plus foreground probes zeko+cto). No model-level child identities were produced. Per the info-gain rule, no further retries were issued.",
+  "fallback_delegation": "All 7 roles were executed through the existing MissionRunner delegation seam (role-owned task dispatch over ParallelExecutor + RuntimeAudit), with recorded per-role structured payloads under tests/organization/fixtures/7role_*.json. This is an alternate delegation path, not model-level child identity."
+}

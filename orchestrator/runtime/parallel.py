@@ -113,16 +113,25 @@ def build_plans(subtasks, *, reads_from_scope: bool = True,
 
     Each subtask is owned by its own ``assigned_role``, reads its task scope,
     and declares NO write scope (the orchestrator is the single writer).
+
+    ``depends_on`` may explicitly map task_id -> tuple of dependencies.
+    When a key is absent, ``Task.dependencies`` is used as the fallback so
+    a decomposed DAG (Task graph) flows directly into SubtaskPlans without
+    an extra translation layer.
     """
     depends_on = depends_on or {}
     plans = []
     for st in subtasks:
+        if st.task_id in depends_on:
+            deps = tuple(depends_on[st.task_id] or ())
+        else:
+            deps = tuple(getattr(st, "dependencies", ()) or ())
         plans.append(SubtaskPlan(
             task=st,
             owner=getattr(st, "assigned_role", ""),
             reads=tuple(st.scope or ()) if reads_from_scope else (),
             writes=(),
-            depends_on=tuple(depends_on.get(st.task_id, ())),
+            depends_on=deps,
         ))
     return tuple(plans)
 
@@ -282,7 +291,123 @@ class ParallelExecutor:
         return outcomes
 
 
+def plan_waves(plans, *, completed: set[str] | None = None) -> list[tuple[SubtaskPlan, ...]]:
+    """Partition a batch of SubtaskPlans into dependency-ordered waves.
+
+    Pure function — no threads, no I/O, no authority.  Each wave is a
+    maximal independent set: every ``depends_on`` of every member is
+    satisfied by *prior* waves and by nothing in the current wave.
+    The concatenation of all waves is a topological order of the input.
+
+    Parameters
+    ----------
+    plans:
+        Iterable of ``SubtaskPlan`` (typically from ``build_plans`` where
+        ``depends_on`` was derived from ``Task.dependencies``).
+    completed:
+        Set of already-completed external task ids whose satisfaction has
+        been PROVEN (e.g. from lifecycle COMPLETE set or a caller-supplied
+        closed set).  Any ``depends_on`` not present in the current batch
+        and not in ``completed`` is an UNSATISFIED external dependency and
+        fails CLOSED (ParallelUnsafe).  ``None`` (default) means no external
+        id is proven — every out-of-batch dependency is refused.  Pass
+        ``set()`` explicitly when the caller has proven that no external
+        dependency exists for this batch; an empty set has the same effect
+        as ``None`` but makes the call-site intent explicit.
+
+    Returns
+    -------
+    list of waves, each wave is a tuple of SubtaskPlans in deterministic
+    (task_id-sorted) order.  Empty input -> [].
+
+    Raises
+    ------
+    ParallelUnsafe
+        Duplicate task_id, unsatisfied internal dependency cycle, unsatisfied
+        external dependency, or any other graph that cannot be topologically
+        sorted.  Fail-closed before any child starts.
+    """
+    plans = tuple(plans or ())
+    if not plans:
+        return []
+    # Validate element types early — same invariant as assert_parallel_safe.
+    for p in plans:
+        if not isinstance(p, SubtaskPlan):
+            raise ParallelUnsafe(
+                f"plan_waves member is not a SubtaskPlan: {type(p).__name__}")
+
+    # Exclusive ownership check (duplicate task_id) — fail-closed.
+    seen: dict[str, SubtaskPlan] = {}
+    for p in plans:
+        if p.task_id in seen:
+            raise ParallelUnsafe(
+                f"subtask id {p.task_id!r} appears twice in plan_waves; "
+                f"task ownership must be exclusive")
+        seen[p.task_id] = p
+
+    ids = set(seen)
+    # Fail-closed on unsatisfied external dependencies: any depends_on not in
+    # ids must be in the proven `completed` set, otherwise its satisfaction
+    # cannot be established (no silent safe-assumption).
+    completed_set = set(completed) if completed is not None else set()
+    for p in plans:
+        for dep in p.depends_on:
+            if dep not in ids and dep not in completed_set:
+                raise ParallelUnsafe(
+                    f"subtask {p.task_id!r} depends on {dep!r} which is not "
+                    f"in the current batch and not in the proven completed "
+                    f"set — unsatisfied external dependency (fail-closed)")
+    # Build adjacency: edge dep -> plan for deps that are *inside* the batch.
+    # Proven external deps do not create a wave ordering constraint.
+    in_degree: dict[str, int] = {tid: 0 for tid in ids}
+    dependents: dict[str, list[str]] = {tid: [] for tid in ids}
+    for p in plans:
+        for dep in p.depends_on:
+            if dep in ids:
+                in_degree[p.task_id] += 1
+                dependents[dep].append(p.task_id)
+        # self-dependency is a cycle
+        if p.task_id in p.depends_on:
+            raise ParallelUnsafe(
+                f"subtask {p.task_id!r} depends on itself (cycle)")
+
+    # Kahn's algorithm, level by level (wave = all zero in-degree nodes).
+    waves: list[tuple[SubtaskPlan, ...]] = []
+    # deterministic: sort each frontier by task_id
+    frontier = sorted([tid for tid, deg in in_degree.items() if deg == 0])
+    remaining = len(ids)
+    visited: set[str] = set()
+
+    while frontier:
+        wave = tuple(seen[tid] for tid in frontier)
+        # Each wave must be provably parallel-safe (single-owner, read-only).
+        # This reuses the existing gate rather than duplicating its checks.
+        # External callers also call assert_parallel_safe per wave in the
+        # executor path; this is an early fail-closed check.
+        assert_parallel_safe(wave)
+        waves.append(wave)
+        visited.update(frontier)
+        remaining -= len(frontier)
+        # Decrement dependents and build next frontier
+        next_frontier_set: set[str] = set()
+        for tid in frontier:
+            for dep_tid in dependents[tid]:
+                in_degree[dep_tid] -= 1
+                if in_degree[dep_tid] == 0:
+                    next_frontier_set.add(dep_tid)
+        frontier = sorted(next_frontier_set)
+
+    if remaining != 0:
+        # Cycle among unvisited nodes — cannot be topologically sorted.
+        cycle = sorted(set(ids) - visited)
+        raise ParallelUnsafe(
+            f"dependency cycle detected among {cycle}; "
+            f"dependent subtasks must form a DAG (contract §6)")
+
+    return waves
+
+
 __all__ = [
     "SubtaskPlan", "ParallelSafety", "ParallelExecutor",
-    "assert_parallel_safe", "build_plans", "DEFAULT_MAX_WORKERS",
+    "assert_parallel_safe", "build_plans", "plan_waves", "DEFAULT_MAX_WORKERS",
 ]

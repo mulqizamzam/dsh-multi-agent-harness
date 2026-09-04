@@ -68,7 +68,7 @@ from .delegation import (
 from .gates import GateRunner
 from .lifecycle import TaskLifecycle
 from .parallel import (
-    ParallelExecutor, assert_parallel_safe, build_plans,
+    ParallelExecutor, assert_parallel_safe, build_plans, plan_waves,
     DEFAULT_MAX_WORKERS,
 )
 from .collection import collect_all, classify_adapter_failure
@@ -680,45 +680,157 @@ class ExecutionFlow:
 
     def _run_subtasks(self, subtasks, delegation, runner) -> list:
         """Execute the decomposed subtasks and return their raw payloads in
-        BATCH ORDER.
+        batch order, wave by wave.
 
-        Independent subtasks run CONCURRENTLY through the approved DSH adapter
-        (the same runner the sequential path uses). Before any child starts the
-        batch must prove dependency independence, exclusive task ownership, and
-        a read-only specialist scope; the held state version is validated before
-        and after the batch (existing CAS control). A batch that cannot be
-        proven safe runs SEQUENTIALLY — it is never force-parallelized.
+        ``plan_waves`` partitions the subtask DAG into dependency-ordered
+        waves (Kahn levels). Each wave is a maximal independent set and is
+        dispatched through the *existing* ``ParallelExecutor`` (bounded
+        concurrency, deterministic order, CAS revalidation) or the sequential
+        fallback — no second scheduler, no new execution engine.
 
+        Waves are sequential; subtasks *within* a wave may run concurrently.
         Every child failure propagates (SubtaskFailed) — no partial success.
+
+        Inter-wave CAS semantics (point 1 / THREAT-021/022):
+        Each wave establishes a NEW CAS epoch: ``held`` is re-read from
+        ``lifecycle.version`` at the start of the wave and the existing
+        ``ParallelExecutor`` / ``RuntimeStore.check_current`` validates that
+        the on-disk version matches ``held`` before and after the wave. If an
+        unrelated writer increments the version between wave N and wave N+1,
+        the next wave's pre-check fails CLOSED (StaleStateDetected -> BLOCKED).
+        This is tested in ``test_08_parallel`` inter-wave CAS cases.
+
+        External dependencies (point 2):
+        A ``depends_on`` not present in the current batch is an *external*
+        dependency. It is considered satisfied IFF it is in the lifecycle's
+        proven COMPLETE task set. Otherwise ``plan_waves`` fails CLOSED
+        (ParallelUnsafe) — no silent assumption. Flow passes the proven
+        completed set derived from ``lifecycle.project_state``.
         """
         r = self._result
         subtasks = tuple(subtasks)
-        held = self._get_lifecycle().version
-        plans = build_plans(subtasks)
+        if not subtasks:
+            r.parallel = {"safe": True, "mode": "sequential",
+                          "task_ids": [], "owners": [],
+                          "held_version": self._get_lifecycle().version,
+                          "waves": [], "wave_count": 0}
+            return []
+        raw_plans = build_plans(subtasks)
+        # Proven-completed set: every task in COMPLETE with a known state.
+        # A dependency outside the batch is satisfied iff it is in this set;
+        # otherwise its satisfaction is UNPROVEN and plan_waves fails closed.
+        proven_completed = {
+            tid for tid, sm in self._get_lifecycle().project_state.task_machines.items()
+            if sm.current() == "COMPLETE"
+        }
+        # The parent task itself is PLANNED/DELEGATED/EXECUTING at this point,
+        # not COMPLETE — it cannot satisfy a child dependency, and it is not
+        # in the proven set, so a child depending on its parent id is correctly
+        # treated as unsatisfied if the id is not inside the batch.
         try:
-            return self._dispatch_subtasks(subtasks, plans, delegation,
-                                           runner, held)
-        except SubtaskFailed as e:
-            # Record the child failure (INT-12) then re-raise so the flow
-            # stops fail-closed / routes to recovery. Never a silent skip.
+            waves = plan_waves(raw_plans, completed=proven_completed)
+        except ParallelUnsafe as e:
+            # Graph-level refusal (duplicate id / cycle / unsatisfied external)
+            # — fail-closed before any child starts.
             self._get_audit().emit(
                 "subtask_failed", action="execute_subtasks",
-                target=e.task_id or r.task_id, task_id=r.task_id,
+                target=r.task_id, task_id=r.task_id,
                 result="error", error=str(e),
-                extra={"failure_class": e.failure_class, "role": e.role})
-            raise
+                extra={"failure_class": "logic", "role": ""})
+            from .exceptions import ParallelUnsafe as _PU
+            raise _PU(str(e)) from e
+
+        # Wave observability (point 3): FlowResult.parallel exposes waves.
+        # Required — observability (docs/phase-4/testing/0001) indexes
+        # parallel_batches and metrics expect per-batch records; wave-level
+        # provenance is the natural extension.  When no waves run, waves=[].
+        wave_records: list[dict] = []
+        all_payloads: list = []
+        for idx, wave_plans in enumerate(waves):
+            wave_tasks = tuple(p.task for p in wave_plans)
+            held = self._get_lifecycle().version
+            # Inter-wave CAS epoch: re-validate held before dispatching
+            # wave N+1.  If an unrelated writer bumped version between waves,
+            # this check fails closed before the next wave starts.  The check
+            # is free when no external writer intervened (current == held).
+            try:
+                self._get_store().check_current(held)
+            except StaleStateDetected as e:
+                self._get_audit().emit(
+                    "version_conflict", action="execute_subtasks",
+                    target=r.task_id, task_id=r.task_id,
+                    result="denied", error=str(e))
+                raise
+            try:
+                payloads = self._dispatch_subtasks(
+                    wave_tasks, wave_plans, delegation, runner, held,
+                    wave_index=idx, wave_count=len(waves),
+                    wave_records=wave_records)
+            except SubtaskFailed as e:
+                # Record waves dispatched so far for forensic completeness
+                self._finalize_wave_parallel(wave_records, len(waves))
+                self._get_audit().emit(
+                    "subtask_failed", action="execute_subtasks",
+                    target=e.task_id or r.task_id, task_id=r.task_id,
+                    result="error", error=str(e),
+                    extra={"failure_class": e.failure_class, "role": e.role})
+                raise
+            except StaleStateDetected:
+                self._finalize_wave_parallel(wave_records, len(waves))
+                raise
+            all_payloads.extend(payloads)
+        self._finalize_wave_parallel(wave_records, len(waves))
+        return all_payloads
+
+    def _finalize_wave_parallel(self, wave_records: list[dict], wave_count: int) -> None:
+        """Write the aggregated wave-aware parallel record to FlowResult.parallel.
+
+        Single-wave runs preserve the legacy shape that existing tests assert on
+        (safe/mode/owners/held_version), while adding waves/wave_count. Multi-wave
+        runs aggregate similarly: top-level is the last wave's safety record
+        (backward compatible) plus waves[] for full observability.
+        """
+        r = self._result
+        # Legacy mirror: keep top-level safe/mode/owners from the last wave's
+        # dispatch (the last _dispatch_subtasks call already wrote r.parallel).
+        # If _dispatch recorded a parallel dict, reuse it as the aggregate base.
+        base = dict(r.parallel) if isinstance(r.parallel, dict) else {}
+        base["waves"] = list(wave_records)
+        base["wave_count"] = wave_count
+        # Ensure sequential fallback that overwrote r.parallel on the last wave
+        # still carries waves on the aggregate.
+        if not wave_records and wave_count == 0:
+            base.setdefault("safe", True)
+            base.setdefault("mode", "sequential")
+        r.parallel = base
 
     def _dispatch_subtasks(self, subtasks, plans, delegation, runner,
-                           held: int):
+                           held: int, *, wave_index: int | None = None,
+                           wave_count: int | None = None,
+                           wave_records: list[dict] | None = None):
         """Dispatch a subtask batch: parallel when provably independent,
-        sequential otherwise. Returns raw payloads in batch order."""
+        sequential otherwise. Returns raw payloads in batch order.
+
+        When ``wave_records`` is supplied, this call appends one entry per
+        wave to that list so the caller can aggregate wave observability.
+        """
         r = self._result
         if self.parallel_subtasks and len(plans) > 1:
             try:
                 safety = assert_parallel_safe(plans, held_version=held)
             except ParallelUnsafe as e:
-                r.parallel = {"safe": False, "reason": str(e),
-                              "task_ids": [p.task_id for p in plans]}
+                rec = {"safe": False, "reason": str(e),
+                       "task_ids": [p.task_id for p in plans]}
+                r.parallel = dict(rec)
+                if wave_records is not None:
+                    wave_records.append({
+                        "wave_index": wave_index if wave_index is not None else 0,
+                        "mode": "sequential",
+                        "safe": False, "reason": str(e),
+                        "task_ids": [p.task_id for p in plans],
+                        "owners": [p.owner for p in plans],
+                        "held_version": held,
+                    })
                 self._get_audit().emit(
                     "parallel_refused", action="execute_subtasks",
                     target=r.task_id, task_id=r.task_id, result="sequential",
@@ -732,7 +844,20 @@ class ExecutionFlow:
                 task_id=r.task_id, result="allowed",
                 extra={"task_ids": list(safety.task_ids),
                        "owners": list(safety.owners),
-                       "held_version": held})
+                       "held_version": held,
+                       "wave_index": wave_index,
+                       "wave_count": wave_count})
+            if wave_records is not None:
+                wave_records.append({
+                    "wave_index": wave_index if wave_index is not None else 0,
+                    "mode": "parallel",
+                    "safe": True, "reason": safety.reason,
+                    "task_ids": list(safety.task_ids),
+                    "owners": list(safety.owners),
+                    "read_scopes": list(safety.read_scopes),
+                    "held_version": held,
+                    "max_workers": self.max_workers,
+                })
             executor = ParallelExecutor(runner, store=self._get_store(),
                                         max_workers=self.max_workers)
             try:
@@ -748,6 +873,15 @@ class ExecutionFlow:
                       "task_ids": [p.task_id for p in plans],
                       "owners": [p.owner for p in plans],
                       "held_version": held}
+        if wave_records is not None:
+            wave_records.append({
+                "wave_index": wave_index if wave_index is not None else 0,
+                "mode": "sequential",
+                "safe": True, "reason": "sequential wave",
+                "task_ids": [p.task_id for p in plans],
+                "owners": [p.owner for p in plans],
+                "held_version": held,
+            })
         return self._run_subtasks_sequential(subtasks, delegation, runner)
 
     def _run_subtasks_sequential(self, subtasks, delegation, runner) -> list:

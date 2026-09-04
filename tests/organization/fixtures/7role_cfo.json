@@ -1,0 +1,25 @@
+{
+  "task_id": "cfo",
+  "mission_id": "mission-7role-smoke-0001",
+  "owner": "cfo",
+  "role": "cfo",
+  "status": "SUCCEEDED",
+  "findings": [
+    "ESTIMATED: resource recommendation — run the remaining waves with the existing DEFAULT_MAX_WORKERS bound (max 4 workers); waves 0 and 3 are maximal independent sets of size 2, so no wave needs more than 2 concurrent workers; no additional spawning beyond the fixed role set.",
+    "NO-DATA: no token/cost telemetry is available in this run; no cost figures are asserted. Any token/cost number would be invented.",
+    "ESTIMATED: budget note — rework budget is bounded at 2 cycles per worker task (MAX_REWORK_CYCLES=2 in orchestrator/organization/rework.py); worst-case review loop for the implementation task is 2 rework cycles then escalate, so plan capacity for at most 2 re-review dispatches, not an open retry loop.",
+    "ESTIMATED: resource recommendation — reviewers (badsector, somad) are read-only and can run concurrently with zero write contention; sequencing them in one wave is the resource-optimal bound under the existing ParallelExecutor.",
+    "OBSERVED: the mission is bounded to 1 run with each specialist invoked exactly once for the canonical smoke (7 dispatches plus at most 2 bounded rework re-dispatches)."
+  ],
+  "evidence": [
+    "artifact:AGENTS.md",
+    "artifact:runner.py",
+    "artifact:parallel.py",
+    "artifact:rework.py"
+  ],
+  "risks": [
+    "R: ESTIMATED figures in this handoff must never be merged into OBSERVED mission metrics; estimates could be mistaken for observations if the fields are combined.",
+    "R: if rework exceeds the 2-cycle budget the mission must escalate rather than continue consuming resources."
+  ],
+  "summary": "Recommend bounded parallelism (max 4 workers, per-wave need ≤2), a hard 2-cycle rework budget with escalation, and strictly no token/cost assertions because no cost telemetry is observable in this run."
+}

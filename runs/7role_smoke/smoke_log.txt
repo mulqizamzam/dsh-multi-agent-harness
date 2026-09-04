@@ -1,0 +1,9 @@
+o3 daemon started at /home/administrator/agent-workspace/multi-agent-harness/runs/7role_smoke
+dispatch role=nova task=nova deps=() wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']
+dispatch role=cfo task=cfo deps=() wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']
+dispatch role=cto task=cto deps=('nova',) wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']
+dispatch role=kai task=kai deps=('cto',) wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']
+kai wrote artifact runs/7role_smoke/smoke_artifact.md
+dispatch role=badsector task=bad deps=('kai',) wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']
+dispatch role=somad task=som deps=('kai',) wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']
+dispatch role=zeko task=zeko deps=('bad', 'som') wave_ctx_keys=['context_refs', 'depends_on', 'mission_id', 'objective']

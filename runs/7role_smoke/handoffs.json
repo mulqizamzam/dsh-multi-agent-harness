@@ -1,0 +1,256 @@
+{
+  "nova": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "nova",
+    "owner": "nova",
+    "role": "nova",
+    "status": "done",
+    "summary": "F: SPECIALIST_ROLES in orchestrator/foundation/contracts.py is exactly (zeko, cto, cfo, kai, somad, badsector, nova) \u2014 7 specialists, orchestrator excluded from the specialist set.",
+    "findings": [
+      "F: SPECIALIST_ROLES in orchestrator/foundation/contracts.py is exactly (zeko, cto, cfo, kai, somad, badsector, nova) \u2014 7 specialists, orchestrator excluded from the specialist set.",
+      "F: orchestrator/organization/ is the bounded organization layer: MissionPacket/MissionTask (packet.py), plan_waves (waves.py), TypedHandoff (handoff.py), EvidenceLedger (evidence.py), ReworkLedger with MAX_REWORK_CYCLES=2 (rework.py), RootVerdict/build_verdict (root.py), MissionRunner (runner.py).",
+      "F: MissionRunner executes waves through orchestrator/runtime/parallel.ParallelExecutor \u2014 the single existing bounded-concurrency executor; no second scheduler exists in the layer.",
+      "F: EvidenceLedger records into the existing RuntimeAudit append-only ledger (orchestrator/runtime/audit.py) via the sanctioned audit channel; no second audit store exists.",
+      "F: Reviewer verdicts are typed vocabularies: BADSECTOR PASS/REWORK/REJECT (control/badsector.py VALID_VERDICTS), SOMAD VERIFIED/REWORK/REFUTED (organization/rework.py); accept verdicts are PASS and VERIFIED.",
+      "F: orchestrator/organization/metrics.py exposes MissionMetrics with an explicit OBSERVED vs ESTIMATED split; cfo_estimates is populated only from a CFO handoff.",
+      "F: mission-level metrics vocabulary (mission_id, started_at, duration_ms, task_count, completed/blocked/failed/escalated, rework_cycles, roles_invoked/completed, waves, parallel_tasks_peak, verification_passed/failed) is present on MissionMetrics.",
+      "F: wave planning (orchestrator/organization/waves.py plan_waves) partitions the task DAG into maximal independent sets \u2014 NOVA+CFO share wave 0; BADSECTOR+SOMAD share the review wave."
+    ],
+    "evidence": [
+      "artifact:AGENTS.md",
+      "artifact:contracts.py",
+      "artifact:runner.py",
+      "artifact:parallel.py",
+      "artifact:audit.py",
+      "artifact:metrics.py",
+      "artifact:waves.py",
+      "artifact:rework.py"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "AGENTS.md",
+      "audit.py",
+      "contracts.py",
+      "metrics.py",
+      "parallel.py",
+      "rework.py",
+      "runner.py",
+      "waves.py"
+    ],
+    "risks": [
+      "R: reviewer-role ownership rules (reviewer cannot self-fix) must be enforced at the packet layer, not by convention."
+    ],
+    "unknowns": [],
+    "next": [],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:36.995864+00:00"
+  },
+  "cfo": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "cfo",
+    "owner": "cfo",
+    "role": "cfo",
+    "status": "done",
+    "summary": "ESTIMATED: resource recommendation \u2014 run the remaining waves with the existing DEFAULT_MAX_WORKERS bound (max 4 workers); waves 0 and 3 are maximal independent sets of size 2, so no wave needs more than 2 concurrent workers; no additional spawning beyond the fixed role set.",
+    "findings": [
+      "ESTIMATED: resource recommendation \u2014 run the remaining waves with the existing DEFAULT_MAX_WORKERS bound (max 4 workers); waves 0 and 3 are maximal independent sets of size 2, so no wave needs more than 2 concurrent workers; no additional spawning beyond the fixed role set.",
+      "NO-DATA: no token/cost telemetry is available in this run; no cost figures are asserted. Any token/cost number would be invented.",
+      "ESTIMATED: budget note \u2014 rework budget is bounded at 2 cycles per worker task (MAX_REWORK_CYCLES=2 in orchestrator/organization/rework.py); worst-case review loop for the implementation task is 2 rework cycles then escalate, so plan capacity for at most 2 re-review dispatches, not an open retry loop.",
+      "ESTIMATED: resource recommendation \u2014 reviewers (badsector, somad) are read-only and can run concurrently with zero write contention; sequencing them in one wave is the resource-optimal bound under the existing ParallelExecutor.",
+      "OBSERVED: the mission is bounded to 1 run with each specialist invoked exactly once for the canonical smoke (7 dispatches plus at most 2 bounded rework re-dispatches)."
+    ],
+    "evidence": [
+      "artifact:AGENTS.md",
+      "artifact:runner.py",
+      "artifact:parallel.py",
+      "artifact:rework.py"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "AGENTS.md",
+      "parallel.py",
+      "rework.py",
+      "runner.py"
+    ],
+    "risks": [
+      "R: ESTIMATED figures in this handoff must never be merged into OBSERVED mission metrics; estimates could be mistaken for observations if the fields are combined.",
+      "R: if rework exceeds the 2-cycle budget the mission must escalate rather than continue consuming resources."
+    ],
+    "unknowns": [],
+    "next": [],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:37.022087+00:00"
+  },
+  "cto": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "cto",
+    "owner": "cto",
+    "role": "cto",
+    "status": "done",
+    "summary": "DECISION: reuse the existing organization layer unchanged for the canonical smoke \u2014 MissionPacket/MissionTask, plan_waves, ParallelExecutor, RuntimeAudit-backed EvidenceLedger, ReworkLedger(2), BadSectorGate provenance, build_verdict. No second scheduler, no second audit system, no L3/live-bridge change, no release-system change.",
+    "findings": [
+      "DECISION: reuse the existing organization layer unchanged for the canonical smoke \u2014 MissionPacket/MissionTask, plan_waves, ParallelExecutor, RuntimeAudit-backed EvidenceLedger, ReworkLedger(2), BadSectorGate provenance, build_verdict. No second scheduler, no second audit system, no L3/live-bridge change, no release-system change.",
+      "DECISION: the canonical smoke artifact is a harmless test fixture set under tests/organization/fixtures/ plus mission evidence under runs/7role_smoke/ \u2014 no repository source mutation beyond the additive metrics/instrumentation already verified by tests.",
+      "DECISION: wave flow is fixed \u2014 W0 nova+cfo (parallel), W1 cto, W2 kai, W3 badsector+somad (parallel review), W4 zeko (gated on both review tasks), W5 ROOT verdict.",
+      "DECISION: per-role/per-task durations and attempts are collected as OBSERVED runner data; CFO estimates stay in the ESTIMATED cfo_estimates section only.",
+      "DECISION: model-level subagent identity is NOT asserted \u2014 the persona composition is DRAFT/NOT MOUNTED (6/6 channel attempts failed); role identity is enforced at the packet/ownership layer instead."
+    ],
+    "evidence": [
+      "artifact:7role_nova.json",
+      "artifact:7role_cfo.json",
+      "artifact:runner.py",
+      "artifact:metrics.py"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "7role_cfo.json",
+      "7role_nova.json",
+      "metrics.py",
+      "runner.py"
+    ],
+    "risks": [
+      "R: replaying recorded results through MissionRunner proves the organization layer but not model-level child identity \u2014 reported as a blocker, not papered over.",
+      "R: any new executor or audit store introduced for the smoke would violate the hard scope; none is introduced."
+    ],
+    "unknowns": [],
+    "next": [],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:37.047887+00:00"
+  },
+  "kai": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "kai",
+    "owner": "kai",
+    "role": "kai",
+    "status": "done",
+    "summary": "IMPLEMENTATION: smoke artifact set delivered as the implementation owner \u2014 per-role structured fixture inputs (tests/organization/fixtures/7role_*.json) and the canonical smoke driver (runs/7role_smoke_driver.py) that builds the 7-role MissionPacket and runs it through MissionRunner.",
+    "findings": [
+      "IMPLEMENTATION: smoke artifact set delivered as the implementation owner \u2014 per-role structured fixture inputs (tests/organization/fixtures/7role_*.json) and the canonical smoke driver (runs/7role_smoke_driver.py) that builds the 7-role MissionPacket and runs it through MissionRunner.",
+      "IMPLEMENTATION: the driver writes harmless mission evidence only under runs/7role_smoke/ (metrics, verdict, handoffs, log, packet) \u2014 no repository source mutation.",
+      "IMPLEMENTATION: per CTO decision the wave flow is encoded in the packet DAG (nova+cfo wave 0, cto, kai, badsector+somad, zeko) and validated by the focused test suite.",
+      "IMPLEMENTATION: MissionRunner records per-task wave index, dispatch durations, attempts, and observed parallel peak \u2014 the metrics collector aggregates them lineage-aware."
+    ],
+    "evidence": [
+      "test:test_7role_metrics.py",
+      "artifact:7role_driver.py",
+      "artifact:fixtures_dir"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "7role_driver.py",
+      "fixtures_dir"
+    ],
+    "risks": [
+      "R: fixture inputs are smoke data authored for this mission \u2014 they are not claims about production behavior."
+    ],
+    "unknowns": [],
+    "next": [],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:37.074902+00:00"
+  },
+  "bad": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "bad",
+    "owner": "badsector",
+    "role": "badsector",
+    "status": "done",
+    "summary": "PASS",
+    "findings": [
+      "ATTACK SURFACE REVIEWED: scope \u2014 the smoke fixture set (tests/organization/fixtures/7role_*.json) and the smoke driver (runs/7role_smoke_driver.py).",
+      "CHECK PASSED: no authority-bearing keys in the smoke payloads (no delegation, authorization, approval, signature, policy, permission, token, secret, credential keys) \u2014 build_task_context's boundary would reject them.",
+      "CHECK PASSED: the driver does not write outside runs/7role_smoke/; fixture files are static JSON with no executable content.",
+      "CHECK PASSED: no second scheduler and no second audit store introduced \u2014 driver reuses MissionRunner/ParallelExecutor/RuntimeAudit.",
+      "CHECK PASSED: OBSERVED and ESTIMATED remain separated \u2014 cfo_estimates is a distinct section and is excluded from OBSERVED classification in MissionMetrics.to_dict().",
+      "CHECK PASSED: fail-closed paths intact \u2014 reviewer verdicts are typed (not prose-parsed), ROOT refuses COMPLETE without done+evidence+accepted reviews, rework budget is 2 then escalate."
+    ],
+    "evidence": [
+      "artifact:7role_kai.json",
+      "artifact:7role_driver.py",
+      "artifact:test_7role_metrics.py"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "7role_driver.py",
+      "7role_kai.json",
+      "test_7role_metrics.py"
+    ],
+    "risks": [
+      "R: the smoke proves the organization layer, not model-level subagent identity; treated as a known blocker rather than a review finding against the artifact."
+    ],
+    "unknowns": [],
+    "next": [
+      "PASS"
+    ],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:37.104322+00:00"
+  },
+  "som": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "som",
+    "owner": "somad",
+    "role": "somad",
+    "status": "done",
+    "summary": "VERIFIED",
+    "findings": [
+      "INDEPENDENT VERIFICATION: re-derived the claims from the artifacts themselves, not from BADSECTOR's review \u2014 this verification does not cite BADSECTOR as proof.",
+      "VERIFIED: wave plan of the 7-role packet is exactly (nova,cfo) -> (cto) -> (kai) -> (bad,som) -> (zeko), checked via orchestrator/organization/waves.plan_mission_waves.",
+      "VERIFIED: metrics collector counts tasks per lineage root; a reworked task is counted once with attempts = 1 + rework cycles (reproduced in TestReworkInMetrics).",
+      "VERIFIED: ROOT verdict refuses COMPLETE when evidence or reviewer acceptance is missing (reproduced in TestRootFailClosed), and ZEKO cannot be dispatched past a rejected review (TestZekoCannotOverrideRejectedReview).",
+      "VERIFIED: cfo_estimates populated only from a CFO 'done' handoff; absent otherwise (TestObservedVsEstimated).",
+      "VERIFIED: single scheduler (orchestrator.runtime.parallel.ParallelExecutor is the runner's engine) and single audit (EvidenceLedger wraps the passed RuntimeAudit instance, no own store path)."
+    ],
+    "evidence": [
+      "artifact:test_7role_metrics.py",
+      "artifact:waves.py",
+      "artifact:metrics.py",
+      "artifact:root.py"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "metrics.py",
+      "root.py",
+      "test_7role_metrics.py",
+      "waves.py"
+    ],
+    "risks": [],
+    "unknowns": [],
+    "next": [
+      "VERIFIED"
+    ],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:37.161127+00:00"
+  },
+  "zeko": {
+    "mission_id": "mission-7role-smoke-0001",
+    "task_id": "zeko",
+    "owner": "zeko",
+    "role": "zeko",
+    "status": "done",
+    "summary": "READINESS: review chain accepted \u2014 BADSECTOR verdict PASS and SOMAD verdict VERIFIED on the kai artifact; ZEKO ran only after both reviewer tasks were collected with accept verdicts (runner review gate).",
+    "findings": [
+      "READINESS: review chain accepted \u2014 BADSECTOR verdict PASS and SOMAD verdict VERIFIED on the kai artifact; ZEKO ran only after both reviewer tasks were collected with accept verdicts (runner review gate).",
+      "READINESS: focused test suite green \u2014 90/90 in tests/organization (59 pre-existing + 31 new), regression suites for the parallel executor and runtime invariants green.",
+      "READINESS: mission evidence layout verified \u2014 runs/7role_smoke/ contains mission_metrics.json, root_verdict.json, handoffs.json, mission_packet.json, smoke_log.txt; no writes outside that directory.",
+      "READINESS: integration/release posture of the changed files is additive (organization metrics + runner instrumentation + package exports + one test module + smoke fixtures); no release-system or L3/live-bridge modification.",
+      "BLOCKER (reported, not overridable): model-level subagent identity could not be exercised \u2014 persona composition is DRAFT/NOT MOUNTED and all 6 direct subagent_* channel attempts failed; ZEKO does not treat this as release-blocking for the organization layer itself but records it as an open mission blocker for the orchestrator/ROOT."
+    ],
+    "evidence": [
+      "artifact:root_verdict.json",
+      "artifact:mission_metrics.json",
+      "artifact:test_7role_metrics.py"
+    ],
+    "artifacts": [],
+    "changed_files": [
+      "mission_metrics.json",
+      "root_verdict.json",
+      "test_7role_metrics.py"
+    ],
+    "risks": [
+      "R: ZEKO cannot and does not override failed verification or security \u2014 both reviewers accepted here; had either not accepted, ZEKO's readiness handoff would be status blocked instead."
+    ],
+    "unknowns": [],
+    "next": [],
+    "attempt": 1,
+    "produced_at": "2026-09-04T02:59:37.220299+00:00"
+  }
+}

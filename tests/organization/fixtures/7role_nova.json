@@ -1,0 +1,37 @@
+{
+  "task_id": "nova",
+  "mission_id": "mission-7role-smoke-0001",
+  "owner": "nova",
+  "role": "nova",
+  "status": "SUCCEEDED",
+  "findings": [
+    "F: SPECIALIST_ROLES in orchestrator/foundation/contracts.py is exactly (zeko, cto, cfo, kai, somad, badsector, nova) — 7 specialists, orchestrator excluded from the specialist set.",
+    "F: orchestrator/organization/ is the bounded organization layer: MissionPacket/MissionTask (packet.py), plan_waves (waves.py), TypedHandoff (handoff.py), EvidenceLedger (evidence.py), ReworkLedger with MAX_REWORK_CYCLES=2 (rework.py), RootVerdict/build_verdict (root.py), MissionRunner (runner.py).",
+    "F: MissionRunner executes waves through orchestrator/runtime/parallel.ParallelExecutor — the single existing bounded-concurrency executor; no second scheduler exists in the layer.",
+    "F: EvidenceLedger records into the existing RuntimeAudit append-only ledger (orchestrator/runtime/audit.py) via the sanctioned audit channel; no second audit store exists.",
+    "F: Reviewer verdicts are typed vocabularies: BADSECTOR PASS/REWORK/REJECT (control/badsector.py VALID_VERDICTS), SOMAD VERIFIED/REWORK/REFUTED (organization/rework.py); accept verdicts are PASS and VERIFIED.",
+    "F: orchestrator/organization/metrics.py exposes MissionMetrics with an explicit OBSERVED vs ESTIMATED split; cfo_estimates is populated only from a CFO handoff.",
+    "F: mission-level metrics vocabulary (mission_id, started_at, duration_ms, task_count, completed/blocked/failed/escalated, rework_cycles, roles_invoked/completed, waves, parallel_tasks_peak, verification_passed/failed) is present on MissionMetrics.",
+    "F: wave planning (orchestrator/organization/waves.py plan_waves) partitions the task DAG into maximal independent sets — NOVA+CFO share wave 0; BADSECTOR+SOMAD share the review wave."
+  ],
+  "evidence": [
+    "artifact:AGENTS.md",
+    "artifact:contracts.py",
+    "artifact:runner.py",
+    "artifact:parallel.py",
+    "artifact:audit.py",
+    "artifact:metrics.py",
+    "artifact:waves.py",
+    "artifact:rework.py"
+  ],
+  "risks": [
+    "R: reviewer-role ownership rules (reviewer cannot self-fix) must be enforced at the packet layer, not by convention."
+  ],
+  "unknowns": [
+    "U: whether the DSH per-role tool-subagent composition is mounted in this session — config/role-preset-mapping.yaml is marked DRAFT/NOT MOUNTED; direct subagent_* invocations failed 6/6."
+  ],
+  "inferences": [
+    "I: the 7-role smoke can run through MissionRunner + ParallelExecutor without modifying the organization layer."
+  ],
+  "summary": "Organization layer already provides the full 7-role wave/review/verdict machinery with single scheduler and single audit; direct subagent channel is not mounted, so the canonical smoke dispatches all 7 roles through the MissionRunner delegation seam."
+}
