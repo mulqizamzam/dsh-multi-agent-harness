@@ -37,16 +37,20 @@ tool_filter:
   allow: [read, read_image, glob, grep,
           job_kill, job_list, job_output,
           skill, exit_plan_mode, todo_write]
-  deny: [bash,
-         web_search,
-         subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-         workflow, ralph, ask_user_question,
-         create_goal, get_goal, update_goal]
+  deny: [edit, write,
+         subagent_cto, subagent_cfo, subagent_kai,
+         subagent_somad, subagent_badsector, subagent_zeko]
   unmounted_candidates: []
   notes: >
     No bash, no web — manuscript work is project-local and non-destructive.
     Writes are confined to the workspace by the session sandbox. Web research
-    can be widened per delegation if worldbuilding research is needed.
+    can be widened per delegation if worldbuilding research is needed. Deny
+    contract: the O5 write/edit hard-block plus the six sibling delegation
+    instances (exact-name subdelegation deny-by-default; the generic
+    workflow-realm tools are not on a specialist child's inherited chain and
+    are rejected by tools.restrict()). bash and web_search are NOT deny
+    entries — they are outside the allow list, which enforces the ISO-005
+    boundary; deny only names tools that are restrictable for the child.
 
 prohibited_actions: [infrastructure_action, credential_change]
 

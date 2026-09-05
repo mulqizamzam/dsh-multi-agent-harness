@@ -38,6 +38,14 @@ except ImportError:  # pragma: no cover - degraded mode without jsonschema
 # ---------------------------------------------------------------------------
 # Tool catalog — verified against DSH 0.1.1-rc.2 (docs/tool-catalog.md).
 # Mirrored here so validation runs without loading the docs.
+#
+# The seven subagent_<id> names are the deployed per-role tool-subagent
+# instance tools: they register as global-layer rows in the live profile
+# composition ($DSH_HOME/profiles/web/cordis.patch.yml), so they are part of
+# every specialist child's inherited (restrictable) surface and are valid
+# allow/deny names for tools.restrict() — verified against the engine
+# (packages/core/tools restrict(): throws on names outside the child's
+# global+ancestor-chain surface).
 # ---------------------------------------------------------------------------
 VERIFIED_TOOLS = frozenset("""
 ask_user_question bash cordis_define cordis_inspect_list cordis_inspect_query
@@ -50,10 +58,22 @@ spawn_teammate str_replace_editor subagent subagent_fork team_task_create
 team_task_get team_task_list team_task_update terminal_close terminal_list
 terminal_open terminal_read terminal_send terminal_signal todo_write update_goal
 wait_agent web_fetch web_search workflow write
+subagent_zeko subagent_cto subagent_cfo subagent_kai subagent_somad
+subagent_badsector subagent_nova
 """.split())
 
 SPECIALIST_IDS = {"zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"}
-DELEGATION_TOOLS = {"subagent", "subagent_fork", "send_message", "interrupt_agent", "list_agents", "workflow", "ralph"}
+# Delegation tools a specialist must never hold in ALLOW. Beyond the generic
+# orchestrator-side delegation tools, the seven sibling subagent_<id>
+# instances are the exact delegation surface a specialist child actually sees
+# (restriction matching is exact-name, so the generic "subagent" deny never
+# blocked them) — subdelegation DENY BY DEFAULT is enforced on both sides.
+DELEGATION_TOOLS = {
+    "subagent", "subagent_fork", "send_message", "interrupt_agent",
+    "list_agents", "workflow", "ralph",
+    "subagent_zeko", "subagent_cto", "subagent_cfo", "subagent_kai",
+    "subagent_somad", "subagent_badsector", "subagent_nova",
+}
 WRITE_EXEC_TOOLS = {"bash", "edit", "write", "str_replace_editor", "run_code", "pwsh"}
 # Permission-matrix vocabulary (config/permissions.yaml, PRD §8 normalized)
 CAPABILITY_VALUES = {"yes", "scoped", "review", "approval", "scoped_approval", "no"}

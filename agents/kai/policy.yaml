@@ -39,16 +39,18 @@ tool_filter:
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
   deny: [bash, edit, write,
-         subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-         workflow, ralph, ask_user_question,
-         create_goal, get_goal, update_goal]
+         subagent_cto, subagent_cfo, subagent_somad,
+         subagent_badsector, subagent_nova, subagent_zeko]
   unmounted_candidates: [web_fetch]
   notes: >
     web_fetch is currently DISABLED in the standard preset (SSRF posture, no
     fetch provider). If deep-document research requires fetch, enabling it is a
     controlled DSH composition exception requiring SSRF review (ADR UNKNOWN #6).
     Until then Kai uses web_search only. No project file write without an
-    explicit grant (ISO-003).
+    explicit grant (ISO-003). Deny contract: the write/exec hard-block plus the
+    six sibling delegation instances (exact-name subdelegation deny-by-default;
+    the generic workflow-realm tools are not on a specialist child's inherited
+    chain and are rejected by tools.restrict()).
 
 prohibited_actions: [project_file_write_without_grant, credential_change]
 

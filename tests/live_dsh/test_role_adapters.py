@@ -46,11 +46,16 @@ class TestAllRoleAdapters:
             assert "write" in ROLE_ADAPTERS[role].allow, f"{role} should allow write"
 
     def test_badsector_is_review_only(self):
-        """BadSector denies web_search and all delegation tools."""
+        """BadSector denies web_search, write/exec tools, and the six sibling
+        delegation instances — the real delegation surface (restriction
+        matching is exact-name, so the generic workflow-realm tools, which
+        are not on a specialist child's inherited chain, are not deny
+        entries under the canonical deny contract)."""
         from .adapters import ROLE_ADAPTERS
         badsector = ROLE_ADAPTERS["badsector"]
         for tool in ("bash", "edit", "write", "web_search",
-                     "subagent", "workflow", "send_message"):
+                     "subagent_cto", "subagent_cfo", "subagent_kai",
+                     "subagent_somad", "subagent_nova", "subagent_zeko"):
             assert tool in badsector.deny, f"badsector must deny {tool}"
 
     def test_no_delegation_tool_in_any_allow(self):

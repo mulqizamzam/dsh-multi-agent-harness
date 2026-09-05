@@ -14,6 +14,11 @@
       style review. You edit manuscripts within the project workspace only. You
       never expand your scope or grant yourself authority. You escalate through
       the orchestrator.
+      Grep/search constraint: the grep tool runs ripgrep standard regex only —
+      never use look-around ((?!…), (?<!…), (?=…), (?<=…)) or PCRE2 syntax;
+      the include parameter accepts exactly one positive glob and no negation.
+      To exclude paths, narrow the path argument to the target directory, use
+      one positive include glob, or read known files directly.
 
 - id: agent-instructions
   name: '@deepseek-ai/dsh-agent-instructions'

@@ -13,7 +13,22 @@
 #    controlled DSH composition exception (ADR Decision 4/7 — HUMAN_PENDING,
 #    reversible per case).
 #  - Tool names are verified against the DSH 0.1.1-rc.2 tool catalog
-#    (docs/tool-catalog.md). Unknown names fail loudly at mount (VERIFIED).
+#    (docs/tool-catalog.md) plus the seven deployed per-role instance tools
+#    (subagent_<id>, mounted as global-layer rows in the live profile
+#    composition). Unknown names fail loudly at child spawn:
+#    tools.restrict() throws on any allow/deny name outside the child's
+#    inherited tool surface (global layer + parent scope chain).
+#  - DENY CONTRACT (canonical; reconciled with the deployed live profile):
+#    every deny list names exactly the six sibling subagent_<id> instances
+#    (the real delegation surface — restriction matching is exact-name, so
+#    denying the generic "subagent" never blocked subagent_<id>) plus the
+#    role-specific bash/edit/write/web_search prohibitions below. Generic
+#    workflow-realm tools (subagent, subagent_fork, send_message,
+#    interrupt_agent, list_agents, workflow, ralph) are NOT valid deny
+#    entries: they register in the standard preset's workflow isolate realm,
+#    outside a specialist child's inherited chain, and restrict() rejects
+#    them. Every other catalog tool is withheld by the closed allow list —
+#    allow is the primary boundary; deny is the exact-name hard block.
 #  - toolFilter is a CAPABILITY boundary, not complete security isolation;
 #    sandbox/approval remain session-level.
 #  - Phase-1B validation tests must assert: allow ∩ deny = ∅, every name in
@@ -44,9 +59,8 @@ roles:
       allow: [bash, read, read_image, edit, write, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
+      deny: [subagent_cto, subagent_cfo, subagent_kai,
+             subagent_somad, subagent_badsector, subagent_nova]
     notes: ops role; bash scoped to diagnosis/delegation-bounded ops; no code architecture change
 
   - id: cto
@@ -62,9 +76,8 @@ roles:
       allow: [bash, read, read_image, edit, write, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
+      deny: [subagent_cfo, subagent_kai, subagent_somad,
+             subagent_badsector, subagent_nova, subagent_zeko]
     notes: engineering role; lsp/str_replace_editor are unmounted_candidates (controlled exception required)
 
   - id: cfo
@@ -81,9 +94,8 @@ roles:
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write,
-             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
+             subagent_cto, subagent_kai, subagent_somad,
+             subagent_badsector, subagent_nova, subagent_zeko]
     notes: read-only analysis; no execution path; transactions always delegated + approved
 
   - id: kai
@@ -100,9 +112,8 @@ roles:
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write,
-             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
+             subagent_cto, subagent_cfo, subagent_somad,
+             subagent_badsector, subagent_nova, subagent_zeko]
     notes: read-only research; web_fetch is unmounted_candidate (SSRF review required)
 
   - id: somad
@@ -118,10 +129,9 @@ roles:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash,
-             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
+      deny: [bash, edit, write,
+             subagent_cto, subagent_cfo, subagent_kai,
+             subagent_badsector, subagent_nova, subagent_zeko]
     notes: drafting content is channel-routed (no raw write/edit); no bash (no infra, ISO-004); publishing is approval-gated via control plane
 
   - id: badsector
@@ -137,11 +147,9 @@ roles:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write,
-             web_search,
-             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
+      deny: [bash, edit, write, web_search,
+             subagent_cto, subagent_cfo, subagent_kai,
+             subagent_somad, subagent_nova, subagent_zeko]
     notes: strictly read-only reviewer; never executes; PASS never authorizes
 
   - id: nova
@@ -157,12 +165,16 @@ roles:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               skill, exit_plan_mode, todo_write]
-      deny: [bash,
-             web_search,
-             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-             workflow, ralph, ask_user_question,
-             create_goal, get_goal, update_goal]
-    notes: manuscript content is channel-routed (no raw write/edit); no bash, no web; project-local
+      deny: [edit, write,
+             subagent_cto, subagent_cfo, subagent_kai,
+             subagent_somad, subagent_badsector, subagent_zeko]
+    notes: >
+      Manuscript content is channel-routed (no raw write/edit); no bash, no web;
+      project-local. Deny carries the O5 write/edit hard-block and the six
+      sibling delegation instances; bash and web_search stay out of deny —
+      they are not in the allow list (the allowlist enforces the ISO-005
+      boundary) and are not part of nova's role composition, so denying them
+      would only risk an unrestrictable-name reject at child spawn.
 
 # The orchestrator is the root session (ADR Decision 3 hybrid), not a
 # tool-subagent instance. Its own session toolFilter is a deployment concern

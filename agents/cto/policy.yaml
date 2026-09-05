@@ -33,14 +33,17 @@ tool_filter:
   allow: [bash, read, read_image, edit, write, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-         workflow, ralph, ask_user_question,
-         create_goal, get_goal, update_goal]
+  deny: [subagent_cfo, subagent_kai, subagent_somad,
+         subagent_badsector, subagent_nova, subagent_zeko]
   unmounted_candidates: [lsp, str_replace_editor]
   notes: >
     lsp and str_replace_editor are code-engineering tools that are NOT mounted
     in the standard web preset; enabling them for CTO requires a controlled
     DSH composition exception (HUMAN_PENDING). Until then they are denied.
+    Deny contract: the six sibling delegation instances (exact-name
+    subdelegation deny-by-default; the generic workflow-realm tools are not on
+    a specialist child's inherited chain and are rejected by
+    tools.restrict()).
 
 prohibited_actions: [financial_transaction, credential_change]
 

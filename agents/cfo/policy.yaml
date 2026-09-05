@@ -39,14 +39,16 @@ tool_filter:
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
   deny: [bash, edit, write,
-         subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-         workflow, ralph, ask_user_question,
-         create_goal, get_goal, update_goal]
+         subagent_cto, subagent_kai, subagent_somad,
+         subagent_badsector, subagent_nova, subagent_zeko]
   unmounted_candidates: []
   notes: >
     CFO has NO execution path: read-only tools only. Any financial transaction
     requires a fresh delegation + Human approval and is never performed by this
-    role directly (RISK-003).
+    role directly (RISK-003). Deny contract: the write/exec hard-block plus the
+    six sibling delegation instances (exact-name subdelegation deny-by-default;
+    the generic workflow-realm tools are not on a specialist child's inherited
+    chain and are rejected by tools.restrict()).
 
 prohibited_actions: [financial_transaction, code_write, credential_change, production_deploy]
 

@@ -13,11 +13,20 @@
 #   maxDepth, enableRunInBackground (default true).
 #
 # Rules preserved:
-#   - subdelegation DENY BY DEFAULT: specialists never expose subagent/fork/
-#     workflow/send_message etc. (they are in every specialist DENY set).
+#   - subdelegation DENY BY DEFAULT: every specialist deny list names exactly
+#     its six sibling subagent_<id> instances (the real delegation surface —
+#     restriction matching is exact-name, so the generic "subagent" deny never
+#     blocked subagent_<id>), and no delegation tool appears in any allow set.
+#     Generic workflow-realm tools (subagent, subagent_fork, send_message,
+#     interrupt_agent, list_agents, workflow, ralph) are NOT deny entries:
+#     they register in the standard preset's workflow isolate realm, outside a
+#     specialist child's inherited chain, and tools.restrict() rejects them.
 #   - toolFilter allow∩deny = ∅ (validated by tests/validate-config.py).
 #   - read-only roles (cfo, kai, badsector) deny edit/write/bash even though
 #     tool-fs is mounted in their preset (tool-fs is atomic — VERIFIED).
+#   - deny vocabulary is canonical and matches the deployed live profile
+#     composition ($DSH_HOME/profiles/web/cordis.patch.yml) row for row
+#     (locked by tests/l3_runner/.../test_live_rows_match_config).
 # ============================================================================
 
 draft_version: 1
@@ -41,9 +50,8 @@ insert_draft:
         allow: [bash, read, read_image, edit, write, glob, grep,
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
-        deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+        deny: [subagent_cto, subagent_cfo, subagent_kai,
+               subagent_somad, subagent_badsector, subagent_nova]
 
   - id: tool-subagent-cto
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -57,9 +65,8 @@ insert_draft:
         allow: [bash, read, read_image, edit, write, glob, grep,
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
-        deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+        deny: [subagent_cfo, subagent_kai, subagent_somad,
+               subagent_badsector, subagent_nova, subagent_zeko]
 
   - id: tool-subagent-cfo
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -74,9 +81,8 @@ insert_draft:
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [bash, edit, write,
-               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+               subagent_cto, subagent_kai, subagent_somad,
+               subagent_badsector, subagent_nova, subagent_zeko]
 
   - id: tool-subagent-kai
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -91,9 +97,8 @@ insert_draft:
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [bash, edit, write,
-               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+               subagent_cto, subagent_cfo, subagent_somad,
+               subagent_badsector, subagent_nova, subagent_zeko]
 
   - id: tool-subagent-somad
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -107,10 +112,9 @@ insert_draft:
         allow: [read, read_image, glob, grep,
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash,
-               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+        deny: [bash, edit, write,
+               subagent_cto, subagent_cfo, subagent_kai,
+               subagent_badsector, subagent_nova, subagent_zeko]
 
   - id: tool-subagent-badsector
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -124,11 +128,9 @@ insert_draft:
         allow: [read, read_image, glob, grep,
                 job_kill, job_list, job_output,
                 skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write,
-               web_search,
-               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+        deny: [bash, edit, write, web_search,
+               subagent_cto, subagent_cfo, subagent_kai,
+               subagent_somad, subagent_nova, subagent_zeko]
 
   - id: tool-subagent-nova
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -142,11 +144,9 @@ insert_draft:
         allow: [read, read_image, glob, grep,
                 job_kill, job_list, job_output,
                 skill, exit_plan_mode, todo_write]
-        deny: [bash,
-               web_search,
-               subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-               workflow, ralph, ask_user_question,
-               create_goal, get_goal, update_goal]
+        deny: [edit, write,
+               subagent_cto, subagent_cfo, subagent_kai,
+               subagent_somad, subagent_badsector, subagent_zeko]
 
 # Consistency guardrails (validated by tests/validate-config.py):
 consistency_rules:

@@ -37,17 +37,20 @@ tool_filter:
   allow: [read, read_image, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [bash,
-         subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-         workflow, ralph, ask_user_question,
-         create_goal, get_goal, update_goal]
+  deny: [bash, edit, write,
+         subagent_cto, subagent_cfo, subagent_kai,
+         subagent_badsector, subagent_nova, subagent_zeko]
   unmounted_candidates: []
   notes: >
     Publishing is NOT a tool in this role: social_publishing is scoped_approval
     at the capability level and is performed only through the control plane with
     explicit Human approval. This role drafts content via the project channel
     (no raw write/edit); it never publishes on its own. No bash — no
-    infrastructure capability (ISO-004).
+    infrastructure capability (ISO-004). Deny contract: the write/exec
+    hard-block plus the six sibling delegation instances (exact-name
+    subdelegation deny-by-default; the generic workflow-realm tools are not on
+    a specialist child's inherited chain and are rejected by
+    tools.restrict()).
 
 prohibited_actions: [server_write, infrastructure_action, credential_change]
 

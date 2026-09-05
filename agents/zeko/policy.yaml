@@ -40,14 +40,17 @@ tool_filter:
   allow: [bash, read, read_image, edit, write, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-         workflow, ralph, ask_user_question,
-         create_goal, get_goal, update_goal]
+  deny: [subagent_cto, subagent_cfo, subagent_kai,
+         subagent_somad, subagent_badsector, subagent_nova]
   unmounted_candidates: []
   notes: >
     bash is scoped to ops diagnosis and delegation-bounded operations; all
     writes remain within the session sandbox (workspace-write) and pass the
     execution gate. No code-editing tools beyond scoped ops use of edit/write.
+    Deny contract: the six sibling delegation instances (exact-name
+    subdelegation deny-by-default; the generic workflow-realm tools are not on
+    a specialist child's inherited chain and are rejected by
+    tools.restrict()).
 
 prohibited_actions: [code_architecture_change, financial_transaction, credential_change]
 

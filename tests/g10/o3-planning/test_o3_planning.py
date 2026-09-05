@@ -243,8 +243,7 @@ def test_config_and_roles_unchanged(role_filters):
         allow = role_filters[rid]["allow"]
         assert "write" not in allow, f"{rid} write must remain removed (O5)"
         assert "edit" not in allow, f"{rid} edit must remain removed (O5)"
-        assert "bash" in role_filters[rid]["deny"], \
-            f"{rid} bash must remain denied"
+        assert "bash" not in allow, f"{rid} bash must remain outside allow (O5)"
     raw_write = sorted(r for r, f in role_filters.items()
                        if {"bash", "write", "edit"} & f["allow"])
     assert raw_write == ["cto", "zeko"], \

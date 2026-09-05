@@ -76,14 +76,43 @@ def test_raw_write_roles_carry_tool_surface(role_filters, raw_write_roles):
 
 
 def test_o5_somad_nova_deny_write_edit(role_filters):
-    """O5 guard: somad and nova must NOT allow write/edit at the DSH layer
-    (their content is channel-routed through the project write path)."""
+    """O5 guard: somad and nova must NOT hold raw write capability at the
+    DSH layer (their content is channel-routed through the project write
+    path).
+
+    Post-reconciliation deny contract (locked to the deployed live rows by
+    test_live_rows_match_config): write/edit stay hard-denied for both roles;
+    somad additionally hard-denies bash (ISO-004, no infra capability); nova
+    enforces its bash/web boundary via the closed allow list (ISO-005) —
+    bash/web_search are not in nova's allow, and deny lists may only name
+    tools restrict() can actually restrict for the child.
+    """
     for rid in ("somad", "nova"):
         allow = role_filters[rid]["allow"]
         assert "write" not in allow, f"{rid} must not allow write (O5)"
         assert "edit" not in allow, f"{rid} must not allow edit (O5)"
+        assert "bash" not in allow, f"{rid} must not allow bash (O5)"
         deny = role_filters[rid]["deny"]
-        assert "bash" in deny, f"{rid} must deny bash (unchanged)"
+        assert {"write", "edit"} <= deny, \
+            f"{rid} must hard-deny write/edit (O5 defense in depth)"
+    assert "bash" in role_filters["somad"]["deny"], \
+        "somad must hard-deny bash (ISO-004)"
+
+
+def test_specialists_hard_deny_sibling_delegation_instances(role_filters):
+    """Subdelegation DENY BY DEFAULT at the REAL delegation surface: every
+    specialist's deny list hard-names its six sibling subagent_<id>
+    instances (global-layer rows, restrictable from every child). The
+    generic "subagent" deny never blocked these — restriction matching is
+    exact-name."""
+    instances = {"subagent_zeko", "subagent_cto", "subagent_cfo",
+                 "subagent_kai", "subagent_somad", "subagent_badsector",
+                 "subagent_nova"}
+    for rid, f in role_filters.items():
+        siblings = instances - {f"subagent_{rid}"}
+        assert siblings <= f["deny"], (
+            f"{rid} must hard-deny sibling delegation instances: "
+            f"{sorted(siblings - f['deny'])}")
 
 
 def test_allow_deny_disjoint(role_filters):
