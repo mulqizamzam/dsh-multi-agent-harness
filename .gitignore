@@ -3,3 +3,10 @@
 .pytest_cache/
 __pycache__/
 *.pyc
+
+# Runtime secrets — HMAC keys generated per run, never commit
+.o3-hmac-secret
+
+# Runtime artifacts
+*.pid
+.tmp-investigate/
