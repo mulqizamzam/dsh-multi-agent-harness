@@ -1060,10 +1060,14 @@ class TestScenarioTraceability:
                               "README.md")
         assert os.path.exists(readme), "missing docs/phase-4/scenarios/README.md"
 
-    def test_phase6_skeletons_still_skipped(self):
-        """The Phase-6 skeleton remains skipped (Phase-6 live engine required);
-        these executable scenarios are the Phase-4 promotion, not a Phase-6
-        claim."""
-        import tests.scenarios.test_scenarios as skel
-        assert getattr(skel, "pytestmark", None), \
-            "test_scenarios.py should keep its Phase-6 skip marker"
+    def test_phase6_scenarios_now_executable(self):
+        """The PRD §17 file was a blanket-skipped skeleton; as of 2026-09-07 it
+        drives the real runtime end-to-end (SCN-001..SCN-010). The contract is
+        now the OPPOSITE of the old one: no blanket skip marker may return, and
+        every scenario id must still be declared."""
+        import tests.scenarios.test_scenarios as scn
+        assert not getattr(scn, "pytestmark", []), \
+            "test_scenarios.py must stay executable (no blanket skip)"
+        assert tuple(scn.SCENARIOS) == tuple(
+            f"SCN-{i:03d}" for i in range(1, 11)), \
+            "PRD §17 scenario list must stay complete"

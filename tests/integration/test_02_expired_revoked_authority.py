@@ -8,6 +8,8 @@
 #
 # Invariants: AUTH-INV-06, INV-13, THREAT-008/009/024
 
+import os
+
 import pytest
 
 
@@ -95,8 +97,77 @@ class TestINT02ExpiredRevokedAuthority:
         assert len(denials) == 1
         assert "expired" in denials[0].get("error", "")
 
-    @pytest.mark.skip(reason="requires Phase-2C — live execution re-check")
     def test_live_revocation_between_plan_and_exec(self, harness):
-        """SKELETON: delegation revoked between planning and execution in a
-        live DSH session; execution-time re-check must DENY."""
-        raise NotImplementedError("Phase-2C: live revocation race")
+        """LIVE variant (D4/D7 mounted): revoke the delegation between planning
+        and execution while the REAL backend is wired, and assert the
+        execution-time re-check denies BEFORE any live dispatch happens
+        (AUTH-INV-06, fail-closed at the DSH boundary).
+
+        Conditional gate, not a skeleton: without the mount marker or a
+        session-recorded child result the test SKIPS with that reason. The
+        offline contract is covered by the tests above and by
+        tests/scenarios/test_executable_scenarios.py SCN-102.
+        """
+        import json
+        from tests.live_dsh.live_gate import (live_available, skip_reason,
+                                              load_recorded)
+        if not live_available("INT-02"):
+            pytest.skip(skip_reason("INT-02"))
+        live = load_recorded("DSH_LIVE_RESULT_INT02",
+                             "int01_live_result.json",
+                             "int07_live_result.json")
+        assert live and live.get("structured"), \
+            "live gate on but no session-recorded child result"
+
+        from orchestrator.runtime import ExecutionFlow
+        from orchestrator.runtime.delegation import MemoryDelegationProvider
+        from orchestrator.dsh import DelegationClient, RoleResolver
+        from tests.live_dsh.real_backend import (RealDSHBackend,
+                                                 DSHBridgeResponse)
+        from tests.scenarios.scenario_helpers import (
+            make_intake, make_execute_plan)
+
+        ws = harness.ws
+        structured = live["structured"]
+        calls = []
+
+        def _dispatch(invocation, instance):
+            calls.append(getattr(instance, "role", ""))
+            return DSHBridgeResponse(
+                run_id=live["run_id"], output=json.dumps(structured),
+                structured=structured,
+                stop_reason=live.get("stop_reason", "completed"))
+
+        backend = RealDSHBackend(_dispatch, require_marker=True)
+        client = DelegationClient(backend=backend, resolver=RoleResolver())
+        delegation = harness.build_delegation(
+            id="delegation-int-02", task="int-02",
+            action="write", target="agents/**",
+            scope_operations=("write", "read", "code_write"),
+            scope_resources=("agents/**", "docs/**",
+                             "multi-agent-harness/**"))
+        provider = MemoryDelegationProvider(delegation)
+        flow = ExecutionFlow(
+            project="multi-agent-harness", base=ws, provider=provider,
+            subtask_runner=lambda task, child: client.delegate(task, child),
+            flow_id="int-02-live")
+
+        # the race: revoked after planning, before execution
+        def _revoke_between_plan_and_exec():
+            provider.revoke("delegation-int-02",
+                            reason="revoked between planning and execution")
+        flow.pre_execute = _revoke_between_plan_and_exec
+
+        result = flow.run(
+            make_intake(objective="engineering",
+                        required_authority_context="delegation-int-02"),
+            execute_plan=make_execute_plan(target="agents/cto/x.txt"))
+
+        assert result.outcome == "BLOCKED", result.to_dict()
+        # the planning dispatch DID happen (legitimate, pre-revocation) — the
+        # proof is that NO dispatch or execution follows the revocation
+        assert len(calls) == 1, \
+            "no dispatch may follow the revocation (no blind retry)"
+        assert not os.path.exists(os.path.join(ws, "agents/cto/x.txt"))
+        denials = flow._get_audit().events_of_class("execution_denial")
+        assert denials, "the live denial must be audited"

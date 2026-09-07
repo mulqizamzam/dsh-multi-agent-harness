@@ -19,6 +19,7 @@
 | **AUTHORITATIVE CURRENT VALUE** | **2761 passed, 15 skipped, 10 failed (isolation import-path issues — pass in isolation), 2786 total.** The test suite has grown since the 2026-08-31 documentation. Historical values: 1597 (master gate), 1642 (final/0005), 1898 (l3/final/0001) are superseded snapshots. The authoritative current value is the re-run result. |
 | **CLASSIFICATION** | **CONTRADICTORY / MISSING EVIDENCE** (resolved) — the three historical values are now superseded by the current measured count. The arithmetic gap remains unexplained in the historical set but the current single-count measurement resolves the contradiction. |
 | **CORRECTION REQUIRED** | The three documents' regression counts are historical snapshots. The authoritative reconciliation is: **2761 passed, 15 skipped, 10 isolation-failures, 2786 collected** (2026-09-01 re-run). The 10 failures are pre-existing test-ordering isolation issues (not real regressions). |
+| **SUPERSEDED 2026-09-07** | Full regression re-run 2026-09-07: **3261 passed, 5 skipped, 0 failed** (3266 collected). The skip delta 15→5 is intentional: commit `4ff05aa` implements the 10 Phase-6 scenario skeletons (SCN-001..010) and converts the 4 Phase-2C live variants + the ISO-LIVE-006 live variant into explicit `DSH_LIVE_BRIDGE_ACTIVE` marker gates (skip with reason when the composition is absent). The 2026-09-01 row above is preserved verbatim as the historical authoritative value for that date. |
 
 ---
 
@@ -350,7 +351,7 @@ The trailing line states: *"20 discrepancies documented (5 STALE, 5 CONTRADICTOR
 
 | Metric | Authoritative Value | Source |
 |---|---|---|
-| **AUTHORITATIVE REGRESSION COUNT** | 2761 passed, 15 skipped, 10 isolation-failures (pass in isolation), 2786 collected | `pytest tests/ -q` (2026-09-01) |
+| **AUTHORITATIVE REGRESSION COUNT** | 2761 passed, 15 skipped, 10 isolation-failures (pass in isolation), 2786 collected | `pytest tests/ -q` (2026-09-01) — superseded 2026-09-07: **3261 passed, 5 skipped, 0 failed** (see R1 SUPERSEDED row) |
 | **AUTHORITATIVE L3 COUNT** | 592 passed | `pytest tests/l3_runner/ tests/l3_reference/ -q` (2026-09-01) |
 | **AUTHORITATIVE BLOCKER COUNT** | 3 L3 blockers (L3ENV-UID-2, L3ENV-D4D7-3, L3ENV-PLAN-REAL) | Readiness probe with `--orchestrator-uid 1000` |
 | **AUTHORITATIVE APPROVAL STATE** | AVAILABLE BY COMPOSITION (web GUI). L3ENV-ANS-1 PASS, L3ENV-ANS-2 PASS. E2E = UNKNOWN. | DSH bundle composition + readiness probe |

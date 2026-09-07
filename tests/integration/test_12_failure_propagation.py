@@ -119,8 +119,74 @@ class TestINT12FailurePropagation:
                          expected_project_version=v - 1)
         # Each denial is independent; no partial execution from any.
 
-    @pytest.mark.skip(reason="requires Phase-2C — live DSH subagent failure")
     def test_live_subagent_failure_propagation(self, harness):
-        """SKELETON: a failure in a live subagent propagates to the orchestrator
-        and stops the pipeline. Blocked on Phase-2C."""
-        raise NotImplementedError("Phase-2C: live subagent failure propagation")
+        """LIVE variant (D4/D7 mounted): a real child's FAILED TaskResult
+        propagates typed (SubtaskFailed) into the flow — no partial success,
+        nothing executed, nothing silently retried.
+
+        Conditional gate, not a skeleton: without the mount marker or the
+        session-recorded FAILED child the test SKIPS with that reason.
+        Offline contract: the tests above and
+        tests/scenarios/test_executable_scenarios.py SCN-106/107.
+        """
+        import json
+        from tests.live_dsh.live_gate import (live_available, skip_reason,
+                                              load_recorded)
+        if not live_available("INT-12"):
+            pytest.skip(skip_reason("INT-12"))
+        live = load_recorded("DSH_LIVE_RESULT_INT12",
+                             "INT-12.live_results.json")
+        assert live, "live gate on but no session-recorded INT-12 results"
+        failed = live.get("int12-fail")
+        assert failed and failed["structured"]["status"] == "FAILED", \
+            "expected the recorded real FAILED kai child (int12-fail)"
+
+        from orchestrator.runtime import ExecutionFlow
+        from orchestrator.runtime.delegation import MemoryDelegationProvider
+        from orchestrator.dsh import DelegationClient, RoleResolver
+        from tests.live_dsh.real_backend import (RealDSHBackend,
+                                                 DSHBridgeResponse)
+        from tests.scenarios.scenario_helpers import (
+            make_intake, make_execute_plan)
+
+        ws = harness.ws
+        calls = []
+
+        def _dispatch(invocation, instance):
+            calls.append(getattr(instance, "role", ""))
+            # Replay rebinding (documented): the recorded FAILED child ran
+            # under its session task id; this replay binds "task-1:kai".
+            structured = dict(failed["structured"])
+            structured["task_id"] = "task-1:kai"
+            return DSHBridgeResponse(
+                run_id=failed["run_id"], output=json.dumps(structured),
+                structured=structured,
+                stop_reason=failed.get("stop_reason", "completed"))
+
+        backend = RealDSHBackend(_dispatch, require_marker=True)
+        client = DelegationClient(backend=backend, resolver=RoleResolver())
+        delegation = harness.build_delegation(
+            id="delegation-int-12", task="int-12",
+            action="read", target="docs/**",
+            scope_operations=("read",),
+            scope_resources=("agents/**", "docs/**",
+                             "multi-agent-harness/**"))
+        provider = MemoryDelegationProvider(delegation)
+        flow = ExecutionFlow(
+            project="multi-agent-harness", base=ws, provider=provider,
+            subtask_runner=lambda task, child: client.delegate(task, child),
+            flow_id="int-12-live")
+        result = flow.run(
+            make_intake(objective="research",
+                        required_authority_context="delegation-int-12"),
+            execute_plan=make_execute_plan(action="read",
+                                           target="docs/sizing.md"))
+
+        assert calls == ["kai"], "exactly the failed live child dispatched"
+        assert result.outcome != "COMPLETE", result.to_dict()
+        assert not result.results, \
+            "fail-closed: no partial success may be reported"
+        # the recorded real run id and the typed failure must surface
+        assert failed["run_id"], "live failure must carry a real run id"
+        assert any("FAILED" in str(e) for e in result.errors), \
+            "the propagated failure must be observable in the flow errors"

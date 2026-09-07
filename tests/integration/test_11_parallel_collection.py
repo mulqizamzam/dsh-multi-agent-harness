@@ -84,8 +84,97 @@ class TestINT11ParallelCollection:
                          expected_project_version=v_before)
         assert h.project_version() == v_after_a
 
-    @pytest.mark.skip(reason="requires Phase-2C — live DSH subagent execution")
     def test_live_parallel_subagent_collection(self, harness):
-        """SKELETON: real parallel subagent execution + result collection.
-        Blocked on Phase-2C."""
-        raise NotImplementedError("Phase-2C: live parallel subagents")
+        """LIVE variant (D4/D7 mounted): parallel real subagent execution with
+        result collection — two session-recorded REAL child results (cfo+kai,
+        the pricing minimum set) flow through RealDSHBackend (marker-gated)
+        into one ExecutionFlow; both must be collected.
+
+        Conditional gate, not a skeleton: without the mount marker or the
+        session-recorded results the test SKIPS with that reason (pytest
+        cannot dispatch a DSH child itself — the dispatch plane is the
+        orchestrator session, tests/live_evidence/harness.py:116-118).
+        Offline contract: the tests above (THREAT-021 CAS) and
+        tests/scenarios/test_scenarios.py SCN-004.
+        """
+        from tests.live_dsh.live_gate import (live_available, skip_reason,
+                                              load_recorded)
+        if not live_available("INT-11"):
+            pytest.skip(skip_reason("INT-11"))
+        live = load_recorded("DSH_LIVE_RESULT_INT11",
+                             "INT-11.live_results.json")
+        assert live, "live gate on but no session-recorded INT-11 results"
+        by_task = {k: v for k, v in live.items()
+                   if k in ("int11-pricing", "int11-research")}
+        assert len(by_task) == 2, \
+            "expected the recorded cfo+kai INT-11 children"
+
+        from orchestrator.runtime import ExecutionFlow
+        from orchestrator.runtime.delegation import MemoryDelegationProvider
+        from orchestrator.dsh import DelegationClient, RoleResolver
+        from tests.live_dsh.real_backend import (RealDSHBackend,
+                                                 DSHBridgeResponse)
+        from tests.scenarios.scenario_helpers import (
+            make_intake, make_execute_plan)
+
+        ws = harness.ws
+        recorded_by_role = {
+            "cfo": by_task["int11-pricing"],
+            "kai": by_task["int11-research"],
+        }
+        run_ids = {}
+        calls = []
+
+        def _dispatch(invocation, instance):
+            role = getattr(instance, "role", "")
+            calls.append(role)
+            rec = recorded_by_role[role]
+            run_ids[role] = rec["run_id"]
+            # Replay rebinding (documented, not silent): the recorded child was
+            # invoked under its session task id (e.g. "int11-pricing"); in this
+            # replay the flow binds "task-1:<role>". The live identity is
+            # preserved in run_id and in the original recorded file.
+            structured = dict(rec["structured"])
+            structured["task_id"] = task_id_by_role[role]
+            return DSHBridgeResponse(
+                run_id=rec["run_id"], output=json.dumps(structured),
+                structured=structured,
+                stop_reason=rec.get("stop_reason", "completed"))
+
+        task_id_by_role = {"cfo": "task-1:cfo", "kai": "task-1:kai"}
+        backend = RealDSHBackend(_dispatch, require_marker=True)
+        client = DelegationClient(backend=backend, resolver=RoleResolver())
+        delegation = harness.build_delegation(
+            id="delegation-int-11", task="int-11",
+            action="read", target="docs/**",
+            scope_operations=("read",),
+            scope_resources=("agents/**", "docs/**",
+                             "multi-agent-harness/**"))
+        provider = MemoryDelegationProvider(delegation)
+        flow = ExecutionFlow(
+            project="multi-agent-harness", base=ws, provider=provider,
+            subtask_runner=lambda task, child: client.delegate(task, child),
+            flow_id="int-11-live")
+        result = flow.run(
+            make_intake(objective="pricing",
+                        required_authority_context="delegation-int-11"),
+            execute_plan=make_execute_plan(action="read",
+                                           target="docs/pricing.md"))
+
+        assert sorted(calls) == ["cfo", "kai"], \
+            "exactly the two live children must be dispatched"
+        # The two REAL recorded recommendations disagree (cost-observability vs
+        # market positioning) — so the conflict gate MUST escalate them to
+        # Human rather than let the flow proceed. Parallel collection and the
+        # conflict semantics are both proven on real evidence.
+        assert result.outcome == "ESCALATED", result.to_dict()
+        assert any(g["gate"] == "conflict" and g["decision"] == "ESCALATE"
+                   for g in result.gates), "conflict gate must escalate"
+        roles = {r["role"] for r in result.results}
+        assert roles == {"cfo", "kai"}, "both live results must be collected"
+        # replay rebinding: session task ids rebind to the replay flow's task,
+        # while the real run ids must stay intact (live provenance)
+        assert {r["task_id"] for r in result.results} == \
+            {"task-1:cfo", "task-1:kai"}
+        assert run_ids["cfo"] and run_ids["kai"], \
+            "live children must carry real run ids"

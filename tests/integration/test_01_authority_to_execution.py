@@ -130,9 +130,77 @@ class TestINT01FullLifecycle:
         assert cmp["reference_decision"] == "ALLOW"
         assert cmp["match"] is True
 
-    @pytest.mark.skip(reason="requires Phase-2C — live DSH subagent execution")
     def test_live_dsh_full_lifecycle(self, harness):
-        """SKELETON: drive the full lifecycle against a live DSH session with
-        a real subagent delegation. Blocked on Phase-2C (production orchestrator
-        execution engine)."""
-        raise NotImplementedError("Phase-2C: live subagent delegation")
+        """LIVE variant (D4/D7 mounted): drive the full INT-01 lifecycle
+        through the REAL backend — a session-recorded subagent_cto result is
+        fed through RealDSHBackend (production mount gate, require_marker=True)
+        into ExecutionFlow, which must reach COMPLETE with exactly one live
+        dispatch.
+
+        Conditional gate, not a skeleton: without the mount marker or without
+        a session-recorded child result the test SKIPS with that reason
+        (pytest cannot dispatch a DSH child itself — the dispatch plane is the
+        orchestrator session, tests/live_evidence/harness.py:116-118). The
+        deterministic contract is covered offline by the tests above and by
+        tests/scenarios/test_scenarios.py SCN-002.
+        """
+        import json
+        from tests.live_dsh.live_gate import (live_available, skip_reason,
+                                              load_recorded)
+        if not live_available("INT-01"):
+            pytest.skip(skip_reason("INT-01"))
+        live = load_recorded("DSH_LIVE_RESULT_INT01",
+                             "int01_live_result.json")
+        assert live and live.get("structured"), \
+            "live gate on but no session-recorded INT-01 child result"
+
+        from orchestrator.runtime import ExecutionFlow
+        from orchestrator.runtime.delegation import MemoryDelegationProvider
+        from orchestrator.dsh import DelegationClient, RoleResolver
+        from tests.live_dsh.real_backend import (RealDSHBackend,
+                                                 DSHBridgeResponse)
+        from tests.scenarios.scenario_helpers import (
+            make_intake, make_execute_plan)
+
+        ws = harness.ws
+        structured = live["structured"]
+        calls = []
+
+        def _dispatch(invocation, instance):
+            calls.append({"tool": getattr(instance, "tool_name", ""),
+                          "role": getattr(instance, "role", "")})
+            return DSHBridgeResponse(
+                run_id=live["run_id"],
+                output=json.dumps(structured),
+                structured=structured,
+                stop_reason=live.get("stop_reason", "completed"))
+
+        backend = RealDSHBackend(_dispatch, require_marker=True)
+        client = DelegationClient(backend=backend, resolver=RoleResolver())
+        delegation = harness.build_delegation(
+            id="delegation-int-001", task="int-01",
+            action="write", target="agents/**",
+            scope_operations=("write", "read", "code_write"),
+            scope_resources=("agents/**", "docs/**",
+                             "multi-agent-harness/**"))
+        provider = MemoryDelegationProvider(delegation)
+
+        def subtask_runner(task, child_delegation):
+            return client.delegate(task, child_delegation)
+
+        flow = ExecutionFlow(project="multi-agent-harness", base=ws,
+                             provider=provider,
+                             subtask_runner=subtask_runner,
+                             flow_id="int-01-live")
+        result = flow.run(
+            make_intake(objective="engineering",
+                        required_authority_context="delegation-int-001"),
+            execute_plan=make_execute_plan(target="agents/cto/output.txt"))
+
+        assert len(calls) == 1, "exactly one live dispatch must occur"
+        assert calls[0]["tool"] == "subagent_cto"
+        assert result.outcome == "COMPLETE", result.to_dict()
+        cto = [r for r in result.results if r.get("role") == "cto"]
+        assert cto and cto[0]["task_id"] == structured["task_id"]
+        # the real DSH run identity must be carried into the collected result
+        assert live["run_id"], "live child must carry a real run_id"

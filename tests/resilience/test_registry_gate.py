@@ -18,6 +18,7 @@
 #   4. No-regression: denial is recorded (audited) and fail-closed — no
 #      partial allow, no cross-root writer grant, no prefix-confusion bypass.
 
+import json
 import os
 import sys
 
@@ -168,16 +169,89 @@ def test_iso_live_006_deterministic_equivalent(ws):
     assert os.path.exists(path)
 
 
-@pytest.mark.skip(
-    reason="ISO-LIVE-006 live variant BLOCKED: requires a mounted DSH session "
-           "(DSH_LIVE_BRIDGE_ACTIVE not set this session); deterministic "
-           "equivalent asserted in test_iso_live_006_deterministic_equivalent")
+_STRUCTURED_OK = {
+    "task_id": "task-1:cto", "assigned_role": "cto",
+    "status": "SUCCEEDED", "confidence": "MEDIUM",
+    "findings": ["live probe: registry write attempted"],
+    "evidence": ["probe:iso-live-006"], "risks": [], "assumptions": [],
+    "unresolved_items": [], "actions_taken": [],
+    "recommendation": "denied as designed",
+    "reported_at": "2026-09-07T00:00:00Z",
+}
+
+
 def test_iso_live_006_live_variant_blocked(ws):
-    """ISO-LIVE-006 LIVE: a real DSH child (bash-capable role) attempting a
-    raw write to state/registry/ must be denied at the DSH layer. BLOCKED —
-    no live mount in this session; do not claim live-DSH proof."""
-    raise AssertionError(
-        "ISO-LIVE-006 live variant must not run without a mounted DSH session")
+    """ISO-LIVE-006 LIVE (D4/D7 mounted): even with a real DSH child wired
+    through RealDSHBackend (require_marker=True), a raw write to
+    state/registry/ must be denied fail-closed by the execution gate —
+    outcome BLOCKED, execution_denial audited, no file, no residue. The live
+    child may be consulted, but the protected root stays untouched.
+
+    Conditional gate, not a skeleton: without the mount marker the test SKIPS
+    with that reason. When it runs, the child result is session-recorded REAL
+    evidence (DSH_LIVE_RESULT_ISO006 or the recorded mount-verification
+    bundle); no live proof is fabricated inside pytest. Deterministic
+    equivalent: test_denial_is_recorded_in_audit_flow_level below.
+    """
+    from tests.live_dsh.live_gate import (live_available, skip_reason,
+                                          load_recorded)
+    if not live_available("ISO-LIVE-006"):
+        pytest.skip(skip_reason("ISO-LIVE-006"))
+    live = load_recorded("DSH_LIVE_RESULT_ISO006",
+                         "int01_live_result.json")
+    assert live and live.get("structured"), \
+        "live gate on but no session-recorded child result"
+
+    from orchestrator.foundation.contracts import Delegation
+    from orchestrator.runtime import ExecutionFlow, MemoryDelegationProvider
+    from orchestrator.dsh import DelegationClient, RoleResolver
+    from tests.live_dsh.real_backend import RealDSHBackend, DSHBridgeResponse
+    from tests.scenarios.scenario_helpers import (
+        make_intake, make_execute_plan)
+
+    structured = live["structured"]
+    calls = []
+
+    def _dispatch(invocation, instance):
+        calls.append(getattr(instance, "role", ""))
+        return DSHBridgeResponse(
+            run_id=live["run_id"], output=json.dumps(structured),
+            structured=structured,
+            stop_reason=live.get("stop_reason", "completed"))
+
+    # The delegation deliberately COVERS state/registry/** (authority ALLOWs)
+    # so the denial must come from the path-aware execution gate — the exact
+    # shape of the deterministic equivalent below.
+    delegation = Delegation(
+        id="delegation-iso-live-006", principal="human",
+        delegate="orchestrator", project="multi-agent-harness",
+        scope_operations=("write", "read", "analysis"),
+        scope_resources=("state/registry/**", "agents/**", "docs/**",
+                         "multi-agent-harness/**"),
+        scope_environments=("dev",), status="ACTIVE", expires_at=None,
+    )
+    backend = RealDSHBackend(_dispatch, require_marker=True)
+    client = DelegationClient(backend=backend, resolver=RoleResolver())
+    flow = ExecutionFlow(
+        base=ws,
+        provider=MemoryDelegationProvider(delegation),
+        subtask_runner=lambda task, child: client.delegate(task, child),
+        flow_id="flow-iso-live-006-live",
+    )
+    result = flow.run(
+        make_intake(objective="engineering"),
+        execute_plan=make_execute_plan(
+            action="write", target="state/registry/iso-live-006.json"),
+        declared_risk="LOW")
+
+    # fail-closed at BOTH layers: the live child is consulted, but the
+    # protected-root write is denied before any mutation
+    assert result.outcome == "BLOCKED", result.to_dict()
+    assert calls, "the live backend must have been wired into the flow"
+    assert not os.path.exists(
+        os.path.join(ws, "state/registry/iso-live-006.json"))
+    denials = flow._get_audit().events_of_class("execution_denial")
+    assert denials, "execution_denial must be recorded in the audit ledger"
 
 
 # ---------------------------------------------------------------------------
