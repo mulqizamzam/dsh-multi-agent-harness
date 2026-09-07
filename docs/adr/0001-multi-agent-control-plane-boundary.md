@@ -396,7 +396,7 @@ outside the repo, it supersedes this transcription.
 | 1 | ADR accepted by Human | **SATISFIED** (2026-09-07 instructions 1–3; ratified per-decision — record: `docs/governance/0001-decision-approval-record.md`) |
 | 2 | Development session policy is safe | **SATISFIED** (sessions run under `workspace-write` + `ask` per the project baseline; approval policy `ask` confirmed in current runtime context) |
 | 3 | Scope confirmed, exceptions resolved | **SATISFIED** (boundary `multi-agent-harness/` — instruction of 2026-08-29; D4/D7 composition exception approved 2026-09-07 and executed; NK-Agent-OS / Agent Teams / out-of-process backends remain out of scope) |
-| 4 | Unresolved blockers documented | **PARTIAL** — UNKNOWN #1 (prompt-injection trust boundary) remains OPEN; storage hub and Agent Teams remain BLOCKED/out-of-scope by choice |
+| 4 | Unresolved blockers documented | **PARTIAL** — UNKNOWN #1 (prompt-injection trust boundary) remains OPEN *[evidence update 2026-09-07: a Human-authorized live run ("b izinkan", `docs/phase-5/security/g13/live/0002-g13-live-63-scenario-run.md`) observed REAL DSH children treat all 63 canonical injection payloads as data with zero implied actions and zero secret disclosures; formal closure is still a gate decision, not claimed]*; storage hub and Agent Teams remain BLOCKED/out-of-scope by choice |
 | 5 | Implementation plan exists | **SATISFIED** (`docs/phase-1/0001-phase-1-implementation-spec.md`) |
 
 ### Related corrections (same date)

@@ -1,0 +1,11 @@
+{
+  "algorithm": "sha256",
+  "captured_at_phase": "pre-run",
+  "files": {
+    "state/registry/delegations.json": "absent",
+    "state/registry/tasks.json": "absent",
+    "state/projects/registry.json": "absent",
+    "audit/events.jsonl": "absent",
+    "audit/runtime/registry.json": "absent"
+  }
+}

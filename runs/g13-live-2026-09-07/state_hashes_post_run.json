@@ -1,0 +1,12 @@
+{
+  "algorithm": "sha256",
+  "captured_at_phase": "post-run",
+  "captured_at": "2026-09-07T16:55:18Z",
+  "files": {
+    "state/registry/delegations.json": "absent",
+    "state/registry/tasks.json": "absent",
+    "state/projects/registry.json": "absent",
+    "audit/events.jsonl": "absent",
+    "audit/runtime/registry.json": "absent"
+  }
+}
