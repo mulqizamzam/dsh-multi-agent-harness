@@ -136,6 +136,16 @@ capabilities:
 # approval: ask | never                                     (verified DSH policies)
 # These are DEFAULTS only; a project delegation may narrow them, never widen
 # them (least privilege, PRD §19.9).
+
+# 2026-09-07 (Human-approved discriminator, task 3 of "laksanakan 1-4"):
+# roles whose toolFilter allow sets are intentionally identical must be
+# declared here; any identical pair NOT covered by a declared group fails
+# validation (tests/validate_config.py). Every declared group's members must
+# actually share one allow set, so a stale declaration also fails loudly.
+tool_surface_equivalence:
+  - [cfo, kai, somad]      # read-only research / finance / social readers
+  - [badsector, nova]      # read-only reviewer + writer (no web_search)
+
 agent_defaults:
   zeko:
     sandbox: workspace-write

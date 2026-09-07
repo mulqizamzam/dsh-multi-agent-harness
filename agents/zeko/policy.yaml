@@ -37,20 +37,24 @@ sandbox_approval_intent:
 # deny = hard prohibitions; unmounted_candidates = not mounted, requires a
 # controlled composition exception before use.
 tool_filter:
-  allow: [bash, read, read_image, edit, write, glob, grep,
+  # 2026-09-07 (Human-approved discriminator, task 3 of "laksanakan 1-4"):
+  # edit/write removed — capabilities.code_write: no is now enforceable at the
+  # toolFilter layer, not advisory. Ops writes are channel/script-routed; bash
+  # remains for diagnosis (G10 residual, documented).
+  allow: [bash, read, read_image, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
   deny: [subagent_cto, subagent_cfo, subagent_kai,
          subagent_somad, subagent_badsector, subagent_nova]
   unmounted_candidates: []
   notes: >
-    bash is scoped to ops diagnosis and delegation-bounded operations; all
-    writes remain within the session sandbox (workspace-write) and pass the
-    execution gate. No code-editing tools beyond scoped ops use of edit/write.
-    Deny contract: the six sibling delegation instances (exact-name
-    subdelegation deny-by-default; the generic workflow-realm tools are not on
-    a specialist child's inherited chain and are rejected by
-    tools.restrict()).
+    bash is scoped to ops diagnosis and delegation-bounded operations; ops
+    file changes are channel-routed through the execution gate (edit/write
+    removed from this role's allow on 2026-09-07 so the tool surface matches
+    capabilities.code_write: no). Deny contract: the six sibling delegation
+    instances (exact-name subdelegation deny-by-default; the generic
+    workflow-realm tools are not on a specialist child's inherited chain and
+    are rejected by tools.restrict()).
 
 prohibited_actions: [code_architecture_change, financial_transaction, credential_change]
 

@@ -205,33 +205,44 @@ class TestG13RecheckAxes:
     # ---- Axis 5: approval path ----
 
     def test_axis_5_approval_path_composition_ready(self):
-        """Approval composition is ready (but E2E UNKNOWN).
+        """Approval composition is ready; E2E state is session-log-derived.
 
         The status ladder (approval_composition.py) distinguishes
         APPROVAL_COMPOSED (service + answerer surface composed, but no web GUI
         attached) from APPROVAL_INTERACTIVE_READY (composed AND a reachable web
-        GUI session). This session is a Web GUI session with the server
-        reachable, so the honest status is the higher rung. Either rung means
-        "composition ready"; NEITHER is end-to-end evidence — that remains
-        UNKNOWN and is asserted separately below.
+        GUI session) from APPROVAL_E2E_VERIFIED (a harmless approval-required
+        probe re-derived from the CURRENT session log: approval/asked +
+        approval/decided pair with a closed-vocabulary outcome). Any rung
+        above HEADLESS means "composition ready". E2E_VERIFIED legitimately
+        occurs once a real approval has flowed through this Web GUI (first
+        observed 2026-09-07 via the sanctioned escalation of the zeko
+        live-row edit); it is derived from live log evidence, not pinned.
         """
         from tests.environment.approval_composition import approval_readiness
         ar = approval_readiness()
         assert ar.status.value in ("APPROVAL_COMPOSED",
-                                   "APPROVAL_INTERACTIVE_READY"), (
+                                   "APPROVAL_INTERACTIVE_READY",
+                                   "APPROVAL_E2E_VERIFIED"), (
             f"approval status: {ar.status}")
         assert ar.composed is True
         assert ar.effective_policy == "ask"
 
-    def test_axis_5_approval_e2e_unknown(self):
-        """Approval E2E is UNKNOWN — no independently re-derivable pair."""
+    def test_axis_5_approval_e2e_state_is_ladder_consistent(self):
+        """The E2E assertion must follow the observed ladder state, not pin a
+        snapshot: UNKNOWN only while no pair is in the current session log;
+        PASS exactly when a re-derivable pair exists. Composition readiness
+        alone is never E2E evidence."""
         from tests.environment.approval_composition import approval_readiness
         ar = approval_readiness()
-        assert ar.e2e_status == "UNKNOWN", (
-            f"approval E2E now {ar.e2e_status}")
-        assert ar.probe_answered is False
-        # Composition readiness alone is not E2E evidence
-        assert ar.status.value != "APPROVAL_E2E_VERIFIED"
+        assert ar.e2e_status == ("PASS" if ar.e2e_pair else "UNKNOWN"), (
+            f"e2e_status {ar.e2e_status!r} inconsistent with pair presence")
+        assert ar.probe_answered == bool(ar.e2e_pair)
+        if ar.status.value == "APPROVAL_E2E_VERIFIED":
+            assert ar.e2e_status == "PASS" and ar.e2e_pair, (
+                "E2E_VERIFIED without a re-derivable pair")
+        else:
+            assert ar.e2e_status != "PASS", (
+                f"E2E PASS at rung {ar.status.value} — ladder inconsistency")
 
     # ---- Axis 6: authorized G13 run ----
 

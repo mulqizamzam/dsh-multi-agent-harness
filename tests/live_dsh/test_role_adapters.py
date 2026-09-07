@@ -40,10 +40,17 @@ class TestAllRoleAdapters:
                 assert tool not in adapter.allow, f"{role} must not allow {tool}"
 
     def test_write_capable_roles_allow_write(self):
-        """Post-O5: only CTO/Zeko allow workspace write (ops/engineering)."""
+        """Post-O5 + 2026-09-07 zeko discriminator: only CTO still allows
+        workspace write/edit at the toolFilter layer (ops file changes are
+        channel-routed through the execution gate; zeko keeps bash for
+        diagnosis)."""
         from .adapters import ROLE_ADAPTERS
-        for role in ("cto", "zeko"):
-            assert "write" in ROLE_ADAPTERS[role].allow, f"{role} should allow write"
+        assert "write" in ROLE_ADAPTERS["cto"].allow, "cto should allow write"
+        assert "edit" in ROLE_ADAPTERS["cto"].allow, "cto should allow edit"
+        for role in ("zeko", "cfo", "kai", "badsector"):
+            for tool in ("write", "edit"):
+                assert tool not in ROLE_ADAPTERS[role].allow, \
+                    f"{role} must not allow {tool}"
 
     def test_badsector_is_review_only(self):
         """BadSector denies web_search, write/exec tools, and the six sibling

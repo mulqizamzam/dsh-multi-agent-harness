@@ -65,9 +65,12 @@ MUTATION_TOOLS = ("bash", "edit", "write")
 # (server_write/code_write/social_publishing = no, and BadSector is review-only).
 READ_ONLY_ROLES = ("cfo", "kai", "badsector")
 
-# Roles whose allow list legitimately carries mutation tools (ops/engineering).
+# Roles whose allow list legitimately carries mutation tools.
 # Post-O5: somad/nova had write/edit removed (containment step).
-WRITE_CAPABLE_ROLES = ("zeko", "cto")
+# 2026-09-07 (Human-approved discriminator): zeko lost write/edit too
+# (capabilities.code_write: no now enforced at the toolFilter layer);
+# only cto holds code-mutation tools.
+WRITE_CAPABLE_ROLES = ("cto",)
 
 
 def bridge_active() -> bool:
@@ -181,6 +184,14 @@ def check_prohibited_tools(role: str) -> RoleCheck:
         return RoleCheck(
             role, "prohibited_tools", ok,
             f"read_only_role forbidden_mutation_tools={forbidden or 'none'}")
+    if role == "zeko":
+        # 2026-09-07 discriminator: code_write 'no' is enforced — zeko must
+        # not carry edit/write in allow (bash residual is documented).
+        forbidden = [t for t in ("edit", "write") if t in inst.allow]
+        ok = not forbidden
+        return RoleCheck(
+            role, "prohibited_tools", ok,
+            f"code_write_no_role forbidden_edit_write={forbidden or 'none'}")
     # Write-capable roles: nothing extra to forbid by matrix (their allow is
     # the declared boundary). Still assert no delegation tools in allow.
     delegation_in_allow = [t for t in DELEGATION_TOOLS if t in inst.allow]

@@ -1,14 +1,17 @@
 # CTO — Declarative Role Policy
 # Phase 1A (finalized). Control-plane input — NOT native DSH authorization.
 # Tool names verified against DSH 0.1.1-rc.2 tool catalog (docs/tool-catalog.md).
+# 2026-09-07: domain/summary aligned to the canonical registry
+# (config/agents.yaml: "Coding & System Architecture"); the earlier
+# game-client-specific wording was persona drift from a prior project era.
 
 role: cto
 role_version: 1
 status: finalized
 version_pin: deepseek-harness-0.1.1-rc.2
 display_name: CTO
-domain: Game-Client Engineering & System Architecture
-summary: game-client mechanics, architecture, rendering/input, memory-facing engineering, testing, security, performance, implementation
+domain: Coding & System Architecture
+summary: coding, architecture, testing, technical feasibility, security, performance, implementation
 
 capabilities:
   server_read: scoped

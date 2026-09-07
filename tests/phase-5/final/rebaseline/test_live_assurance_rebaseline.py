@@ -147,25 +147,34 @@ class TestApprovalCorrection:
         r = _approval_readiness()
         assert r.composed is True
         assert r.interactive_ready is True
-        assert r.status.value == "APPROVAL_INTERACTIVE_READY"
+        # 2026-09-07: a real approval has since flowed through the Web GUI
+        # (sanctioned escalation of the zeko live-row edit), so the ladder
+        # may legitimately sit at E2E_VERIFIED (strictly above
+        # INTERACTIVE_READY; both require full composition).
+        assert r.status.value in ("APPROVAL_INTERACTIVE_READY",
+                                  "APPROVAL_E2E_VERIFIED")
         assert r.approval_service_composed is True
         assert r.answerer_surface_composed is True
         assert r.web_session is True
         assert r.effective_policy == "ask"
 
-    def test_e2e_status_unknown_not_promoted(self):
+    def test_e2e_status_matches_session_log_not_pinned(self):
         r = _approval_readiness()
-        # E2E must be UNKNOWN, never PASS, when no matching pair is in the
-        # current session log (composition readiness != E2E verification)
-        assert r.e2e_status == "UNKNOWN", \
-            f"E2E must be UNKNOWN, got {r.e2e_status}"
-        assert r.e2e_verified is False
-        assert r.probe_answered is False
+        # E2E status is session-log-derived, never pinned: UNKNOWN only while
+        # no approval/asked + approval/decided pair is in the CURRENT session
+        # log (composition readiness != E2E verification); PASS exactly when
+        # a re-derivable pair exists. First observed PASS: 2026-09-07.
+        assert r.e2e_status == ("PASS" if r.e2e_pair else "UNKNOWN"), \
+            f"e2e_status {r.e2e_status!r} inconsistent with pair presence"
+        assert r.e2e_verified is bool(r.e2e_pair)
+        assert r.probe_answered is bool(r.e2e_pair)
+        if r.e2e_status == "PASS":
+            assert r.e2e_pair.get("outcome"), (
+                "E2E pair must carry a closed-vocabulary outcome")
 
-    def test_approval_events_zero(self):
+    def test_e2e_pair_empty_iff_unknown(self):
         r = _approval_readiness()
-        assert len(r.approval_events) == 0
-        assert r.e2e_pair == {}
+        assert (r.e2e_pair == {}) == (r.e2e_status == "UNKNOWN")
 
 
 # ---------------------------------------------------------------------------

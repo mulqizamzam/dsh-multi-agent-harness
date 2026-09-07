@@ -147,19 +147,23 @@ def test_plan_derives_actor_set_from_current_config(raw_write_roles):
 
 
 def test_o5_applied_this_session(role_filters):
-    """O5 has been applied: somad/nova deny write/edit; zeko/cto unchanged.
-    The actor set is now {zeko, cto}."""
-    for rid in ("somad", "nova"):
+    """O5 applied (2026-08-31): somad/nova deny write/edit. Amended
+    2026-09-07 (Human-approved zeko discriminator, task 3 of
+    "laksanakan 1 - 4"): zeko also loses write/edit
+    (capabilities.code_write: no, now enforceable); cto keeps write/edit;
+    zeko keeps bash (ops diagnosis residual). write/edit actors = {cto};
+    bash/write/edit actors = {zeko, cto}."""
+    for rid in ("somad", "nova", "zeko"):
         allow = role_filters[rid]["allow"]
-        assert "write" not in allow, f"{rid} write still in allow — O5 not applied?"
-        assert "edit" not in allow, f"{rid} edit still in allow — O5 not applied?"
-    for rid in ("zeko", "cto"):
-        assert "write" in role_filters[rid]["allow"], \
-            f"{rid} write removed — must be preserved"
-        assert "edit" in role_filters[rid]["allow"], \
-            f"{rid} edit removed — must be preserved"
+        assert "write" not in allow, f"{rid} write still in allow — O5/amendment not applied?"
+        assert "edit" not in allow, f"{rid} edit still in allow — O5/amendment not applied?"
+    cto_allow = role_filters["cto"]["allow"]
+    assert "write" in cto_allow, "cto write removed — must be preserved"
+    assert "edit" in cto_allow, "cto edit removed — must be preserved"
+    assert "bash" in role_filters["zeko"]["allow"], \
+        "zeko bash removed — ops diagnosis residual must be preserved"
     assert set(raw_write_for(role_filters)) == {"zeko", "cto"}, (
-        "raw-write actor set after O5 must be {zeko, cto}")
+        "bash/write/edit actor set after O5+amendment must be {zeko, cto}")
 
 
 def test_mapping_matches_policy_yaml_still_holds():

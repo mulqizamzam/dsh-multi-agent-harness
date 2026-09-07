@@ -230,6 +230,39 @@ def run_checks(root):
         if pol.get("sandbox_approval_intent", {}).get("sandbox") == "read-only":
             check(f"{rid} read-only no write tools", not (allow & WRITE_EXEC_TOOLS), f"{allow & WRITE_EXEC_TOOLS}")
 
+    # --- capability discriminators (2026-09-07, Human-approved) -------------
+    # (a) capabilities.code_write == 'no' is ENFORCEABLE, not advisory: such a
+    #     role must not hold edit/write in its allow set, regardless of
+    #     sandbox intent (closes the gap where no enforcement layer read the
+    #     matrix — zeko held a code-mutation surface identical to cto).
+    code_write = caps.get("code_write", {})
+    for rid in SPECIALIST_IDS:
+        if code_write.get(rid) == "no":
+            a = set(mapped_roles.get(rid, {}).get("tool_filter", {}).get("allow", []))
+            bad = a & {"edit", "write"}
+            check(f"{rid} code_write=no excludes edit/write from allow", not bad, f"{bad}")
+
+    # (b) allow-set uniqueness: two roles with identical allow sets have no
+    #     tool-layer boundary between them. Identical sets are only allowed
+    #     inside a declared tool_surface_equivalence group (permissions.yaml),
+    #     and every declared group must actually share one allow set.
+    declared_groups = [set(g) for g in perms.get("tool_surface_equivalence", [])]
+    by_allow: dict = {}
+    for rid, entry in mapped_roles.items():
+        a = frozenset(entry.get("tool_filter", {}).get("allow", []))
+        by_allow.setdefault(a, set()).add(rid)
+    for a, rids in by_allow.items():
+        if len(rids) < 2:
+            continue
+        covered = any(rids <= g for g in declared_groups)
+        check(f"identical allow set declared {sorted(rids)}", covered,
+              f"{sorted(rids)} not covered by tool_surface_equivalence")
+    for i, g in enumerate(declared_groups):
+        member_sets = {frozenset(mapped_roles[r]["tool_filter"]["allow"])
+                       for r in g if r in mapped_roles}
+        check(f"tool_surface_equivalence[{i}] shares allow set",
+              len(member_sets) <= 1, f"{[sorted(s) for s in member_sets]}")
+
     # --- orchestrator mapping ----------------------------------------------
     orch = mapping.get("orchestrator", {})
     orch_tf = orch.get("tool_filter", {})
@@ -251,15 +284,15 @@ def run_checks(root):
         check(f"{rid} registry-protection invariant declared",
               pol.get("invariants", {}).get("no_self_delegation") is True)
 
-    # --- Phase 1C draft artifacts (DRAFT ONLY — nothing mounted) ------------
+    # --- Phase 1C draft artifacts (mounted 2026-09-07, Human-approved D4/D7) -
     draft = mapping.get("draft_artifacts", {})
-    check("draft status is draft", draft.get("status") == "draft")
+    check("draft status is mounted", draft.get("status") == "mounted")
     check("draft mount_required false", draft.get("mount_required") is False)
     check("draft instances file exists", os.path.exists(os.path.join(root, draft.get("instances_draft_path", ""))))
     check("draft preset ref valid", "agent.cordis.yml" in draft.get("preset_draft_path", ""))
 
     instances = load_yaml(os.path.join(root, "config", "tool-subagent-instances.yaml"))
-    check("instances draft status", instances.get("status") == "draft")
+    check("instances status mounted", instances.get("status") == "mounted")
     insert = instances.get("insert_draft", [])
     check("instances count 7", len(insert) == 7, f"{len(insert)}")
     instance_map = {}

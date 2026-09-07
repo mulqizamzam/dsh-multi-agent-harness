@@ -1,6 +1,8 @@
-# DRAFT — Role preset: Nova (Writing & Novel)
-# NOT MOUNTED. Draft composition artifact for the controlled DSH composition
-# exception (ADR Decision 4/7). See docs/phase-1/0002-role-isolation-draft.md.
+# Role preset: Nova (Writing & Novel)
+# Mounted 2026-09-07 in the live web profile composition under the Human-approved
+# controlled DSH composition exception (ADR Decision 4/7); verification:
+# runs/mount-verification-2026-09-07/. Originally authored as the Phase 1C DRAFT
+# (docs/phase-1/0002-role-isolation-draft.md).
 # Version pin: DeepSeek Harness 0.1.1-rc.2
 # Source: agents/nova/AGENT.md + config/role-preset-mapping.yaml
 

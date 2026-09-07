@@ -7,8 +7,9 @@ to the CURRENT environment with read-only checks:
   - D4D7_FILES: 7 role presets + 7 tool-subagent rows present on disk;
   - D4D7_COMPOSITION: mapping == policy == instance, allow∩deny=∅,
     deny-list hygiene (no `run_code`, no 25 VERIFIED_UNREGISTERED names),
-    post-O5 role/toolFilter invariants (somad/nova read-only, zeko/cto keep
-    bash+write+edit), live rows match config;
+    post-O5 + 2026-09-07-discriminator role/toolFilter invariants (somad/
+    nova read-only, cto keeps bash+write+edit, zeko keeps bash only),
+    live rows match config;
   - BRIDGE_MARKER: DSH_LIVE_BRIDGE_ACTIVE is unset (reported, never set);
   - REAL_BACKEND: probe_backend_kind() == UNAVAILABLE (fail-closed);
   - LIVE_DISPATCH_POSSIBLE: NO — RealDSHBackend.start() raises
@@ -145,15 +146,17 @@ def test_deny_lists_free_of_reserved_and_unregistered_names():
 
 
 def test_post_o5_role_tool_expectations():
-    """somad/nova have no raw-write tool; zeko/cto keep bash+write+edit;
+    """somad/nova have no raw-write tool; cto keeps bash+write+edit while
+    zeko keeps bash only (2026-09-07 discriminator: write/edit removed,
+    capabilities.code_write: no enforced at the toolFilter layer);
     read-only roles unchanged."""
     filters = _role_filters()
     for rid in ("somad", "nova"):
         allow = set(filters[rid]["allow"])
         assert not ({"bash", "write", "edit"} & allow), rid
-    for rid in ("zeko", "cto"):
-        allow = set(filters[rid]["allow"])
-        assert {"bash", "write", "edit"} <= allow, rid
+    assert {"bash", "write", "edit"} <= set(filters["cto"]["allow"]), "cto"
+    assert "bash" in filters["zeko"]["allow"], "zeko"
+    assert not ({"write", "edit"} & set(filters["zeko"]["allow"])), "zeko"
     for rid in ("badsector", "cfo", "kai"):
         deny = set(filters[rid]["deny"])
         assert {"bash", "write", "edit"} <= deny, rid

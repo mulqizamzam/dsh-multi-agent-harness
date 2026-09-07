@@ -213,8 +213,13 @@ class TestLiveEnvironmentFacts:
     def test_approval_status_interactive_ready(self):
         from tests.environment.approval_composition import approval_readiness, ApprovalStatus
         r = approval_readiness()
-        # In this Web GUI session, the service is composed and interactive-ready
-        assert r.status == ApprovalStatus.APPROVAL_INTERACTIVE_READY
+        # In this Web GUI session, the service is composed and interactive-
+        # ready. Since 2026-09-07 a real approval has also flowed through the
+        # Web GUI (sanctioned escalation of the zeko live-row edit), so the
+        # ladder may legitimately sit at E2E_VERIFIED — the rung strictly
+        # above INTERACTIVE_READY, with identical composition requirements.
+        assert r.status in (ApprovalStatus.APPROVAL_INTERACTIVE_READY,
+                            ApprovalStatus.APPROVAL_E2E_VERIFIED)
 
     def test_l3_blockers_exclude_ans_in_web_gui_session(self):
         """In the current Web GUI session, L3ENV-ANS-1 must NOT be a blocker."""

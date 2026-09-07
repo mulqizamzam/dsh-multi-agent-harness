@@ -1,12 +1,13 @@
 # ============================================================================
-# DRAFT — Per-role tool-subagent instances (subagent_<id>)
-# NOT MOUNTED. Draft composition artifact for the controlled DSH composition
-# exception (ADR Decision 4/7). See docs/phase-1/0002-role-isolation-draft.md.
+# Per-role tool-subagent instances (subagent_<id>)
+# MOUNTED 2026-09-07 in the live web profile composition
+# ($DSH_HOME/profiles/web/cordis.patch.yml) under the Human-approved D4/D7
+# composition exception (ADR Decision 4/7). Verification evidence:
+# runs/mount-verification-2026-09-07/. This file remains the composition
+# source-of-record; further composition changes are per-case exceptions.
 #
-# This file is a DRAFT of the `- insert:` rows that WOULD be added to a profile
-# composition (e.g. a project overlay / profile cordis.patch.yml) to expose the
-# seven specialist roles to the orchestrator as per-role tool-subagent
-# instances. It is intentionally written in cordis patch style.
+# Originally authored as the Phase 1C DRAFT (see
+# docs/phase-1/0002-role-isolation-draft.md); written in cordis patch style.
 #
 # Config keys VERIFIED against the DSH 0.1.1-rc.2 tool-subagent source:
 #   provider, toolName, persona, toolFilter {allow, deny}, backgroundMode,
@@ -30,13 +31,13 @@
 # ============================================================================
 
 draft_version: 1
-status: draft            # NOT mounted
+status: mounted           # was: draft — mounted 2026-09-07 (Human-approved D4/D7)
 version_pin: deepseek-harness-0.1.1-rc.2
 mapping_ref: config/role-preset-mapping.yaml
 policy_ref_prefix: agents/  # <id>/policy.yaml
 
-# The insert block below is what a controlled exception WOULD add to a profile
-# composition. NOT EXECUTED in Phase 1C.
+# The insert block below is the row set executed into the live profile
+# composition on 2026-09-07 (was: a Phase 1C projection).
 insert_draft:
   - id: tool-subagent-zeko
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -47,7 +48,10 @@ insert_draft:
       backgroundMode: continuable
       maxDepth: 1
       toolFilter:
-        allow: [bash, read, read_image, edit, write, glob, grep,
+        # 2026-09-07 (Human-approved discriminator): edit/write removed —
+        # capabilities.code_write: no is now enforceable at the toolFilter
+        # layer; raw-write actor set {zeko, cto} -> {cto}.
+        allow: [bash, read, read_image, glob, grep,
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [subagent_cto, subagent_cfo, subagent_kai,

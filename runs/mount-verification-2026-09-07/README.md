@@ -126,3 +126,41 @@ approval did not cover production code):
   PASS / 0 FAIL; A/B on the concurrently-edited `tests/scenarios/` file showed
   an identical failure set with and without this patch (0 patch-caused
   failures).
+
+## 7. Follow-up fix #2 (same day): zeko discriminator re-mount (Human-approved, task 3 of "laksanakan 1 - 4")
+
+Finding §4-F (CTO↔zeko surfaces identical; `code_write` advisory-only) was
+fixed across all four layers:
+
+- Repo config: `edit`/`write` removed from zeko's allow set in
+  `agents/zeko/policy.yaml`, `config/role-preset-mapping.yaml`,
+  `config/tool-subagent-instances.yaml`. New invariants added to
+  `tests/validate_config.py`: (a) `code_write == 'no'` ⇒ `edit`/`write`
+  cannot appear in a role's allow set; (b) allow-set uniqueness across roles
+  unless a `tool_surface_equivalence` group is declared in
+  `config/permissions.yaml` (declared: `[cfo, kai, somad]`,
+  `[badsector, nova]`). Result: write/edit-capable actors `{zeko, cto}` →
+  `{cto}`; bash residual on zeko unchanged.
+- Live composition: the `tool-subagent-zeko` row in
+  `$DSH_HOME/profiles/web/cordis.patch.yml` re-mounted with the narrowed
+  allow set via the sanctioned approval path (the approval interaction
+  itself was recorded end-to-end in the session log — decision id
+  `bdc9e3b4-ad8d-4f68-9458-c9bcdded015c`, outcome `allowed-once`, which
+  also first promoted the approval ladder to `APPROVAL_E2E_VERIFIED`).
+- Backup: `backups/cordis.patch.yml.pre-zeko-narrow-2026-09-07` (SHA-256
+  `b1820939cd99380efbb04c87b9560733c21bcea57a839656b3577c070bd0ea02`,
+  byte-identical to the live file pre-change). Rollback: copy back + session
+  reload.
+- Parity check after the edit: all 7 live rows ≡ config (yaml-diff, sym-diff
+  ∅ each row); `test_live_rows_match_config` green.
+- Records amended: O5 application record §7 (Amendment 1, 2026-09-07);
+  D4/D7 change request Amendment 1; ADR 0001 Revision 3 addendum;
+  cto persona aligned to the canonical registry (`config/agents.yaml`,
+  "Coding & System Architecture") across `agents/cto/AGENT.md`,
+  `agents/cto/policy.yaml`, `agents/cto/agent.cordis.yml` — repo preset
+  files updated, and the aligned preset deployed verbatim into the live
+  `$DSH_HOME/.agent-presets/role-cto/agent.cordis.yml` (SHA-256
+  `1a137c9001a59153e74b0aa3f99e4922c23bc2a0f4e4213653a3fbbd152e14ca`,
+  repo == mounted byte-identical; new checksum supersedes the §2 pin as a
+  dated amendment, copy preserved in git history).
+- Full suite after the fixes: **3262 passed, 5 skipped, 0 failed**.

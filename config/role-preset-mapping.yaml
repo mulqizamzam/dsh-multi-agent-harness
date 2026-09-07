@@ -9,9 +9,10 @@
 # (agents/<id>/AGENT.md + policy.yaml) and DSH Agent Presets.
 #
 # IMPORTANT:
-#  - NOTHING here is mounted. Mounting per-role presets/instances is a
-#    controlled DSH composition exception (ADR Decision 4/7 — HUMAN_PENDING,
-#    reversible per case).
+#  - Mounted 2026-09-07: per-role presets/instances ARE mounted in the live
+#    web profile composition under the Human-approved D4/D7 exception
+#    (ADR Decision 4/7; verification: runs/mount-verification-2026-09-07/).
+#    Composition changes per case remain a controlled, reversible exception.
 #  - Tool names are verified against the DSH 0.1.1-rc.2 tool catalog
 #    (docs/tool-catalog.md) plus the seven deployed per-role instance tools
 #    (subagent_<id>, mounted as global-layer rows in the live profile
@@ -56,12 +57,16 @@ roles:
       max_depth: 1
       persona: role-zeko
     tool_filter:
-      allow: [bash, read, read_image, edit, write, glob, grep,
+      # 2026-09-07 (Human-approved discriminator): edit/write removed from
+      # zeko — capabilities.code_write: no is now enforceable at the toolFilter
+      # layer. Raw-write actor set narrows {zeko, cto} -> {cto}; G10 residual
+      # now rests on cto alone.
+      allow: [bash, read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
       deny: [subagent_cto, subagent_cfo, subagent_kai,
              subagent_somad, subagent_badsector, subagent_nova]
-    notes: ops role; bash scoped to diagnosis/delegation-bounded ops; no code architecture change
+    notes: ops role; bash scoped to diagnosis/delegation-bounded ops; no code architecture change; edit/write channel-routed (2026-09-07 discriminator)
 
   - id: cto
     preset: role-cto
@@ -220,13 +225,15 @@ consistency_rules:
   delegation_orchestrator_only: true   # subdelegation DENY BY DEFAULT (V1)
   specialist_max_depth_1: true
 
-# ── Phase 1C draft references (DRAFT ONLY — nothing mounted) ────────────────
-# The controlled DSH composition exception (ADR D4/D7) would mount the
-# artifacts referenced below. They are drafts; see
-# docs/phase-1/0002-role-isolation-draft.md for the full register.
+# ── Phase 1C draft references ───────────────────────────────────────────────
+# The controlled DSH composition exception (ADR D4/D7) was Human-approved
+# 2026-09-07 and executed: the seven subagent_<id> rows are mounted in the
+# live web profile composition ($DSH_HOME/profiles/web/cordis.patch.yml) and
+# verified (runs/mount-verification-2026-09-07/). The draft register below is
+# retained for provenance; see docs/phase-1/0002-role-isolation-draft.md.
 draft_artifacts:
-  status: draft                       # NOT mounted
+  status: mounted                      # was: draft — mounted 2026-09-07 (Human-approved D4/D7)
   preset_draft_path: 'agents/<id>/agent.cordis.yml'   # per-role preset composition
   instances_draft_path: config/tool-subagent-instances.yaml  # per-role tool-subagent rows
   orchestrator_preset: standard       # root session stays on the shipped standard preset
-  mount_required: false               # true only when the controlled exception executes
+  mount_required: false               # exception already executed; no further mount required
