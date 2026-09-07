@@ -121,6 +121,14 @@ class MemoryDelegationProvider(DelegationProvider):
             self._delegation = _revoke(self._delegation, reason=reason)
         self._log.append({"revoked": delegation_id, "reason": reason})
 
+    def replace(self, delegation: Delegation) -> None:
+        """Swap in a replacement record so an execution-time re-read observes
+        an authorized registry update mid-flow (e.g. a scope narrowing that
+        leaves the delegation ACTIVE). Counterpart of revoke(). TEST-SUPPORT
+        ONLY (not production)."""
+        self._delegation = delegation
+        self._log.append({"replaced": delegation.id})
+
     def history(self) -> list:
         return list(self._log)
 

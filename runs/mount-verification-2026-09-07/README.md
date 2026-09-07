@@ -88,9 +88,41 @@ Authority: user instruction "mount D4/D7 bridge approved" (this session,
 - ISO-LIVE-006 live variant (deliberate protected write to `state/registry/`)
   was not executed — it needs a real mounted child session and would create
   stray protected-path files.
-- The 15 pytest skips remain unconditional Phase-2C/Phase-6 skeletons
-  (`raise NotImplementedError` / `raise AssertionError`); no env var enables
-  them. Implementing them is separate work, outside this approval.
+- The 15 pytest skips at the time of this run were unconditional Phase-2C/
+  Phase-6 skeletons (`raise NotImplementedError` / `raise AssertionError`); no
+  env var enables them. Implementing them is separate work, outside this
+  approval. (Update, same day: the 10 `tests/scenarios/test_scenarios.py`
+  skeletons were implemented by separate concurrent work — see §6.)
 - `tests/live_dsh/discovery.py:check_instance_mounted()` remains marker-only —
   the gate is nominal, not an observed live probe. Closing that gap is a code
   task, not a verification task.
+
+## 6. Follow-up fix (same day, Human-approved separately)
+
+The scope-staleness finding in §4 was fixed under its own approval (the mount
+approval did not cover production code):
+
+- `orchestrator/runtime/flow.py::_execute` now re-derives AUTH-INV-04 at
+  execution: `scope_contained(grant, delegation_now)` against the freshly read
+  registry record, emitting `execution_denial` and raising `AuthorityDenied`
+  when an ACTIVE delegation was narrowed in any dimension (operations,
+  resources, environments, prohibitions, approval burden, expiry, cost).
+  Deliberate deviation from the child's suggested `version`/`updated_at`
+  equality check: `delegation_now` is the parent record while the snapshot is
+  the in-memory child, so version equality across the two is meaningless;
+  containment re-derivation is the invariant that actually closes the hole,
+  with no schema change.
+- The recovery path no longer binds the wider parent grant: it reuses the
+  scoped child when the flow instance still holds it (`self._child`), falling
+  back to the current record otherwise.
+- `MemoryDelegationProvider.replace()` added (test-support only) as the
+  counterpart of `revoke()`, so tests can simulate an authorized ACTIVE
+  narrowing mid-flow.
+- Regression: `tests/orchestrator/production/test_production_13_scope_narrowing.py`
+  — narrowed ACTIVE parent → DENY + audit + no mutation; added prohibition →
+  DENY; true superset widening → allowed (no false positive).
+- Verified: `tests/orchestrator/ tests/integration/ tests/resilience/
+  tests/phase4_integration/` → 835 passed, 5 skipped; `validate-config` → 194
+  PASS / 0 FAIL; A/B on the concurrently-edited `tests/scenarios/` file showed
+  an identical failure set with and without this patch (0 patch-caused
+  failures).

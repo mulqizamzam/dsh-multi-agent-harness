@@ -984,6 +984,23 @@ class ExecutionFlow:
                 "execution-time re-check: delegation revoked/expired "
                 "(AUTH-INV-06)")
 
+        # 1b. AUTH-INV-04 re-derived at EXECUTION against the CURRENT record:
+        # a scope change that leaves the delegation ACTIVE (fewer operations/
+        # resources/environments, an added prohibition or approval requirement,
+        # a shortened expiry, a lower cost cap) must not be executed under the
+        # superseded planning-time grant (AUTH-INV-06, DRIFT_AUTHORIZATION).
+        from control.delegation import scope_contained
+        if not scope_contained(delegation, delegation_now):
+            audit.emit("execution_denial", action=plan.action,
+                       target=plan.target, task_id=r.task_id, result="denied",
+                       authority_source=delegation_now.id,
+                       error="execution-time re-check: grant no longer "
+                             "contained in current delegation scope "
+                             "(AUTH-INV-04/06)")
+            raise AuthorityDenied(
+                "execution-time re-check: grant no longer contained in "
+                "current delegation scope (AUTH-INV-04/06)")
+
         # 2. state/version must be current before the consequential action
         try:
             self._get_store().check_current(lc.version)
@@ -1292,8 +1309,13 @@ class ExecutionFlow:
         r.version = lc.version
 
         if re_execute:
+            # Bind the least-privilege grant: the scoped child issued at
+            # planning when this flow instance still holds it (the normal-path
+            # binding), otherwise the current record. Both are re-derived
+            # against the fresh parent inside _execute (AUTH-INV-04/06).
+            effective = self._child if self._child is not None else delegation_now
             try:
-                self._execute(delegation_now, plan, self._approval_reference)
+                self._execute(effective, plan, self._approval_reference)
                 self._verify(plan)
                 lc.transition(task_id, "EXECUTING", authority=delegation_now)
                 lc.transition(task_id, "COLLECTED")
