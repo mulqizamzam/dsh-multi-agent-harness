@@ -381,11 +381,19 @@ the instructions verbatim with dates, but the verifiable approval channel
 for D1–D7 remains an open documentation item. If a stronger record exists
 outside the repo, it supersedes this transcription.
 
+> **Resolved 2026-09-07 (same day)**: the Human ratified the decisions
+> per-decision ("Daftar D1–D7 …" + *"setuju"*; *"(a) setuju"*). The
+> authoritative in-repo approval record now lives at
+> `docs/governance/0001-decision-approval-record.md` — per-decision table,
+> verbatim dated instructions, scope-of-ratification, and the explicit note
+> that G13/prompt-injection stays OPEN/UNKNOWN. This addendum remains the
+> narrative transcription; that file is the record.
+
 ### Entry criteria — current status (2026-09-07)
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | ADR accepted by Human | **SATISFIED** (2026-09-07 instructions 1–3; see residual gap above) |
+| 1 | ADR accepted by Human | **SATISFIED** (2026-09-07 instructions 1–3; ratified per-decision — record: `docs/governance/0001-decision-approval-record.md`) |
 | 2 | Development session policy is safe | **SATISFIED** (sessions run under `workspace-write` + `ask` per the project baseline; approval policy `ask` confirmed in current runtime context) |
 | 3 | Scope confirmed, exceptions resolved | **SATISFIED** (boundary `multi-agent-harness/` — instruction of 2026-08-29; D4/D7 composition exception approved 2026-09-07 and executed; NK-Agent-OS / Agent Teams / out-of-process backends remain out of scope) |
 | 4 | Unresolved blockers documented | **PARTIAL** — UNKNOWN #1 (prompt-injection trust boundary) remains OPEN; storage hub and Agent Teams remain BLOCKED/out-of-scope by choice |
