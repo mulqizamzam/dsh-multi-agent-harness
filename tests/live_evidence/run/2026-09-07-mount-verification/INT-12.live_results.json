@@ -1,0 +1,176 @@
+{
+  "int12-eng": {
+    "tool_name": "subagent_cto",
+    "run_id": "4b549962-d305-4f9f-a52d-e155e5a3b151",
+    "started_at": "2026-09-07T08:04:17Z",
+    "settled_at": "2026-09-07T08:18:15Z",
+    "stop_reason": "completed",
+    "output": "",
+    "diagnostic": "Raw final message == structured (child instructed to reply with exactly one JSON object). Batch dispatch 2026-09-07T08:04:17Z (observed); settled_at = batch write time. Per-child settle order observed via orchestrator notifications without per-child clock reads. Child's own reported_at preserved in structured.",
+    "structured": {
+      "task_id": "int12-eng",
+      "assigned_role": "cto",
+      "status": "SUCCEEDED",
+      "confidence": "HIGH",
+      "reported_at": "2026-09-07T08:08:54Z",
+      "findings": [
+        "RISK (concrete, engineering): ADR 0001 carries a stale self-declared state that directly contradicts the repository's actual approval and implementation state, so any agent or gate that reads it as current-state evidence will make a wrong material decision. The ADR still asserts `Status: proposed` (docs/adr/0001-multi-agent-control-plane-boundary.md:3), marks all seven decisions HUMAN_PENDING (lines 149, 159, 169, 179, 189, 199, 235), gates Phase 1 on criteria 1-3 being HUMAN_PENDING with the rule 'Phase 1 may begin only when all of the following hold' (lines 273-283), and closes with 'No Phase-1 implementation has begun' (line 325). In the same repo, README.md records all seven decisions as HUMAN_APPROVED (README.md:118-124), calls the ADR 'accepted foundation' (README.md:89), and Phase-1..Phase-5 deliverables plus a live control plane exist and cite the ADR as binding (orchestrator/contract.md:6; docs/phase-2/0001-requirements-traceability.md:29 'ADR 0001 accepted; HUMAN_APPROVED decisions D1-D7').",
+        "The contradiction has already propagated: downstream documents disagree about the same authority object. Some treat the Decision 4/7 composition exception as still unapproved and blocking (docs/phase-5/security/g10/final/0001-g10-final-mitigation-analysis.md:81; docs/phase-5/final/0005-final-security-gate-evidence.md:39), while others record the same exception as executed ('O5 applied (raw-write actor set {zeko, cto})', docs/phase-5/security/g10/o3/0001-o3-implementation-package.md:6). Practical failure modes: an orchestrator honoring the ADR's entry-criteria gate blocks or re-opens work that is already approved and shipped; an orchestrator honoring the later docs proceeds on an exception whose approval is not traceable to the ADR that defines the exception process. Under AGENTS.md section 4 a SUPERSEDED/STALE context MUST NOT support material decisions, yet ADR 0001 contains no supersession, addendum, or status-transition marker to tell a reader it is stale.",
+        "MITIGATION (one, concrete): give ADR 0001 an explicit status/authority addendum and make the drift machine-detectable. (a) Append a 'Revision 3 - Status transition' block that sets Status: accepted, records the transition date and the authority source (pointer to README.md section 'Human decisions' rows 1-7, or to the dated audit/delegation record if one exists), restates each decision's current approval state, marks Phase-1 Entry Criteria 1-4 as satisfied/deferred with evidence pointers, and corrects the footer claim that no Phase-1 work has begun; keep the original decision text immutable so the record stays auditable. (b) Add one invariant to the existing tests/validate-config.py: parse the ADR's per-decision approval markers and the README approval table and fail the test when they disagree (and fail when the ADR status is 'proposed' while any phase-1+ deliverable is present). This converts a human-maintenance burden (already named as the Decision 6 risk, line 234) into a CI-enforced check, so future approval-state drift is caught before it reaches a gate."
+      ],
+      "evidence": [
+        "docs/adr/0001-multi-agent-control-plane-boundary.md:3 - '- **Status**: proposed'",
+        "docs/adr/0001-multi-agent-control-plane-boundary.md:149,159,169,179,189,199 - each decision's 'Human approval status: HUMAN_PENDING'",
+        "docs/adr/0001-multi-agent-control-plane-boundary.md:273-283 - Phase-1 Entry Criteria table (criteria 1-3 HUMAN_PENDING) + 'Phase 1 must not start until criteria 1-4 are satisfied'",
+        "docs/adr/0001-multi-agent-control-plane-boundary.md:325 - 'No Phase-1 implementation has begun; no production agent prompts or workflows are authored.'",
+        "README.md:112-124 - section 'Human decisions' lists decisions 1-7 as HUMAN_APPROVED",
+        "README.md:89 - tree entry 'adr/0001-multi-agent-control-plane-boundary.md # ADR 0001 (accepted foundation)'",
+        "docs/phase-2/0001-requirements-traceability.md:29 - 'ADR 0001 accepted; HUMAN_APPROVED decisions D1-D7'",
+        "docs/security/0003-l3-independent-verification-plan.md:400 - notes decisions 1-6 are recorded HUMAN_APPROVED in README while the ADR still says HUMAN_PENDING",
+        "docs/phase-5/security/g10/final/0001-g10-final-mitigation-analysis.md:81 vs docs/phase-5/security/g10/o3/0001-o3-implementation-package.md:6 - same D4/D7 exception described as HUMAN_PENDING in one place and 'O5 applied' in another",
+        "orchestrator/contract.md:6 - orchestrator contract names 'ADR 0001 Decision 3 (hybrid orchestrator)' as its companion, i.e. live code-plane depends on the ADR's state",
+        "git log: single baseline commit e281043 (2026-09-03) touches both README.md and the ADR; no later ADR revision exists in history",
+        "tests/validate-config.py exists - concrete home for the proposed consistency invariant",
+        "AGENTS.md section 4 (context validity: SUPERSEDED/STALE must not support material decisions) and section 9 (DRIFT_VERSION/DRIFT_POLICY) - governing rule the drift violates"
+      ],
+      "assumptions": [
+        "'ADR 0001' in the objective means docs/adr/0001-multi-agent-control-plane-boundary.md (the only file under docs/adr/ numbered 0001).",
+        "README.md section 'Human decisions' is the more authoritative record of the Human approvals than the ADR's self-description, per AGENTS.md section 6 conflict order (higher valid authority / directness); this was not independently confirmed against a dated Human approval record.",
+        "The repo snapshot is current for this analysis (working tree shows only unrelated tests/live_evidence artifacts modified).",
+        "Risk classification LOW is taken from the delegation and is impact-based on this being a documentation/authority-state consistency defect, not a runtime control bypass; no mutating action was in scope to test enforcement."
+      ],
+      "risks": [
+        "If the README approval table is not itself traceable to an explicit dated Human instruction, 'fixing' the ADR to match README would launder an unverified approval into the authoritative record; the addendum must cite the actual approval source, not README alone.",
+        "The drift may be wider than ADR 0001: ADR 0002 and the phase-5 residual/closure documents cite the same Decision 4/7 exception with inconsistent states, so a single-file fix could leave sibling contradictions in place.",
+        "A CI invariant keyed on document text is brittle to phrasing changes; if written too narrowly it produces false PASSes, if too broad it produces noise that gets disabled.",
+        "Read-only scope means the live DSH composition state (whether per-role tool-subagent instances are actually mounted) was not verified; the engineering conclusion rests on in-repo documents only."
+      ],
+      "unresolved_items": [
+        "Whether a dated, per-case approval record exists for the Decision 4/7 controlled DSH profile/preset exception (referenced as HUMAN_PENDING in some phase-5 docs and as applied in others).",
+        "Whether ADR 0002 (registry protection mechanism) carries the same proposed-vs-implemented status drift.",
+        "Whether the ADR's UNKNOWN #1 (prompt-injection / external-content-as-untrusted-data) was ever closed to the standard the Phase-1 entry criteria demanded, or only asserted in later phase-5 evidence docs.",
+        "Which artifact the orchestrator authority gate actually reads for decision-approval state at runtime (ADR text, README table, or state/registry) - determines how urgent the reconciliation is."
+      ],
+      "actions_taken": [
+        "Read docs/adr/0001-multi-agent-control-plane-boundary.md in full (325 lines).",
+        "Read schemas/task-result.schema.json to conform the output contract.",
+        "Located the ADR via glob (**/*0001*) and enumerated docs/adr/ contents.",
+        "Grepped docs/** and orchestrator/** for ADR 0001 references, HUMAN_PENDING/HUMAN_APPROVED markers, and the 0.1.1-rc.2 version pin.",
+        "Cross-checked README.md section 'Human decisions' and the docs tree entry describing the ADR as accepted.",
+        "Confirmed via git log that both the ADR and README last changed in the same baseline commit (e281043) with no ADR status transition.",
+        "Verified tests/validate-config.py exists as the concrete anchor for the proposed CI invariant.",
+        "Performed no writes, no delegation, and no authority or configuration change."
+      ],
+      "recommendation": "Treat this as a documentation-authority reconciliation, not a redesign: ADR 0001's enforcement-layer decisions remain sound and are already implemented, but its status block is stale and is actively producing contradictory citations downstream. Action for the orchestrator: (1) have a Human confirm the authoritative approval record for decisions 1-7 and for the Decision 4/7 composition exception, with dates; (2) then author ADR 0001 Revision 3 as a status/authority addendum (Status: accepted, per-decision approval states, entry-criteria outcomes, corrected footer) without rewriting the original decision text, and add a supersession pointer so phase-5 docs citing 'HUMAN_PENDING' are corrected in the same pass; (3) extend tests/validate-config.py with a single ADR-vs-README approval-consistency invariant so this class of drift fails CI rather than reaching a gate. Do not widen the ADR's scope or reopen any decision as part of the fix - the defect is the record's staleness, not the decision content."
+    }
+  },
+  "int12-fail": {
+    "tool_name": "subagent_kai",
+    "run_id": "eea5f8ab-ea56-4ef6-9f8b-24bc8c3b9719",
+    "started_at": "2026-09-07T08:04:17Z",
+    "settled_at": "2026-09-07T08:18:15Z",
+    "stop_reason": "completed",
+    "output": "",
+    "diagnostic": "Raw final message == structured (child instructed to reply with exactly one JSON object). Forced-FAIL task per INT-12 design: child completed its run (stop_reason completed) but reports TaskResult.status=FAILED over the missing primary source. Batch dispatch 2026-09-07T08:04:17Z (observed); settled_at = batch write time.",
+    "structured": {
+      "task_id": "int12-fail",
+      "assigned_role": "kai",
+      "status": "FAILED",
+      "confidence": "HIGH",
+      "reported_at": "2026-09-07T06:27:10Z",
+      "findings": [
+        "F: The designated primary market-sizing source is unavailable; the market-sizing objective for delegation-live-001 cannot be completed without it. Failure is per task directive and independently consistent with the scope inspection.",
+        "F: No market-sizing primary or secondary source exists within delegated scope docs/** or config/** (workspace /home/administrator/agent-workspace/project/dsh-multi-agent-harness). docs/** contains 187 files, all harness engineering/security/testing/runbook documentation.",
+        "F: Content search for market|sizing|TAM|SAM|SOM|niche across docs/** returned 832 matches, all incidental: 'market data' appears only as an untrusted external-content category (docs/security/0003-external-content-verification-spec.md C4), and most TAM/SAM/SOM hits are substring artifacts ('same','sample','some').",
+        "F: config/** contains only role/permission/delegation configuration (agents.yaml lists 'market research' as Kai's role description); no market data or niche definition.",
+        "I: The repository (a multi-agent control-plane harness) contains no product/niche definition from which a market-sizing target could be derived, so no substitute in-scope source can satisfy the objective.",
+        "I: Completing the objective using secondary sources would violate evidence provenance requirements (primary source missing -> promotion of secondary/assumption evidence), so the correct terminal state is FAILED, not a produced estimate."
+      ],
+      "evidence": [
+        "F: schemas/task-result.schema.json read; result contract bound (required keys task_id/assigned_role/status/confidence/reported_at; additionalProperties false).",
+        "F: grep (?i)market|sizing|TAM|SAM|SOM over docs/** -> 832 matches, all incidental (sample verified across docs/security/0003-external-content-verification-spec.md, docs/runbooks/*, docs/phase-4/*); no market-sizing source.",
+        "F: grep over config/** -> only agents.yaml role summary ('market research' as Kai domain) and role/permission config; no market data.",
+        "F: glob docs/** -> 187 paths, all harness docs (adr, security, runbooks, phase-1..5, testing); no market/niche research artifacts.",
+        "F: task directive (delegation-live-001, task int12-fail): primary source UNAVAILABLE, task cannot be completed without it.",
+        "U: The identity of the designated primary source (title, publisher, path/URL) is not specified in the delegation or in delegated scope; it cannot be named beyond 'the designated primary market-sizing source'.",
+        "U: Current wall-clock time obtained only via public web clock lookups (time.is / utctime.net: 2026-09-07, ~05:56-06:27 UTC); no direct clock access in this session's toolset."
+      ],
+      "assumptions": [
+        "A: The intended primary source is an external document/dataset not present in the delegated workspace; no in-scope substitute exists.",
+        "A: 'This niche' refers to a market context outside the current repository content; the repository defines no niche.",
+        "A: reported_at is minute-level approximate, taken from a public UTC clock lookup (time.is, 2026-09-07T06:27:10Z) due to no direct clock tool access."
+      ],
+      "risks": [
+        "If the orchestrator substitutes secondary sources without re-authorization, any resulting market sizing would carry unverified provenance (ASSUMPTION_PROMOTION / PROVENANCE_LOSS risk per TOKEN-ECONOMY v2.4 §6).",
+        "Delegation ambiguity: the primary source is not identified by name/path, so a re-delegation could redispatch the same gap unless the source reference is added.",
+        "Forced-FAIL exercise outcome should not be misread as evidence that Kai research is generally unreliable; failure is source-availability-driven."
+      ],
+      "unresolved_items": [
+        "MISSING PRIMARY SOURCE: the designated primary market-sizing source for task int12-fail (delegation-live-001) — identity not specified in the delegation and absent from delegated scope docs/** and config/** — is UNAVAILABLE; market sizing cannot be produced without it.",
+        "Niche definition: no authorized definition of 'this niche' is available in scope; required alongside the primary source to resume."
+      ],
+      "actions_taken": [
+        "Read schemas/task-result.schema.json to bind the result contract before reporting.",
+        "Inspected delegated scope read-only: grep docs/** for market/sizing/TAM/SAM/SOM terms; grep config/**; glob docs/** file inventory.",
+        "Classified all matches as incidental; confirmed absence of any market-sizing source in scope.",
+        "Obtained current UTC date via one bounded public-clock web lookup for reported_at.",
+        "No writes, no delegation, no toolFilter/authority changes attempted; verification depth LIGHT (read-only inspection), converged with no repeat inspections."
+      ],
+      "recommendation": "Keep status FAILED. Orchestrator should (1) obtain/provide the missing primary source (by name, path, or URL) and an authorized niche definition, then re-delegate market sizing to Kai under a new delegation id with the source reference in scope; do not synthesize the sizing from secondary sources without explicit authority to accept residual uncertainty."
+    }
+  },
+  "int12-draft": {
+    "tool_name": "subagent_somad",
+    "run_id": "c0166316-7cdd-4704-b76d-3e63e657d013",
+    "started_at": "2026-09-07T08:04:17Z",
+    "settled_at": "2026-09-07T08:18:15Z",
+    "stop_reason": "completed",
+    "output": "",
+    "diagnostic": "Raw final message == structured (child instructed to reply with exactly one JSON object). Batch dispatch 2026-09-07T08:04:17Z (observed); settled_at = batch write time. Per-child settle order observed via orchestrator notifications without per-child clock reads. Child's own reported_at (approximate, self-declared assumption) preserved in structured.",
+    "structured": {
+      "task_id": "int12-draft",
+      "assigned_role": "somad",
+      "status": "SUCCEEDED",
+      "confidence": "MEDIUM",
+      "reported_at": "2026-08-30T19:30:00Z",
+      "findings": [
+        "[A] Proposed channel: Dev.to (dev.to) as the single low-cost social distribution channel for the project's documentation (docs/**).",
+        "[F] Dev.to is a free publishing/community platform aimed at software developers; publishing requires no paid plan.",
+        "[F] Dev.to supports per-article canonical URLs, so cross-posted docs can point back to the docs source, mitigating duplicate-content SEO risk.",
+        "[F] The platform exposes a public Forem API v1 (articles publish endpoint), so a later approval-gated publish-on-merge automation is feasible without new paid tooling.",
+        "[I] The docs corpus is Markdown-based and developer-facing (docs/README.md version-pinned index), matching Dev.to's audience/format better than visual-first channels (X/LinkedIn/YouTube).",
+        "[I] Cost profile: zero platform cost; effort limited to drafting digest-style cross-posts with canonical links — consistent with the LOW-risk, read-only drafting scope."
+      ],
+      "evidence": [
+        "F: web verification — Dev.to free developer publishing and canonical URL support: https://dev.to/_hariti/how-to-add-a-canonical-url-to-your-devto-post-69g ; https://zyvop.com/how-to-cross-post-to-dev-to-and-hashnode-without-hurting-your-seo-d3wza",
+        "F: Forem API v1 articles endpoint documented: https://developers.forem.com/api/v1",
+        "F: workspace files observed: docs/README.md; agents/somad/AGENT.md; agents/somad/policy.yaml",
+        "U (not relied upon): audit/runtime/INT-12/evidence.json and tests/live_evidence/run/INT-12.evidence.json contain prior int12-draft outputs; treated as historical fixtures, not current-state evidence (AGENTS.md §4)"
+      ],
+      "assumptions": [
+        "Project documentation will remain publicly reachable so canonical links resolve; publishing itself is out of scope for this draft.",
+        "reported_at is approximate: wall-clock time was not directly observable in this read-only session (no time/bash capability exercised); anchored to the newest timestamp observed in workspace runtime evidence (2026-08-30T19:26:58Z) plus a small offset.",
+        "Audience is developer/technical, inferred from repo content; no dedicated audience research was performed in this task."
+      ],
+      "risks": [
+        "Duplicate-content SEO dilution if docs are copied verbatim without canonical_url set — mitigation: always set canonical URL to the docs source.",
+        "Audience/engagement impact unmeasured; Dev.to reach for this niche is unverified until first-post telemetry exists.",
+        "Publishing is approval-gated: this draft grants no publication authority; actual posting requires Human approval per agents/somad/AGENT.md (publish_requires_approval) and BadSector review for material publication.",
+        "Forem API automation would require an account/API token; credential handling is out of this role's scope (no infra capability, ISO-004)."
+      ],
+      "unresolved_items": [
+        "Whether maintainers want per-doc cross-posts or a periodic digest post (digest recommended first).",
+        "Canonical base URL for posts (repo path vs rendered docs host) — needs CTO/orchestrator input.",
+        "Ownership/branding of the Dev.to organization account — Human decision.",
+        "Publish-on-merge automation feasibility in harness CI — needs CTO assessment."
+      ],
+      "actions_taken": [
+        "Read schemas/task-result.schema.json to bind output format.",
+        "Read docs/README.md and sampled the docs corpus to ground the proposal in the actual documentation.",
+        "Read agents/somad/AGENT.md and agents/somad/policy.yaml to confirm capability boundaries (drafting yes; publishing scoped_approval; no infra).",
+        "One bounded web search verifying Dev.to cost, canonical URL support, and Forem API. No writes performed (read-only task); no delegation; no scope change."
+      ],
+      "recommendation": "Adopt Dev.to (dev.to) as the single low-cost social distribution channel for the project's documentation: start with a periodic digest post rather than verbatim copies, set the docs source as the canonical URL on every post to avoid SEO dilution, keep publishing approval-gated with Human sign-off, and defer Forem API publish-on-merge automation until account ownership and CTO feasibility are confirmed."
+    }
+  }
+}

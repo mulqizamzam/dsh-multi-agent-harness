@@ -1,0 +1,48 @@
+{
+  "run_id": "7b6d88d0-0645-4fe0-a46c-9d70e3e6c1de",
+  "stop_reason": "completed",
+  "structured": {
+    "task_id": "task-1:cto",
+    "assigned_role": "cto",
+    "status": "SUCCEEDED",
+    "confidence": "MEDIUM",
+    "findings": [
+      "AUTH-INV-06 (docs/authority.md:59,101 — expiry/revocation checked at EXECUTION time, not only at planning) is genuinely enforced in the main path: orchestrator/runtime/flow.py::_execute re-reads the registry record + revocation list immediately before the side effect and fails closed on absent/inactive/revoked/expired. But the re-check is parent-centric: the ExecutionEngine authority re-check evaluates the PLANNING-TIME child delegation snapshot (flow.py:625 passes `child` into ExecutionRequest at flow.py:996-1004; engine.py:303-308 uses req.delegation), and child-scope ⊆ live-parent-scope (AUTH-INV-04) is verified only at issuance (control/delegation.py:426; module comment line 17 'containment checked at creation') — it is never re-derived at execution against the freshly re-read parent."
+    ],
+    "evidence": [
+      "docs/authority.md:19 (Capability ≠ Permission ≠ Authority), :59 ('expiry / revocation checked at execution time (AUTH-INV-06), not only at planning'), :67 (authority gate 'Re-runs at execution'), :101 (AUTH-INV-05/06 expired/revoked fails closed)",
+      "orchestrator/runtime/flow.py:970-987 — step 1 re-reads provider.current() and raises AuthorityDenied if the delegation is absent / not ACTIVE / in the revocation list / expired, emitting an execution_denial audit event (fail-closed)",
+      "orchestrator/runtime/flow.py:996-1010 — ExecutionRequest is built with delegation=delegation (the planning-time child; call site flow.py:625), then engine.validate() + engine.recheck_authority(revocation_list=revocations)",
+      "orchestrator/execution/engine.py:294-308 — recheck_authority calls _recheck_authority(delegation=req.delegation, ...), i.e. the request's delegation snapshot, not the freshly re-read registry record; engine.py:223-227 (validate) does the same",
+      "control/delegation.py:380-430 — issue_child_delegation mints a fresh runtime id (delegation-<task>-<uid>) at version:1 and enforces scope_contained(child, parent) only at creation (line 426)",
+      "schemas/delegation.schema.json — properties are id, principal, delegate, project, task, action, target, environment, scope, prohibited_actions, requires_approval, expires_at, approval_reference, status, version, created_at, updated_at, revoked_at; there is NO parent_id/parent_version lineage field, so a child cannot be re-validated against its live parent at execution",
+      "control/delegation.py:111-124 (malformed expires_at → EXPIRED, fail-closed) and control/authority.py:176-181 (status != ACTIVE, id in revocation_list, is_expired → Denied)",
+      "orchestrator/runtime/delegation.py:60-79 — FileDelegationProvider.current() re-reads delegation.json + revocations.json through the O3 daemon on every call (production path does re-read fresh); :120 marks MemoryDelegationProvider as TEST-SUPPORT ONLY",
+      "orchestrator/runtime/flow.py:1296 — the recovery path passes the freshly re-read delegation_now to _execute, so the child-side guarantee currently depends on call-site wiring rather than on the gate itself",
+      "agents/cto/policy.yaml:50-58 declares execution_gate_required: true with no expiry/revocation binding; grep for 'expir|revoc|execution time|AUTH-INV-06' across agents/** returned no matches — consistent with capability living in role files and authority living in the control plane"
+    ],
+    "assumptions": [
+      "docs/authority.md is the normative authority model for this repo, and 'checked at execution time' refers to the concrete pre-side-effect re-check in flow.py::_execute / engine.recheck_authority",
+      "Analysis was static and READ-ONLY: no orchestrator flow, test suite, or live DSH runtime was executed, so no runtime/audit evidence was collected; only the two _execute call sites found in flow.py (625, 1296) were audited for delegation wiring",
+      "No authority or delegation state was changed; agents/cto/policy.yaml was read only as role-context for the capability boundary"
+    ],
+    "risks": [
+      "A future caller that invokes ExecutionEngine directly with a child delegation snapshot would silently rely on issuance-time containment: a parent scope narrowed between planning and execution would not be re-checked at execution",
+      "Child delegation ids are runtime-minted and can never appear in state/registry/revocations.json, so the child object has no revocation channel of its own — revocation propagates only through the flow-layer parent re-read",
+      "A residual TOCTOU window exists between the registry re-read (flow.py:971) and the actual side effect; expiry can lapse inside it (inherent to the design, but unmeasured here)"
+    ],
+    "recommendation": "Bind the execution-time re-check to the live record: construct the ExecutionRequest with delegation_now (flow.py:999) instead of the planning-time child, and have the engine re-derive child ⊆ parent (AUTH-INV-04) against the freshly read registry record rather than trusting issuance-time containment. Add parent_id/parent_version (lineage) to schemas/delegation.schema.json so a child can be re-validated against its live parent, and add a regression test that narrows the parent between planning and execution and asserts DENY. No files were created, edited, or deleted (read-only task); no authority or delegation changes were made.",
+    "unresolved_items": [
+      "Whether ExecutionEngine is invoked with a child delegation anywhere outside flow.py:625/1296 was not exhaustively enumerated across the repo",
+      "The gap is established by code inspection only; no test run or live DSH bridge execution demonstrated a mid-flow parent narrowing"
+    ],
+    "actions_taken": [
+      "Read docs/authority.md in full (capability ≠ permission ≠ authority table, delegation object, gates, AUTH-INV-01..20)",
+      "Traced the execution-time authority path across control/delegation.py, control/authority.py, orchestrator/runtime/flow.py, orchestrator/runtime/delegation.py and orchestrator/execution/engine.py",
+      "Inspected schemas/delegation.schema.json for parent/expiry/revocation fields",
+      "Inspected agents/cto/policy.yaml and grepped agents/** for expiry/revocation bindings",
+      "Performed no writes, no delegation, and no authority changes"
+    ],
+    "reported_at": "2026-09-07T09:27:30Z"
+  }
+}

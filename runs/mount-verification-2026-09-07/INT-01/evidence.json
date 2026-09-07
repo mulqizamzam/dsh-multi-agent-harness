@@ -1,0 +1,165 @@
+{
+  "bundle_id": "ev-INT-01-5215bc",
+  "scenario_id": "INT-01",
+  "evidence_level": "L2-LIVE",
+  "l3_claim": false,
+  "created_at": "2026-09-07T09:27:12Z",
+  "project": "multi-agent-harness",
+  "identity": {
+    "task_id": "task-1",
+    "delegation_id": "delegation-task-1-7bf9e48d",
+    "actor": "orchestrator",
+    "role": "orchestrator",
+    "flow_id": "flow-mountverify-int-01-121f5e",
+    "dsh_session_id": "session-74be4558-8dec-4355-8a32-6437c313f49d",
+    "dsh_run_id": "81924798-551e-422d-bca4-ba9d18648396"
+  },
+  "state": {
+    "pre_state": {
+      "current_state": "DRAFT",
+      "version": 1,
+      "hash": "sha256:6db7d803e74f1ffa7d8f5adc0bf95b3e15bf4c8373fffadf546227cc6c6742cb"
+    },
+    "post_state": {
+      "current_state": "DRAFT",
+      "version": 7,
+      "hash": "sha256:b633cc92a469a9b4838c9dd6976616dd915f0893b176d3622791454eef02432d"
+    },
+    "state_version_before": 1,
+    "state_version_after": 7
+  },
+  "authority": {
+    "decision": "ALLOW",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "delegation active and in scope",
+    "delegation_id": "delegation-task-1-7bf9e48d",
+    "audit_event_id": "event-000025"
+  },
+  "gates": [
+    {
+      "gate": "risk_classify",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "risk",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "model-assessed nuance applied over declared MEDIUM",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "evidence",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "evidence sufficient for action",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "conflict",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "all conflicts synthesized; disagreement preserved; no voting",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "badsector_review",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "review not required for this action class",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "authority",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "",
+      "audit_event_id": ""
+    },
+    {
+      "gate": "verification",
+      "decision": "ALLOW",
+      "source": "CONTROL-PLANE-DECISION",
+      "reason": "verified outcome matches expected with required evidence (AUTH-INV-15)",
+      "audit_event_id": ""
+    }
+  ],
+  "execution": {
+    "decision": "ALLOW",
+    "source": "RUNTIME-OBSERVED",
+    "target": "agents/cto/output.txt",
+    "expected": {
+      "exit_code": 0
+    },
+    "observed": {
+      "exit_code": 0,
+      "file_exists": true
+    },
+    "audit_event_id": "event-000025"
+  },
+  "verification": {
+    "verdict": "PASSED",
+    "source": "CONTROL-PLANE-DECISION",
+    "reason": "expected outcome matched observed",
+    "evidence_kinds": [
+      "artifact"
+    ]
+  },
+  "final_status": "COMPLETE",
+  "audit_references": [
+    "event-000001",
+    "event-000025"
+  ],
+  "artifact_hashes": {
+    "agents/cto/output.txt": "sha256:4d1d885a5f12733de67620a2bda5296993808bc97544568d4f4c30a5b7e503f5"
+  },
+  "failure": null,
+  "provenance": {
+    "children": [
+      {
+        "task_id": "task-1:cto",
+        "role": "cto",
+        "run_id": "81924798-551e-422d-bca4-ba9d18648396",
+        "tool_name": "subagent_cto",
+        "stop_reason": "completed",
+        "source": "RUNTIME-OBSERVED"
+      }
+    ],
+    "collection_order": [
+      "task-1:cto"
+    ]
+  },
+  "evidence_items": [
+    {
+      "kind": "authority_decision",
+      "source": "CONTROL-PLANE-DECISION",
+      "detail": {
+        "decision": "ALLOW",
+        "delegation_id": "delegation-task-1-7bf9e48d"
+      }
+    },
+    {
+      "kind": "execution_outcome",
+      "source": "RUNTIME-OBSERVED",
+      "detail": {
+        "exit_code": 0,
+        "file_exists": true
+      }
+    },
+    {
+      "kind": "agent_result",
+      "source": "AGENT-REPORTED",
+      "detail": {
+        "status": "SUCCEEDED",
+        "role": "cto"
+      }
+    }
+  ],
+  "qa_validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": []
+  }
+}

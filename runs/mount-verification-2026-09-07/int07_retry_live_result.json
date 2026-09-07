@@ -1,0 +1,58 @@
+{
+  "_provenance_note": "Live subagent_cto run 54a6f5d6-b744-422a-9f1c-5e4e57cdaf8d, dispatched 2026-09-07 as a redundant INT-07 retry (the original child 7b6d88d0 had already settled with a complete result, which is what the INT-07 bundle uses). This result was NOT consumed by any evidence bundle; it is retained because it is a real live child output and because its finding was independently verified by the orchestrator (see README.md, 'Verified findings'). Structured payload below is verbatim from the child's final message.",
+  "run_id": "54a6f5d6-b744-422a-9f1c-5e4e57cdaf8d",
+  "tool_name": "subagent_cto",
+  "dispatched_at": "2026-09-07T09:33:00Z",
+  "settled_at": "2026-09-07T09:37:19Z",
+  "stop_reason": "completed",
+  "used_for_evidence": false,
+  "structured": {
+    "task_id": "task-1:cto",
+    "assigned_role": "cto",
+    "status": "SUCCEEDED",
+    "confidence": "HIGH",
+    "reported_at": "2026-09-07T09:37:19Z",
+    "findings": [
+      "EXECUTION-TIME SCOPE STALENESS: the runtime satisfies AUTH-INV-06 for status/revocation/expiry but NOT for scope. OrchestratorFlow._execute re-reads the registry (flow.py:971) and tests only is_active / id-in-revocations / is_expired on the fresh record (flow.py:975-985); it then builds ExecutionRequest with the PLANNING-TIME delegation snapshot (flow.py:999, passed in at flow.py:625 as the child issued during the planning authority gate), and ExecutionEngine.recheck_authority runs the authority gate against req.delegation (engine.py:302). Because control.authority.recheck_authority derives operations/resources/environments/prohibited_actions/requires_approval solely from the object it is handed (control/authority.py:197-209), a Human registry update that narrows or alters scope while leaving the delegation ACTIVE (e.g. scope_resources agents/** -> agents/cto/**, dropping code_write from operations, adding requires_approval: [destructive], lowering maximum_cost) is invisible at execution: the action proceeds under superseded scope. Delegation.version and Delegation.updated_at exist (orchestrator/foundation/contracts.py:224,226) but are never compared anywhere in control/authority.py, control/delegation.py, engine.py or flow.py, so there is no freshness binding on the authority record."
+    ],
+    "evidence": [
+      "docs/authority.md:59 — 'expiry / revocation checked at execution time (AUTH-INV-06), not only at planning'",
+      "docs/authority.md:71 — Execution gate checklist includes 'delegation status, expiry, revocation, scope' re-evaluated immediately before the DSH boundary",
+      "orchestrator/runtime/flow.py:971 — delegation_now, revocations = self.provider.current() (fresh read at execution)",
+      "orchestrator/runtime/flow.py:975-985 — fresh record consulted only for is_active / revocation-list membership / expiry",
+      "orchestrator/runtime/flow.py:996-1003 — ExecutionRequest(..., delegation=delegation, ...) uses the planning-time snapshot, not delegation_now",
+      "orchestrator/runtime/flow.py:625 — self._execute(child, plan, approval_reference) where child was issued at planning (flow.py:603-608)",
+      "orchestrator/execution/engine.py:301-311 — _recheck_authority(delegation=req.delegation, ...) at execution time",
+      "control/authority.py:197-209 — action/environment/target/prohibited checks all read from the passed delegation object",
+      "orchestrator/foundation/contracts.py:224,226 — Delegation.version / updated_at fields exist but are unused as an execution-time binding",
+      "grep of control/authority.py, control/delegation.py, orchestrator/execution/engine.py, orchestrator/runtime/flow.py: no delegation version/updated_at comparison",
+      "agents/cto/policy.yaml — invariants execution_gate_required: true and scope_expansion_requires_new_delegation: true (role layer asserts the gate the runtime under-delivers on scope)",
+      "tests/integration/test_02_expired_revoked_authority.py, tests/orchestrator/runtime/test_02_authority.py:64-72, tests/integration/test_07_execution_recheck.py — mid-flow coverage exists for revocation/expiry only; no test mutates delegation scope between planning and execution"
+    ],
+    "assumptions": [
+      "FileDelegationProvider (state/registry/delegations.json via the O3 registry read) is the production authority seam, and a Human/authorized writer can change scope fields on an ACTIVE delegation without flipping status or expiry.",
+      "Registry writes are expected to bump version/updated_at (single-writer control plane, ADR 0002); not exercised here because the task is read-only.",
+      "docs/authority.md §4 intends scope to be re-evaluated against the current record at execution; if the intent is snapshot-scope-only, the doc and the code disagree rather than the code being wrong."
+    ],
+    "risks": [
+      "STALE_AUTHORIZATION / TOCTOU_REVALIDATION_OMISSION on the scope dimension: AUTH-INV-02/04 containment is enforced only at issuance, so a post-planning narrowing of the grant does not re-gate an in-flight action.",
+      "Revocation semantics are partially misleading: revocation-by-id works, but 'quiet narrowing' (the more likely Human response to a misbehaving run) is equivalent to no revocation at execution time.",
+      "Test assurance gap: INT-02/INT-07/THREAT-009 prove expiry+revocation re-checks, which can be read as full execution-time authority freshness; the scope path is untested and therefore unproven.",
+      "Recovery path already passes the fresh record (flow.py:1296 self._execute(delegation_now, ...)), so normal and recovery executions use different authority bindings — an inconsistency that will make future gate changes drift."
+    ],
+    "recommendation": "Bind the execution-time re-check to the CURRENT registry record instead of the planning snapshot. Minimal change in OrchestratorFlow._execute: after provider.current(), fail closed unless delegation_now.id == delegation.id and (delegation_now.version, delegation_now.updated_at) == (delegation.version, delegation.updated_at) — on mismatch, STOP -> PRESERVE -> RE-GATE per AUTH-INV-06/DRIFT_AUTHORIZATION; or construct ExecutionRequest with delegation_now and re-derive the child scope from it. Add a regression test that leaves status ACTIVE but narrows scope_resources / adds requires_approval between planning and execution and asserts DENY, plus a static check that no execution path passes a planning-time delegation into ExecutionRequest.",
+    "unresolved_items": [
+      "Whether the sanctioned registry writer actually increments Delegation.version / updated_at (needs a write-path inspection, out of read-only scope here).",
+      "Whether docs/authority.md §4 'scope' in the execution checklist is normative (current record) or descriptive (snapshot) — needs a doc-owner ruling before code change.",
+      "Whether child delegations issued at planning (flow.py:625) are ever re-validated against a narrowed parent by design; scope_contained is only called at issuance (control/delegation.py:426)."
+    ],
+    "actions_taken": [
+      "Read docs/authority.md in full (118 lines) — authority model, delegation object, gates, AUTH-INV list.",
+      "Enumerated agents/** (7 roles x AGENT.md/policy.yaml/agent.cordis.yml) and read all seven policy.yaml capability/toolFilter/invariant blocks.",
+      "Traced the execution-time authority path read-only: control/delegation.py, control/authority.py, orchestrator/runtime/delegation.py, orchestrator/runtime/flow.py (planning 415/603, execute 958-1011, recovery 1254-1296), orchestrator/execution/engine.py (validate 195-242, recheck_authority 275-314).",
+      "Verified absence of any delegation version/updated_at freshness comparison via targeted grep across control/ and orchestrator/.",
+      "Confirmed existing test coverage is limited to mid-flow expiry/revocation, not mid-flow scope change.",
+      "No files created, edited, or deleted; no delegation performed; no authority or configuration changes."
+    ]
+  }
+}
