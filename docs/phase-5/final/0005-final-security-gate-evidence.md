@@ -36,7 +36,7 @@ G10 hardening must **close the raw DSH filesystem bypass path** OR **formally pr
 **Why prevention cannot close in this session:**
 | Option | Constraint |
 |---|---|
-| O5 — reduce bash/write/edit surface | Requires Human-approved composition change (ADR 0001 Decision 4/7 HUMAN_PENDING) |
+| O5 — reduce bash/write/edit surface | Requires Human-approved composition change (ADR 0001 Decision 4/7 HUMAN_PENDING) *[Correction 2026-09-07: the D4/D7 exception was Human-approved and executed 2026-09-07 (ADR 0001 Revision 3 addendum); O5 was applied 2026-08-31 and amended 2026-09-07 (zeko discriminator — write/edit actors now `{cto}`; bash residual on zeko/cto unchanged). The HUMAN_PENDING label is historical.]* |
 | O3 — out-of-process registry | Requires Human-approved infrastructure change (ADR 0002 consequence 4) |
 | O2 — registry outside workspace | Rejected for V1 (ADR 0002 Option A analysis); requires per-agent sandbox |
 | **O4 — per-agent/path-level sandbox** | **DSH capability absent from 0.1.1-rc.2** — sandbox is per-session (`child-agent.ts:180`), toolFilter is tool-name-level (`ToolRestriction` string arrays), no per-path allow/deny on filesystem tools |

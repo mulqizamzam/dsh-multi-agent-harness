@@ -44,7 +44,7 @@ The orchestrator has corresponding files under `orchestrator/`.
 
 ## Role → DSH preset mapping
 
-The mapping from role definitions to DSH Agent Presets + per-role `tool-subagent` instances is in `config/role-preset-mapping.yaml`. This mapping is a **control-plane input** — it is not yet mounted (mounting is a controlled DSH composition exception, HUMAN_PENDING per ADR Decision 4/7).
+The mapping from role definitions to DSH Agent Presets + per-role `tool-subagent` instances is in `config/role-preset-mapping.yaml`. The instances are **mounted** in the live web profile composition since 2026-09-07 under the Human-approved controlled DSH composition exception (ADR Decision 4/7; verification: `runs/mount-verification-2026-09-07/`). Note: zeko's toolFilter no longer carries `edit`/`write` (2026-09-07 discriminator — `capabilities.code_write: no` is enforced at the toolFilter layer; the raw-write/code-mutation actor set is now `{cto}` only).
 
 ---
 

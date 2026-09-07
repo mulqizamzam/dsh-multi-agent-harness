@@ -1,8 +1,8 @@
 # ADR 0001 — Multi-Agent Control Plane Boundary (Phase 0/1 Foundation)
 
-- **Status**: proposed
+- **Status**: accepted (2026-09-07 — see Revision 3 addendum at the end of this file)
 - **Date**: 2026-08-29
-- **Revision**: 2 (revised for architecture review: three enforcement layers, recommendations-not-approvals, boundary corrections, Phase-1 entry criteria)
+- **Revision**: 3 (2026-09-07: decisions accepted by Human instruction; D4/D7 composition exception executed — see the Revision 3 addendum before relying on any HUMAN_PENDING label in the body below)
 - **Source**: `PRD_Multi_Agent_DeepSeek_Harness_v1.0.md` (v1.0, Draft for implementation) + Phase-0 investigation of DeepSeek Harness running locally.
 - **Scope**: `multi-agent-harness/`. Does **not** modify DSH core, `project/`, `obsidian-vault/`, `memorycore/`, or any other existing project.
 - **Version pin**: DeepSeek Harness `0.1.1-rc.2` (verified locally; later releases require re-verification).
@@ -224,6 +224,12 @@ Each is a **recommendation**. None is binding until the Human marks it HUMAN_APP
 
 ## Decision table (formal)
 
+> **Revision 3 note (2026-09-07)**: the per-decision statuses in this table
+> are historical as of the original authoring. All seven decisions were
+> accepted by Human instruction on 2026-09-07 — see the Revision 3 addendum
+> at the end of this file for the acceptance record, authority provenance,
+> and the residual documentation gap.
+
 | Decision | Recommended | Evidence | Risk | Reversible? | Human approval |
 |---|---|---|---|---|---|
 | 1. Per-agent permission vs session sandbox/approval | Two-tier: per-role toolFilter + per-session sandbox/approval | sandbox/approval per-session (V); toolFilter/persona config-level (V); presets per-role (V) | Medium — PRD §8 per-agent sandbox/approval not natively expressible; shared session policy | Moderate | **HUMAN_PENDING** |
@@ -269,6 +275,11 @@ This section names, per control, *where it lives* (which layer) and *what enforc
 ---
 
 ## Phase-1 Entry Criteria
+
+> **Revision 3 note (2026-09-07)**: criteria 1–3 are SATISFIED and criterion 4
+> is PARTIAL as of 2026-09-07 — see the Revision 3 addendum. Phase 1 has in
+> fact been executed through Phase 5 under Human supervision; the table below
+> is retained as authored (historical).
 
 Phase 1 may begin **only when all** of the following hold (each currently `HUMAN_PENDING` unless noted):
 
@@ -322,4 +333,69 @@ This ADR separates the PRD's control plane from DSH's enforcement, fixes the per
 
 ---
 
-*Status: proposed. Human approval statuses are all HUMAN_PENDING unless marked HUMAN_APPROVED (Decision 7 boundary, given by explicit instruction) or NOT_APPLICABLE. No Phase-1 implementation has begun; no production agent prompts or workflows are authored.*
+*Status: [SUPERSEDED 2026-09-07 by the Revision 3 addendum — see below. Historical 2026-08-29 status:] proposed. Human approval statuses are all HUMAN_PENDING unless marked HUMAN_APPROVED (Decision 7 boundary, given by explicit instruction) or NOT_APPLICABLE. No Phase-1 implementation has begun; no production agent prompts or workflows are authored.*
+
+---
+
+## Revision 3 addendum (2026-09-07) — decisions accepted; D4/D7 exception executed
+
+### What happened
+
+Phase 1 through Phase 5 of the control plane were implemented in this
+repository under continued Human supervision (commit history from
+2026-08-30 onward). The original body above was written before any of that
+work existed; its HUMAN_PENDING labels and "no implementation has begun"
+footer are historical.
+
+### Acceptance record (authority provenance)
+
+- **Authority source**: direct Human instructions in the working session
+  that owns this project (the Human is the principal, per the ADR's own
+  approval vocabulary).
+- **Instruction 1** (2026-09-07, exact words): *"mount D4/D7 bridge approved"*
+  — Human authority for the **controlled DSH composition exception**
+  (Decision 4 implementation + Decision 7's per-case exception). Executed the
+  same day: the seven per-role tool-subagent rows and role presets were
+  mounted in the live web profile composition
+  (`$DSH_HOME/profiles/web/cordis.patch.yml`), verified read-only, and
+  recorded in `runs/mount-verification-2026-09-07/` (INT-01..INT-12,
+  REAL-backend live dispatches included).
+- **Instruction 2** (2026-09-07, exact words): *"setuju"* — Human approval of
+  the commit of that verification evidence.
+- **Instruction 3** (2026-09-07, exact words): *"laksanakan 1 - 4"* — Human
+  approval to execute the four-item follow-up plan that had been presented,
+  which included the zeko write/edit discriminator, the reconciliation of
+  stale HUMAN_PENDING/draft statuses, and this ADR's status transition.
+- **Effect**: Decisions 1–7 are **accepted**; ADR status → **accepted**
+  (Revision 3). Decision 7's boundary was already HUMAN_APPROVED
+  (2026-08-29 instruction); its per-case exception was granted and executed
+  2026-09-07.
+
+### Residual gap (documented, not silently closed)
+
+The approvals above were given as chat instructions in the owning session.
+The ADR's original entry criteria anticipate a **dated, per-decision
+approval record**; a chat transcript is a weaker, non-repo-verifiable form
+of that record. This addendum is the in-repo best transcription: it quotes
+the instructions verbatim with dates, but the verifiable approval channel
+for D1–D7 remains an open documentation item. If a stronger record exists
+outside the repo, it supersedes this transcription.
+
+### Entry criteria — current status (2026-09-07)
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | ADR accepted by Human | **SATISFIED** (2026-09-07 instructions 1–3; see residual gap above) |
+| 2 | Development session policy is safe | **SATISFIED** (sessions run under `workspace-write` + `ask` per the project baseline; approval policy `ask` confirmed in current runtime context) |
+| 3 | Scope confirmed, exceptions resolved | **SATISFIED** (boundary `multi-agent-harness/` — instruction of 2026-08-29; D4/D7 composition exception approved 2026-09-07 and executed; NK-Agent-OS / Agent Teams / out-of-process backends remain out of scope) |
+| 4 | Unresolved blockers documented | **PARTIAL** — UNKNOWN #1 (prompt-injection trust boundary) remains OPEN; storage hub and Agent Teams remain BLOCKED/out-of-scope by choice |
+| 5 | Implementation plan exists | **SATISFIED** (`docs/phase-1/0001-phase-1-implementation-spec.md`) |
+
+### Related corrections (same date)
+
+- `docs/phase-5/security/g10/final/0001-g10-final-mitigation-analysis.md`
+  and `docs/phase-5/final/0005-final-security-gate-evidence.md` cited the
+  D4/D7 exception as HUMAN_PENDING; both carry dated correction notes.
+- `config/role-preset-mapping.yaml`, `config/tool-subagent-instances.yaml`,
+  the seven `agents/<id>/agent.cordis.yml` presets, and `AGENTS.md` were
+  updated from draft/not-mounted wording to mounted status.

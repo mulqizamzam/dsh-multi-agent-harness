@@ -1,6 +1,6 @@
 # CHANGE REQUEST — Controlled DSH Composition Exception: D4 Role Isolation (MOUNT)
 
-- **STATUS = PENDING_HUMAN_APPROVAL**
+- **STATUS = APPROVED & EXECUTED (2026-09-07)** — Human instruction *"mount D4/D7 bridge approved"*; see Amendment 1 at the end of this file. The body below is preserved as authored 2026-08-29 (historical).
 - **Date**: 2026-08-29
 - **Version pin**: DeepSeek Harness `0.1.1-rc.2`
 - **Type**: Controlled DSH composition exception (ADR 0001 Decision 4/7; security spec §15 condition 5) — **the one approved-in-principle exception to the "DSH profile/preset change is a per-case exception" boundary.**
@@ -233,8 +233,17 @@ Each recorded with evidence (schema dump / tool result / audit event). **L2 isol
 
 ## Decision block (for the Human)
 
-- [ ] **APPROVE** — authorize §1–§5 mount + §9 ISO-LIVE tests, executed as a reversible step with §8 rollback on standby.
+- [x] **APPROVE** — authorize §1–§5 mount + §9 ISO-LIVE tests, executed as a reversible step with §8 rollback on standby. *(Approved 2026-09-07: Human instruction "mount D4/D7 bridge approved"; executed same day — see Amendment 1.)*
 - [ ] **APPROVE WITH CHANGES** — specify modifications.
 - [ ] **REJECT** — keep Phase-1C drafts; no external file touched.
 
-*Prepared as the single change request. STATUS = PENDING_HUMAN_APPROVAL. Nothing mounted, no `$DSH_HOME`/profile/preset modified, no restart, no live test run, no session policy change, nothing outside `multi-agent-harness/` changed.*
+*Prepared as the single change request. STATUS = PENDING_HUMAN_APPROVAL. Nothing mounted, no `$DSH_HOME`/profile/preset modified, no restart, no live test run, no session policy change, nothing outside `multi-agent-harness/` changed. [Historical 2026-08-29 — superseded 2026-09-07, see Amendment 1.]*
+
+---
+
+## Amendment 1 (2026-09-07) — approved and executed
+
+- **Authority**: Human instruction in the owning session, exact words: *"mount D4/D7 bridge approved"* (2026-09-07); commit approval *"setuju"* for the verification evidence.
+- **Executed**: §1–§5 mount — 7 presets into `$DSH_HOME/.agent-presets/role-<id>/`, 7 `tool-subagent-<id>` rows appended to `$DSH_HOME/profiles/web/cordis.patch.yml` (pre-change backup kept per §8). Verified read-only: `runs/mount-verification-2026-09-07/` (INT-01..INT-12, including REAL-backend live dispatches; live rows match the config row for row — locked by `test_live_rows_match_config`).
+- **Post-execution narrowing (same day, Human-approved via "laksanakan 1 - 4", task 3)**: zeko's `subagent_zeko` allow set loses `edit, write` (the verified finding was that zeko's surface was byte-identical to cto's; `capabilities.code_write: no` becomes enforceable). The `§3 subagent_zeko` row and the `§5b diff` above record the pre-narrowing allow sets as history; the authoritative current rows are `config/tool-subagent-instances.yaml` + `config/role-preset-mapping.yaml` + the live patch file. The re-mount of the narrowed zeko row is recorded in the same run directory (`README.md` §6, follow-up fix).
+- **Session policy**: unchanged, as §13 promised (`workspace-write` + `ask`).

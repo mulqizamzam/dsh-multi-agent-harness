@@ -126,4 +126,22 @@ Restore order (reverse of apply), each from `backups/o5-pre/`:
 
 ---
 
-*Status: O5 APPLIED (containment only). G10 remains OPEN / BLOCKING. Raw-write actor set: `{zeko, cto, somad, nova}` → `{zeko, cto}`. O3 HOLD. No closure of prevention claimed.*
+## 7. Amendment 1 (2026-09-07) — zeko discriminator: `write`/`edit` removed from zeko
+
+Human-approved (task 3 of the 2026-09-07 "laksanakan 1-4" instruction, same
+session that approved the D4/D7 mount activation). Following the verified
+finding that `subagent_zeko`'s tool surface was byte-identical to
+`subagent_cto` (runs/mount-verification-2026-09-07/), `edit`/`write` are
+removed from zeko's allow set in all three config layers
+(`agents/zeko/policy.yaml`, `config/role-preset-mapping.yaml`,
+`config/tool-subagent-instances.yaml`) and from the live
+`cordis.patch.yml` row.
+
+| | |
+|---|---|
+| **Effect** | write/edit-capable actor set **narrows from `{zeko, cto}` to `{cto}`** — `capabilities.code_write: no` (permissions.yaml) is now enforceable at the toolFilter layer. zeko retains `bash` (ops diagnosis residual, unchanged, still documented). |
+| **Validation invariants added** | `tests/validate_config.py`: (a) `code_write == 'no'` ⇒ `edit`/`write` ∉ allow regardless of sandbox intent; (b) allow-set uniqueness across roles unless a `tool_surface_equivalence` group is declared in `config/permissions.yaml` (declared: `[cfo, kai, somad]`, `[badsector, nova]`). |
+| **Historical rows preserved** | Sections 1–6 above record the post-O5 state `{zeko, cto}` verbatim as of 2026-08-31; they are history, not the current state. Current authoritative actor sets: bash/write/edit-capable `{zeko, cto}` (bash via zeko), write/edit-capable `{cto}`. |
+| **Reversibility** | HIGH (same class as O5; restore zeko allow entries + reload). |
+
+*Amendment 1 status: APPLIED 2026-09-07. Current write/edit actors: `{cto}`. G10 remains OPEN (bash residual on zeko/cto). No closure of prevention claimed.*
