@@ -57,6 +57,13 @@ Properties (from security docs):
 - **delegate** — the orchestrator; subagents act within orchestrator scope.
 - **scope ⊆ Human grant** (AUTH-INV-02); child scope ⊆ parent scope (AUTH-INV-04).
 - **expiry / revocation checked at execution time** (AUTH-INV-06), not only at planning.
+- **grant containment re-derived at execution time** (AUTH-INV-04/06, since 2026-09-07):
+  the execution-time re-check re-derives `scope_contained(grant, delegation_now)`
+  against the freshly read registry record, so a scope change that leaves the
+  delegation ACTIVE (narrower operations/resources/environments, an added
+  prohibition or approval requirement, shortened expiry, lower cost cap) is
+  re-gated before any side effect (`orchestrator/runtime/flow.py::_execute`,
+  regression `tests/orchestrator/production/test_production_13_scope_narrowing.py`).
 - **V1 subdelegation: DENY BY DEFAULT** — only the orchestrator delegates; no specialist may subdelegate.
 - Malformed delegation → treated as absent → **DENY** (fail-closed).
 

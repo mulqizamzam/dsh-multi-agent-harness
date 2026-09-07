@@ -14,9 +14,12 @@
 #                  grant is supplied).
 #   AUTH-INV-04  — a child delegation the orchestrator issues must be within the
 #                  orchestrator's own granted scope (issue_child_delegation,
-#                  scope_contained) — containment checked at creation.
+#                  scope_contained) — checked at creation AND re-derived at
+#                  execution time against the current registry record
+#                  (orchestrator/runtime/flow.py::_execute, since 2026-09-07).
 #   AUTH-INV-06  — expiry/revocation primitives (is_expired, is_revoked); the
-#                  gate re-checks them at execution time.
+#                  gate re-checks them at execution time (together with the
+#                  AUTH-INV-04 containment re-derivation).
 #   AUTH-INV-11  — target containment primitive (target_in_scope) with `**`
 #                  prefix-boundary matching (sibling-prefix confusion prevented).
 #   DLG-003      — subdelegation DENY BY DEFAULT (V1): only the orchestrator
