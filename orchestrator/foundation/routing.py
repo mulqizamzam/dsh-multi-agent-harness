@@ -19,7 +19,7 @@ from .contracts import (
 )
 
 # A routing decision never returns ALL specialists (no blanket fan-out).
-MAX_FAN_OUT = len(SPECIALIST_ROLES) - 1  # at most 6 of the 7
+MAX_FAN_OUT = len(SPECIALIST_ROLES) - 1  # at most 14 of the 15 (PRD v0.2)
 
 
 class RoutingError(ValueError):
@@ -34,11 +34,14 @@ def select_agents(task: Task) -> tuple[str, ...]:
     to all specialists.
     """
     objective = task.objective.lower().strip()
-    # Exact keyword match first, then substring match against any domain token.
+    # Exact keyword match first; then LONGEST substring match. Longest-match
+    # specificity: `architecture_review` (atlas) beats its substring
+    # `architecture` (cto); `security_review` (badsector) beats `security`
+    # (argus). Free-text substrings keep their baseline mappings (ADR 0003 D6).
     matched_domain = objective if objective in DOMAIN_ROLE else None
     if matched_domain is None:
         matches = [k for k in DOMAIN_ROLE if k in objective]
-        matched_domain = matches[0] if matches else None
+        matched_domain = max(matches, key=len) if matches else None
     if matched_domain is None:
         raise RoutingError(f"cannot route task {task.task_id}: unknown domain")
 

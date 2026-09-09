@@ -26,15 +26,22 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------------
-# Role / classification vocabulary (fixed — peer topology, no 8th specialist)
+# Role / classification vocabulary (PRD v0.2 — 15-specialist on-demand pool;
+# ADR 0003). Baseline seven first, expansion eight appended in PRD §9 order.
 # ---------------------------------------------------------------------------
-SPECIALIST_ROLES = ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova")
+SPECIALIST_ROLES = (
+    "zeko", "cto", "cfo", "kai", "somad", "badsector", "nova",
+    "vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger",
+)
 ORCHESTRATOR = "orchestrator"
 ALL_ROLES = SPECIALIST_ROLES + (ORCHESTRATOR,)
 
 # Domain fit: classify a task's domain and map to the MINIMUM specialist set.
 # A task maps to exactly one primary role; some domains legitimately need a
-# secondary (e.g. finance+research). Routing NEVER fans out to all 7.
+# secondary (e.g. finance+research). Routing NEVER fans out to all 15.
+# Matcher note: select_agents uses longest-key specificity, so the specific
+# `architecture_review` (atlas) wins over its substring `architecture` (cto)
+# while free-text architecture stays cto (ADR 0003 D6).
 DOMAIN_ROLE = {
     "operations": "zeko",
     "engineering": "cto",
@@ -60,14 +67,47 @@ DOMAIN_ROLE = {
     "adversarial_review": "badsector",
     "review": "badsector",
     "red_team": "badsector",
-    "verification": "badsector",
+    # PRD v0.2 §9.1: Vera owns verification; the badsector mapping was a
+    # Phase-1D stopgap before any verification specialist existed (ADR 0003 D6).
+    "verification": "vera",
+    # ── PRD v0.2 expansion (ADR 0003) ─────────────────────────────────────
+    "evidence": "vera",
+    "acceptance": "vera",
+    "security": "argus",
+    "threat_model": "argus",
+    "privilege_analysis": "argus",
+    "trust_boundary": "argus",
+    "architecture_review": "atlas",
+    "dependency_boundary": "atlas",
+    "coupling": "atlas",
+    "failure_analysis": "tess",
+    "timeout": "tess",
+    "cancellation": "tess",
+    "race_condition": "tess",
+    "policy": "quill",
+    "invariant": "quill",
+    "specification": "quill",
+    "integration": "scout",
+    "compatibility": "scout",
+    "version_drift": "scout",
+    "reliability": "talon",
+    "idempotency": "talon",
+    "retry": "talon",
+    "rollback": "talon",
+    "audit": "ledger",
+    "provenance": "ledger",
+    "lineage": "ledger",
 }
 # Domains that additionally require a secondary specialist (minimum set, still
-# never all 7).
+# never all 15).
 DOMAIN_SECONDARY = {
     "pricing": "kai",      # pricing analysis feeds on market research
     "market_research": "cfo",  # research feeding a financial decision
     "security_review": "cto",  # adversarial review of engineering work
+    "security": "badsector",   # adversarial challenge of security analysis
+    "integration": "atlas",    # PRD v0.2 §16.3: architectural fit
+    "reliability": "tess",     # PRD v0.2 §16.2: failure analysis
+    "failure_analysis": "talon",  # recovery semantics beside failure analysis
 }
 
 RISK_CLASSES = ("LOW", "MEDIUM", "HIGH")
