@@ -16,7 +16,7 @@ This file is a pointer — the PRD is the authoritative source for the system's 
 ## Key references
 
 - PRD §4: Orchestrator — coordination/delegation, not an eighth specialist.
-- PRD §5: Seven specialist peers; no specialist manages another.
+- PRD §5: Seven specialist peers (baseline; pool expanded to 15 in PRD v0.2); no specialist manages another.
 - PRD §6: Capability / Permission / Authority separation.
 - PRD §8: Per-agent capability matrix (mapped to DSH realities in ADR 0001).
 - PRD §12: Security — prompt injection, confidentiality, audit.

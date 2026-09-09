@@ -1,6 +1,6 @@
 # Multi-Agent Harness — Control Plane
 
-A **seven-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.1.1-rc.2`).
+A **fifteen-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.1.1-rc.2`): 7 active baseline specialists + 8 registered-not-mounted expansion specialists (PRD v0.2 / ADR 0003).
 
 **Version pin: DeepSeek Harness `0.1.1-rc.2`** — verified locally. Later releases require re-verification.
 
@@ -15,7 +15,7 @@ Human                         ←  ultimate authority
 Orchestrator                  ←  coordinator + delegated decision-maker
   │
   ▼
-7 peer specialist agents:     ←  peers; no specialist manages another
+7 peer specialist agents (active baseline):  ←  peers; no specialist manages another
   Zeko  (operations)
   CTO   (engineering)
   CFO   (finance)
@@ -23,11 +23,15 @@ Orchestrator                  ←  coordinator + delegated decision-maker
   Somad (social)
   BadSector (adversarial review)
   Nova  (writing)
++ 8 registered expansion specialists (PRD v0.2, not yet mounted):
+  Vera (verification)  Argus (security)  Atlas (architecture)
+  Tess (failure)  Quill (policy)  Scout (integration)
+  Talon (reliability)  Ledger (audit)
 ```
 
 - **Human** is the ultimate authority: approves, delegates, revokes, and may override.
 - **Orchestrator** coordinates and owns the project control plane; it does **not** own every domain and has no permanent authority.
-- **Seven specialists are peers.** BadSector reviews/challenges; it never authorizes and never executes the reviewed plan.
+- **All fifteen specialists are peers** (7 active baseline + 8 registered expansion). BadSector reviews/challenges; it never authorizes and never executes the reviewed plan.
 
 ## Three enforcement layers
 
@@ -48,14 +52,10 @@ multi-agent-harness/
 │   ├── agents.yaml              # agent registry (finalized)
 │   ├── permissions.yaml         # capability×agent matrix (control-plane input)
 │   └── role-preset-mapping.yaml # role→DSH preset/toolFilter mapping
-├── agents/
-│   ├── zeko/ → AGENT.md, policy.yaml
-│   ├── cto/   → AGENT.md, policy.yaml
-│   ├── cfo/   → AGENT.md, policy.yaml
-│   ├── kai/   → AGENT.md, policy.yaml
-│   ├── somad/ → AGENT.md, policy.yaml
-│   ├── badsector/ → AGENT.md, policy.yaml
-│   └── nova/  → AGENT.md, policy.yaml
+├── agents/                        # 15 role dirs (7 baseline + 8 PRD v0.2 expansion);
+│   │                              # each: AGENT.md, policy.yaml, agent.cordis.yml
+│   ├── zeko/ cto/ cfo/ kai/ somad/ badsector/ nova/      # baseline (mounted)
+│   └── vera/ argus/ atlas/ tess/ quill/ scout/ talon/ ledger/  # expansion (registered)
 ├── orchestrator/
 │   ├── AGENT.md                 # orchestrator role definition
 │   ├── contract.md              # orchestrator contract (gate ownership, protocol)

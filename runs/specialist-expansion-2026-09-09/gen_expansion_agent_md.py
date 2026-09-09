@@ -33,7 +33,7 @@ RESP = {
     "atlas": ["architecture review", "dependency-boundary analysis", "interface analysis", "coupling analysis",
               "component ownership analysis", "architectural trade-offs", "consistency checks"],
     "tess": ["timeout analysis", "cancellation analysis", "partial-failure analysis", "race-condition analysis",
-             "failure injection", "degraded-state analysis", "recovery-path analysis"],
+             "failure-injection analysis (reads the injection surface; never injects)", "degraded-state analysis", "recovery-path analysis"],
     "quill": ["policy decomposition", "invariant definition", "rule definition", "schema implications",
               "executable-test mapping", "contract consistency checks"],
     "scout": ["integration analysis", "API compatibility", "plugin compatibility", "dependency compatibility",
@@ -54,7 +54,7 @@ NONRESP = {
     "scout": ["authorization", "ownership of another specialist", "unrestricted scope expansion"],
     "talon": ["general operations ownership", "general security ownership", "authorization"],
     "ledger": ["creating authority", "approving state transitions",
-               "altering audit history outside approved mechanisms"],
+               "altering audit history — audit history is immutable; ledger only reads and reports it"],
 }
 MANDATORY = {
     "vera": "A Vera verification result is never authorization (`Vera verification result ≠ authorization`).",

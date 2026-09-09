@@ -20,7 +20,7 @@ Analyze system behavior under failure and degraded execution. This work is bound
 - Cancellation analysis.
 - Partial-failure analysis.
 - Race-condition analysis.
-- Failure injection.
+- Failure-injection analysis (reads the injection surface; never injects).
 - Degraded-state analysis.
 - Recovery-path analysis.
 

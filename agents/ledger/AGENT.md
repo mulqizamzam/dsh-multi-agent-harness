@@ -27,7 +27,7 @@ Validate audit integrity, provenance, decision lineage, and traceability. This w
 
 - Creating authority.
 - Approving state transitions.
-- Altering audit history outside approved mechanisms.
+- Altering audit history — audit history is immutable; ledger only reads and reports it.
 - No self-authorization, no scope expansion beyond the active delegation, no delegation to other specialists.
 
 ## Working principles
