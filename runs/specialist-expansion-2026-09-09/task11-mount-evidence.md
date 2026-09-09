@@ -77,3 +77,22 @@ additionally requires the `DSH_LIVE_BRIDGE_ACTIVE=1` runtime marker
 - A live GUI restart + runtime probe of the 8 new personas (out of scope for
   this session; next session should see `subagent_vera` … in its tool list).
 - Live dispatch smoke for a new specialist (requires an active bridge session).
+
+## Addendum — full-suite skip accounting (post-mount run bash-12)
+
+3384 passed, 9 skipped, 1 failed (collected total 3394, unchanged). The skip
+delta vs the pre-mount run (5 skipped) is fully accounted for:
+
+- 5 skips, unchanged from baseline: live DSH bridge not active in-process
+  (INT-01/02/11/12, ISO-LIVE-006) — the per-session marker is intentionally
+  unset; deterministic equivalents cover these offline.
+- +4 skips, environmental, NOT mount-related: `tests/g10/
+  test_dsh_layer_isolation.py` skips "DSH file sandbox not active" — the
+  session approval policy changed to danger-full-access during this task, so
+  outside-write denial is no longer observable; they execute again under a
+  sandboxed mode.
+- xfail accounting: `test_live_rows_match_config` left xfail → now a normal
+  pass (the intended strict-xfail lifecycle).
+  3387 − 4 + 1 = 3384 passed. Nothing else moved.
+- The one failure remains the pre-existing
+  `test_web_answerer_is_not_in_dsh_home_profiles` env drift (baseline.md).
