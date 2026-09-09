@@ -5,6 +5,32 @@ import os
 import pytest
 from jsonschema import Draft202012Validator, ValidationError
 
+# PRD v0.2 expansion (ADR 0003): the 8 new specialists and their registry roles.
+NEW_IDS = ["vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger"]
+NEW_ROLES = ["verification", "security_engineering", "architecture", "failure_engineering",
+             "policy_specification", "integration_compatibility", "reliability_engineering",
+             "audit_provenance"]
+NEW_GROUPS = ["assurance", "technical_assurance", "technical_assurance", "technical_assurance",
+              "assurance", "technical_assurance", "technical_assurance", "assurance"]
+
+
+def _registry_agent(rid, role, group=None):
+    a = {"id": rid, "role": role, "display_name": rid.capitalize(),
+         "domain": "x", "summary": "x", "default_policy": f"agents/{rid}/policy.yaml"}
+    if group is not None:
+        a["pool_group"] = group
+    return a
+
+
+def _full_registry_agents():
+    """The 15-specialist roster (7 baseline + 8 expansion) as schema fixtures."""
+    base = [("zeko", "operations"), ("cto", "engineering"), ("cfo", "finance"),
+            ("kai", "research"), ("somad", "social"), ("badsector", "adversarial_review"),
+            ("nova", "writing")]
+    return ([_registry_agent(r, ro) for r, ro in base]
+            + [_registry_agent(rid, ro, grp)
+               for rid, ro, grp in zip(NEW_IDS, NEW_ROLES, NEW_GROUPS)])
+
 
 def _load_schema(name, schemas_dir):
     with open(os.path.join(schemas_dir, name)) as f:
@@ -117,9 +143,10 @@ class TestSchemas:
             self.validate(self.audit_schema, {"event_id": "e1"})  # missing many required
 
     def test_valid_role_mapping_disjoint(self):
-        """allow ∩ deny must be empty (7-role mapping)."""
+        """allow ∩ deny must be empty (15-role mapping)."""
         roles = []
-        for rid in ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"]:
+        for rid in (["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"]
+                    + NEW_IDS):
             roles.append({
                 "id": rid, "preset": f"role-{rid}", "policy_ref": f"agents/{rid}/policy.yaml",
                 "tool_instance": {"tool_name": f"subagent_{rid}", "provider": "spawn",
@@ -230,42 +257,23 @@ class TestSchemas:
     # Agent-registry schema tests
     # =====================================================================
     def test_valid_registry(self):
+        """The 15-specialist roster validates (PRD v0.2 §10; ADR 0003 D2)."""
         self.validate(self.registry_schema, {
-            "registry_version": 1, "status": "foundation",
+            "registry_version": 3, "status": "foundation",
             "role_mapping": "config/role-preset-mapping.yaml",
             "orchestrator": {"id": "orchestrator", "kind": "coordination", "role": "Orch", "summary": "x"},
-            "agents": [
-                {"id": "zeko", "role": "operations", "display_name": "Zeko",
-                 "domain": "Ops", "summary": "x", "default_policy": "agents/zeko/policy.yaml"},
-                {"id": "cto", "role": "engineering", "display_name": "CTO",
-                 "domain": "Eng", "summary": "x", "default_policy": "agents/cto/policy.yaml"},
-                {"id": "cfo", "role": "finance", "display_name": "CFO",
-                 "domain": "Fin", "summary": "x", "default_policy": "agents/cfo/policy.yaml"},
-                {"id": "kai", "role": "research", "display_name": "Kai",
-                 "domain": "Res", "summary": "x", "default_policy": "agents/kai/policy.yaml"},
-                {"id": "somad", "role": "social", "display_name": "Somad",
-                 "domain": "Soc", "summary": "x", "default_policy": "agents/somad/policy.yaml"},
-                {"id": "badsector", "role": "adversarial_review", "display_name": "BadSector",
-                 "domain": "Rev", "summary": "x", "default_policy": "agents/badsector/policy.yaml"},
-                {"id": "nova", "role": "writing", "display_name": "Nova",
-                 "domain": "Wri", "summary": "x", "default_policy": "agents/nova/policy.yaml"},
-            ],
-            "invariants": {"specialist_count": 7, "peer_relationship": True},
+            "agents": _full_registry_agents(),
+            "invariants": {"specialist_count": 15, "peer_relationship": True},
         })
 
-    def test_invalid_registry_eighth_agent_rejected(self):
-        """maxItems=7 enforces the seven-specialist topology."""
-        agents = []
-        for rid in ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"]:
-            agents.append({"id": rid, "role": "operations", "display_name": "X",
-                           "domain": "x", "summary": "x",
-                           "default_policy": f"agents/{rid}/policy.yaml"})
-        agents.append({"id": "eighth", "role": "operations", "display_name": "Eighth",
-                       "domain": "x", "summary": "x",
-                       "default_policy": "agents/eighth/policy.yaml"})
+    def test_invalid_registry_sixteenth_agent_rejected(self):
+        """maxItems=15 pins the PRD v0.2 roster shape (roster count, not an
+        architectural limit — but growing it means growing this schema)."""
+        agents = _full_registry_agents()
+        agents.append(_registry_agent("sixteenth", "operations"))
         with pytest.raises(ValidationError):
             self.validate(self.registry_schema, {
-                "registry_version": 1, "status": "foundation",
+                "registry_version": 3, "status": "foundation",
                 "role_mapping": "config/role-preset-mapping.yaml",
                 "orchestrator": {"id": "orchestrator", "kind": "coordination", "role": "O", "summary": "x"},
                 "agents": agents,
@@ -367,6 +375,23 @@ class TestSchemas:
             self.validate(self.task_result_schema, {
                 "task_id": "t-1", "assigned_role": "cto", "status": "DONE",
                 "confidence": "LOW", "reported_at": "2026-08-29T00:00:00Z",
+            })
+
+    def test_valid_task_new_specialist_roles(self):
+        """PRD v0.2: the eight new specialists are valid assigned_role values."""
+        for rid in NEW_IDS:
+            self.validate(self.task_schema, {
+                "task_id": f"t-{rid}", "objective": "x", "assigned_role": rid,
+                "risk_metadata": "LOW", "project": "p",
+            })
+
+    def test_valid_task_result_lifecycle_statuses(self):
+        """PRD v0.2 §13: CANCELLED / TIMEOUT / INCOMPLETE are representable
+        result statuses, distinct from success, and never implicit success."""
+        for st in ("CANCELLED", "TIMEOUT", "INCOMPLETE"):
+            self.validate(self.task_result_schema, {
+                "task_id": "t-1", "assigned_role": "vera", "status": st,
+                "confidence": "LOW", "reported_at": "2026-09-09T00:00:00Z",
             })
 
     def test_invalid_task_result_bad_role(self):

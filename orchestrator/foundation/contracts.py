@@ -343,7 +343,10 @@ class TaskResult:
     """
     task_id: str
     assigned_role: str
-    status: str = "SUCCEEDED"        # SUCCEEDED / FAILED / BLOCKED
+    # SUCCEEDED / FAILED / BLOCKED / CANCELLED / TIMEOUT / INCOMPLETE
+    # (PRD v0.2 §13 lifecycle vocabulary; ADR 0003). Non-SUCCEEDED values are
+    # never implicit success — see collection.FAILING_STATUSES.
+    status: str = "SUCCEEDED"
     findings: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()   # refs to evidence artifacts, never secrets
     assumptions: tuple[str, ...] = ()
@@ -357,7 +360,8 @@ class TaskResult:
     def __post_init__(self):
         _require_nonempty(self.task_id, "task_id", "TaskResult")
         _require_valid_role(self.assigned_role)
-        if self.status not in ("SUCCEEDED", "FAILED", "BLOCKED"):
+        if self.status not in ("SUCCEEDED", "FAILED", "BLOCKED",
+                               "CANCELLED", "TIMEOUT", "INCOMPLETE"):
             raise ContractError(f"TaskResult {self.task_id}: invalid status {self.status!r}")
         if self.confidence not in RISK_CLASSES:
             raise ContractError(f"TaskResult {self.task_id}: invalid confidence {self.confidence!r}")

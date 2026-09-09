@@ -3,7 +3,7 @@
   "$id": "https://multi-agent-harness.local/schemas/role-mapping.schema.json",
   "title": "Role → preset/toolFilter mapping",
   "description": "Declarative mapping from role definitions to DSH Agent Presets + per-role tool-subagent instances (config/role-preset-mapping.yaml). draft_artifacts.status records the mount lifecycle: 'draft' (pre-2026-09-07) or 'mounted' (Human-approved D4/D7 exception executed 2026-09-07). Tool names verified against DSH 0.1.1-rc.2 catalog.",
-  "x-schema-version": 2,
+  "x-schema-version": 3,
   "type": "object",
   "additionalProperties": false,
   "required": ["mapping_version", "status", "version_pin", "documentation_ref", "preset_naming_convention", "instance_naming_convention", "roles", "orchestrator", "consistency_rules"],
@@ -16,7 +16,7 @@
     "instance_naming_convention": { "type": "string" },
     "roles": {
       "type": "array",
-      "minItems": 7,
+      "minItems": 15,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/roleEntry" }
     },
@@ -44,7 +44,7 @@
       "additionalProperties": false,
       "required": ["id", "preset", "policy_ref", "tool_instance", "tool_filter"],
       "properties": {
-        "id": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+        "id": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova", "vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger"] },
         "preset": { "type": "string", "pattern": "^role-[a-z]+$" },
         "policy_ref": { "type": "string", "pattern": "^agents/[a-z]+/policy\\.yaml$" },
         "tool_instance": {

@@ -3,12 +3,12 @@
   "$id": "https://multi-agent-harness.local/schemas/role-definition.schema.json",
   "title": "Agent role definition (policy.yaml)",
   "description": "Declarative role policy for one agent (agents/<id>/policy.yaml). Control-plane input; NOT native DSH authorization. Tool names verified against DSH 0.1.1-rc.2 catalog (docs/tool-catalog.md).",
-  "x-schema-version": 1,
+  "x-schema-version": 2,
   "type": "object",
   "additionalProperties": false,
   "required": ["role", "role_version", "status", "version_pin", "display_name", "domain", "summary", "capabilities", "sandbox_approval_intent", "tool_filter", "prohibited_actions", "invariants"],
   "properties": {
-    "role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+    "role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova", "vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger"] },
     "role_version": { "type": "integer", "minimum": 1 },
     "status": { "const": "finalized" },
     "version_pin": { "type": "string", "pattern": "^deepseek-harness-" },
@@ -22,7 +22,10 @@
         "server_read", "server_write", "code_read", "code_write",
         "financial_analysis", "financial_transaction", "web_research",
         "social_drafting", "social_publishing", "novel_editing",
-        "adversarial_review", "production_deploy", "destructive_action"
+        "adversarial_review", "production_deploy", "destructive_action",
+        "evidence_verification", "security_engineering", "architecture_review",
+        "failure_analysis", "policy_specification", "integration_compatibility",
+        "reliability_engineering", "audit_provenance"
       ] },
       "patternProperties": {
         "^.*$": { "enum": ["yes", "scoped", "review", "approval", "scoped_approval", "no"] }

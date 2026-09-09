@@ -35,7 +35,9 @@ from orchestrator.foundation.contracts import TaskResult  # noqa: E402
 from .exceptions import SubtaskFailed, RuntimeFlowError  # noqa: E402
 
 # A claimed status the orchestrator treats as a propagating subtask failure.
-FAILING_STATUSES = ("FAILED", "BLOCKED")
+# Every status except SUCCEEDED is failing: a cancelled, timed-out, or
+# incomplete subtask is never silently skipped (INT-12; PRD v0.2 §13).
+FAILING_STATUSES = ("FAILED", "BLOCKED", "CANCELLED", "TIMEOUT", "INCOMPLETE")
 
 
 @dataclass(frozen=True)
@@ -131,9 +133,19 @@ def collect_one(payload, *, task=None) -> CollectedResult:
                 f"{expected_role!r}")
 
     if result.status in FAILING_STATUSES:
+        # PRD v0.2 §13 / ADR 0003: every non-SUCCEEDED status propagates as a
+        # typed subtask failure — CANCELLED/TIMEOUT/INCOMPLETE never degrade
+        # into silent success.
+        failure_class = {
+            "FAILED": "logic",
+            "BLOCKED": "authorization",
+            "CANCELLED": "logic",
+            "TIMEOUT": "environment",
+            "INCOMPLETE": "logic",
+        }[result.status]
         raise SubtaskFailed(
             role=result.assigned_role, task_id=result.task_id,
-            failure_class="logic" if result.status == "FAILED" else "authorization",
+            failure_class=failure_class,
             reason=(f"specialist reported {result.status}"
                     + (f": {result.unresolved_items[0]}"
                        if result.unresolved_items else "")))
