@@ -106,11 +106,12 @@ The authoritative role→tool mapping is `config/role-preset-mapping.yaml` (tool
 | `skill` | yes | yes | yes | yes | yes | yes | yes | yes |
 
 Notes:
-- **Delegation and orchestration tools are orchestrator-only in V1** — subdelegation is DENY BY DEFAULT (security docs §6.3; AUTH-INV-04).
+- **Delegation and orchestration tools are orchestrator-only in V1** — subdelegation is DENY BY DEFAULT (security docs §6.3; AUTH-INV-04). Every specialist deny list names all **14 sibling** `subagent_<id>` instances (exact-name matching — the real delegation surface; PRD v0.2 / ADR 0003 D4).
 - `report` is child-scoped: it appears inside a continuable child regardless of the child's toolFilter (verified) and is therefore not listed in role toolFilters.
 - `bash` grants the executor the full sandboxed surface (including escalation attempts); roles with `bash` must have it bounded by the session sandbox (`workspace-write`) and the execution gate.
 - CFO and Kai are **read-only by design** (permissions.yaml: sandbox `read-only`, approval `never` intent) — no `write_fs`, no `execute`.
 - BadSector is **review-only**: no `write_fs`, no `execute`, no `delegate`, no `web_search` (review reads project-local evidence; web evidence arrives via the evidence set).
+- **PRD v0.2 expansion (ADR 0003)**: 8 new per-role instance tools — `subagent_vera`, `subagent_argus`, `subagent_atlas`, `subagent_tess`, `subagent_quill`, `subagent_scout`, `subagent_talon`, `subagent_ledger` — are **registered-pending-mount** (`config/tool-subagent-instances.yaml` draft_version 2): valid verified names in allow/deny sets, but **not present in the live composition** until the separate Human per-case mount exception (ADR 0003 D8). L-group (vera, quill, ledger): no web_search. W-group (argus, atlas, tess, scout, talon): scoped web_search, `fetch: false`. All 8 are read-only analysts (no write/exec tools).
 
 ---
 
