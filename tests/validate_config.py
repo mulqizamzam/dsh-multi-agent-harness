@@ -39,12 +39,13 @@ except ImportError:  # pragma: no cover - degraded mode without jsonschema
 # Tool catalog — verified against DSH 0.1.1-rc.2 (docs/tool-catalog.md).
 # Mirrored here so validation runs without loading the docs.
 #
-# The seven subagent_<id> names are the deployed per-role tool-subagent
-# instance tools: they register as global-layer rows in the live profile
-# composition ($DSH_HOME/profiles/web/cordis.patch.yml), so they are part of
-# every specialist child's inherited (restrictable) surface and are valid
-# allow/deny names for tools.restrict() — verified against the engine
-# (packages/core/tools restrict(): throws on names outside the child's
+# The fifteen subagent_<id> names are the per-role tool-subagent instance
+# tools (7 baseline deployed 2026-09-07; 8 expansion registered PRD v0.2 —
+# mount is the separate Human gate, ADR 0003 D8). They register as global-layer
+# rows in the live profile composition ($DSH_HOME/profiles/web/cordis.patch.yml),
+# so they are part of every specialist child's inherited (restrictable) surface
+# and are valid allow/deny names for tools.restrict() — verified against the
+# engine (packages/core/tools restrict(): throws on names outside the child's
 # global+ancestor-chain surface).
 # ---------------------------------------------------------------------------
 VERIFIED_TOOLS = frozenset("""
@@ -60,11 +61,16 @@ terminal_open terminal_read terminal_send terminal_signal todo_write update_goal
 wait_agent web_fetch web_search workflow write
 subagent_zeko subagent_cto subagent_cfo subagent_kai subagent_somad
 subagent_badsector subagent_nova
+subagent_vera subagent_argus subagent_atlas subagent_tess
+subagent_quill subagent_scout subagent_talon subagent_ledger
 """.split())
 
-SPECIALIST_IDS = {"zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"}
+# Baseline seven first, then the PRD v0.2 expansion eight (ADR 0003 D1 order).
+BASELINE_IDS = ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova")
+EXPANSION_IDS = ("vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger")
+SPECIALIST_IDS = set(BASELINE_IDS) | set(EXPANSION_IDS)
 # Delegation tools a specialist must never hold in ALLOW. Beyond the generic
-# orchestrator-side delegation tools, the seven sibling subagent_<id>
+# orchestrator-side delegation tools, the fourteen sibling subagent_<id>
 # instances are the exact delegation surface a specialist child actually sees
 # (restriction matching is exact-name, so the generic "subagent" deny never
 # blocked them) — subdelegation DENY BY DEFAULT is enforced on both sides.
@@ -73,6 +79,8 @@ DELEGATION_TOOLS = {
     "list_agents", "workflow", "ralph",
     "subagent_zeko", "subagent_cto", "subagent_cfo", "subagent_kai",
     "subagent_somad", "subagent_badsector", "subagent_nova",
+    "subagent_vera", "subagent_argus", "subagent_atlas", "subagent_tess",
+    "subagent_quill", "subagent_scout", "subagent_talon", "subagent_ledger",
 }
 WRITE_EXEC_TOOLS = {"bash", "edit", "write", "str_replace_editor", "run_code", "pwsh"}
 # Permission-matrix vocabulary (config/permissions.yaml, PRD §8 normalized)
@@ -133,8 +141,13 @@ def run_checks(root):
     perms = load_yaml(perms_path)
     mapping = load_yaml(mapping_path)
     policies = {}
-    for rid in SPECIALIST_IDS:
-        policies[rid] = load_yaml(os.path.join(agents_dir, rid, "policy.yaml"))
+    for rid in sorted(SPECIALIST_IDS):
+        p = os.path.join(agents_dir, rid, "policy.yaml")
+        try:
+            policies[rid] = load_yaml(p)
+        except Exception as e:
+            policies[rid] = {}
+            check(f"agents/{rid}/policy.yaml load", False, str(e))
 
     schemas = {}
     for fn in os.listdir(schemas_dir):
@@ -163,11 +176,11 @@ def run_checks(root):
     # --- registry invariants (agents.yaml) ---------------------------------
     reg_inv = agents.get("invariants", {})
     ag = agents.get("agents", [])
-    check("registry 7 specialists", len(ag) == 7, f"{len(ag)}")
+    check("registry 15 specialists", len(ag) == 15, f"{len(ag)}")
     check("registry specialist ids", {a["id"] for a in ag} == SPECIALIST_IDS)
-    check("registry unique ids", len({a["id"] for a in ag}) == 7)
+    check("registry unique ids", len({a["id"] for a in ag}) == 15)
     check("registry specialist_count invariant",
-          reg_inv.get("specialist_count") == 7, f"{reg_inv.get('specialist_count')}")
+          reg_inv.get("specialist_count") == 15, f"{reg_inv.get('specialist_count')}")
     check("registry orchestrator coordination", agents.get("orchestrator", {}).get("kind") == "coordination")
     check("registry orchestrator id", agents.get("orchestrator", {}).get("id") == "orchestrator")
     check("registry peer_relationship", reg_inv.get("peer_relationship") is True)
@@ -209,6 +222,27 @@ def run_checks(root):
             check(f"perm {rid} read-only approval never", defaults.get("approval") == "never",
                   f"{defaults.get('approval')}")
 
+    # --- PRD v0.2 expansion hardening (ADR 0003) ----------------------------
+    # (a) adversarial_review is reserved to badsector: no other specialist may
+    #     hold it in any form (reviewers of record stay singular).
+    adv = caps.get("adversarial_review", {})
+    for rid in sorted(SPECIALIST_IDS - {"badsector"}):
+        check(f"perm adversarial_review reserved (not {rid})", adv.get(rid) == "no",
+              f"{adv.get(rid)!r}")
+    # (b) every expansion analyst is a read-only/never sandbox role.
+    defaults_map = perms.get("agent_defaults", {})
+    for rid in EXPANSION_IDS:
+        d = defaults_map.get(rid, {})
+        check(f"perm {rid} defaults read-only", d.get("sandbox") == "read-only",
+              f"{d.get('sandbox')!r}")
+        check(f"perm {rid} defaults approval never", d.get("approval") == "never",
+              f"{d.get('approval')!r}")
+    # (c) every specialist policy declares never_authorizes (AUTH-INV-13: a
+    #     specialist's PASS/verdict is data, never authorization).
+    for rid, pol in policies.items():
+        check(f"{rid} never_authorizes invariant declared",
+              pol.get("invariants", {}).get("never_authorizes") is True)
+
     # --- role→policy→mapping consistency -----------------------------------
     mapped_roles = {r["id"]: r for r in mapping.get("roles", [])}
     check("mapping covers all roles", set(mapped_roles) == SPECIALIST_IDS)
@@ -226,6 +260,13 @@ def run_checks(root):
         check(f"{rid} tool names verified", not unknown, f"{unknown}")
         check(f"{rid} no delegation tools", not (allow & DELEGATION_TOOLS), f"{allow & DELEGATION_TOOLS}")
         check(f"{rid} max_depth 1", entry.get("tool_instance", {}).get("max_depth") == 1)
+        # Sibling-instance deny contract: a role's deny list must name every
+        # OTHER specialist's subagent_<id> (14 siblings) — the exact-name
+        # surface a child actually inherits. (ADR 0003 D4; PRD v0.2 §17.)
+        expected_siblings = {f"subagent_{o}" for o in SPECIALIST_IDS - {rid}}
+        missing_sibs = expected_siblings - deny
+        check(f"{rid} deny covers sibling instances", not missing_sibs,
+              f"missing {sorted(missing_sibs)}")
         # read-only roles have no write/exec tools
         if pol.get("sandbox_approval_intent", {}).get("sandbox") == "read-only":
             check(f"{rid} read-only no write tools", not (allow & WRITE_EXEC_TOOLS), f"{allow & WRITE_EXEC_TOOLS}")
@@ -294,7 +335,7 @@ def run_checks(root):
     instances = load_yaml(os.path.join(root, "config", "tool-subagent-instances.yaml"))
     check("instances status mounted", instances.get("status") == "mounted")
     insert = instances.get("insert_draft", [])
-    check("instances count 7", len(insert) == 7, f"{len(insert)}")
+    check("instances count 15", len(insert) == 15, f"{len(insert)}")
     instance_map = {}
     for row in insert:
         cfg = row.get("config", {})
