@@ -45,7 +45,8 @@ tool_filter:
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
   deny: [subagent_cto, subagent_cfo, subagent_kai,
-         subagent_somad, subagent_badsector, subagent_nova]
+         subagent_somad, subagent_badsector, subagent_nova,
+         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
   unmounted_candidates: []
   notes: >
     bash is scoped to ops diagnosis and delegation-bounded operations; ops

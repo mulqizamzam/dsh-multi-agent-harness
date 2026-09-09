@@ -15,7 +15,7 @@
 #
 # Rules preserved:
 #   - subdelegation DENY BY DEFAULT: every specialist deny list names exactly
-#     its six sibling subagent_<id> instances (the real delegation surface —
+#     its fourteen sibling subagent_<id> instances (the real delegation surface —
 #     restriction matching is exact-name, so the generic "subagent" deny never
 #     blocked subagent_<id>), and no delegation tool appears in any allow set.
 #     Generic workflow-realm tools (subagent, subagent_fork, send_message,
@@ -30,8 +30,12 @@
 #     (locked by tests/l3_runner/.../test_live_rows_match_config).
 # ============================================================================
 
-draft_version: 1
-status: mounted           # was: draft — mounted 2026-09-07 (Human-approved D4/D7)
+draft_version: 2
+status: mounted           # 7 baseline rows mounted 2026-09-07 (Human-approved
+                          # D4/D7). The 8 PRD v0.2 expansion rows (vera..ledger)
+                          # are REGISTERED-pending-mount: inserting them into the
+                          # live profile is the separate Human per-case exception
+                          # (ADR 0003 D8) and is NOT executed by this change.
 version_pin: deepseek-harness-0.1.1-rc.2
 mapping_ref: config/role-preset-mapping.yaml
 policy_ref_prefix: agents/  # <id>/policy.yaml
@@ -55,7 +59,15 @@ insert_draft:
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [subagent_cto, subagent_cfo, subagent_kai,
-               subagent_somad, subagent_badsector, subagent_nova]
+               subagent_somad, subagent_badsector, subagent_nova,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
   - id: tool-subagent-cto
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -70,7 +82,15 @@ insert_draft:
                 job_kill, job_list, job_output,
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [subagent_cfo, subagent_kai, subagent_somad,
-               subagent_badsector, subagent_nova, subagent_zeko]
+               subagent_badsector, subagent_nova, subagent_zeko,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
   - id: tool-subagent-cfo
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -86,7 +106,15 @@ insert_draft:
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [bash, edit, write,
                subagent_cto, subagent_kai, subagent_somad,
-               subagent_badsector, subagent_nova, subagent_zeko]
+               subagent_badsector, subagent_nova, subagent_zeko,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
   - id: tool-subagent-kai
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -102,7 +130,15 @@ insert_draft:
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [bash, edit, write,
                subagent_cto, subagent_cfo, subagent_somad,
-               subagent_badsector, subagent_nova, subagent_zeko]
+               subagent_badsector, subagent_nova, subagent_zeko,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
   - id: tool-subagent-somad
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -118,7 +154,15 @@ insert_draft:
                 web_search, skill, exit_plan_mode, todo_write]
         deny: [bash, edit, write,
                subagent_cto, subagent_cfo, subagent_kai,
-               subagent_badsector, subagent_nova, subagent_zeko]
+               subagent_badsector, subagent_nova, subagent_zeko,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
   - id: tool-subagent-badsector
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -134,7 +178,15 @@ insert_draft:
                 skill, exit_plan_mode, todo_write]
         deny: [bash, edit, write, web_search,
                subagent_cto, subagent_cfo, subagent_kai,
-               subagent_somad, subagent_nova, subagent_zeko]
+               subagent_somad, subagent_nova, subagent_zeko,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
   - id: tool-subagent-nova
     name: '@deepseek-ai/dsh-tool-subagent'
@@ -150,8 +202,111 @@ insert_draft:
                 skill, exit_plan_mode, todo_write]
         deny: [edit, write,
                subagent_cto, subagent_cfo, subagent_kai,
-               subagent_somad, subagent_badsector, subagent_zeko]
+               subagent_somad, subagent_badsector, subagent_zeko,
+               subagent_vera,
+               subagent_argus,
+               subagent_atlas,
+               subagent_tess,
+               subagent_quill,
+               subagent_scout,
+               subagent_talon,
+               subagent_ledger]
 
+  - id: tool-subagent-vera
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_vera
+      persona: role-vera
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-argus
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_argus
+      persona: role-argus
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, subagent_vera, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-atlas
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_atlas
+      persona: role-atlas
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-tess
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_tess
+      persona: role-tess
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-quill
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_quill
+      persona: role-quill
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-scout
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_scout
+      persona: role-scout
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-talon
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_talon
+      persona: role-talon
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+
+  - id: tool-subagent-ledger
+    name: '@deepseek-ai/dsh-tool-subagent'
+    config:
+      provider: spawn
+      toolName: subagent_ledger
+      persona: role-ledger
+      backgroundMode: continuable
+      maxDepth: 1
+      toolFilter:
+        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+        deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
 # Consistency guardrails (validated by tests/validate-config.py):
 consistency_rules:
   instance_allow_deny_disjoint: true

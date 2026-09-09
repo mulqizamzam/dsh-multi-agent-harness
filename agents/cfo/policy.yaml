@@ -40,7 +40,8 @@ tool_filter:
           web_search, skill, exit_plan_mode, todo_write]
   deny: [bash, edit, write,
          subagent_cto, subagent_kai, subagent_somad,
-         subagent_badsector, subagent_nova, subagent_zeko]
+         subagent_badsector, subagent_nova, subagent_zeko,
+         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
   unmounted_candidates: []
   notes: >
     CFO has NO execution path: read-only tools only. Any financial transaction

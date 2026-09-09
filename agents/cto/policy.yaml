@@ -37,7 +37,8 @@ tool_filter:
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
   deny: [subagent_cfo, subagent_kai, subagent_somad,
-         subagent_badsector, subagent_nova, subagent_zeko]
+         subagent_badsector, subagent_nova, subagent_zeko,
+         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
   unmounted_candidates: [lsp, str_replace_editor]
   notes: >
     lsp and str_replace_editor are code-engineering tools that are NOT mounted

@@ -39,7 +39,8 @@ tool_filter:
           skill, exit_plan_mode, todo_write]
   deny: [edit, write,
          subagent_cto, subagent_cfo, subagent_kai,
-         subagent_somad, subagent_badsector, subagent_zeko]
+         subagent_somad, subagent_badsector, subagent_zeko,
+         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
   unmounted_candidates: []
   notes: >
     No bash, no web — manuscript work is project-local and non-destructive.

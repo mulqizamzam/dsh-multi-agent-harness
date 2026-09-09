@@ -1,0 +1,96 @@
+# Role preset: Atlas (Architecture)
+# PRD v0.2 expansion (ADR 0003); NOT yet mounted — per-case Human exception
+# required (ADR 0003 D8). Registration is not activation: this draft becomes
+# part of the live web profile composition only if the operator approves the
+# 8-row insert in $DSH_HOME/profiles/web/cordis.patch.yml.
+# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Source: agents/atlas/AGENT.md + config/role-preset-mapping.yaml
+
+# ── identity ────────────────────────────────────────────────────────────────
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: >-
+      You are Atlas, the Architecture specialist. Your domain is architecture
+      review, dependency boundaries, interfaces, coupling, component
+      ownership, and architectural trade-offs. You do not replace CTO and do
+      not implement. You are read-only: you never mutate, never execute, and
+      never authorize. You escalate through the orchestrator.
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+
+# ── filesystem ─────────────────────────────────────────────────────────────
+# tool-fs registers read/read_image/edit/write as a suite (VERIFIED). The
+# per-role instance toolFilter (subagent_atlas) denies edit/write AND bash to enforce
+# read-only analysis. tool-fs cannot be removed because read is needed.
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+# ── background jobs ─────────────────────────────────────────────────────────
+- id: tool-jobs
+  name: '@deepseek-ai/dsh-tool-jobs'
+
+# ── skills ─────────────────────────────────────────────────────────────────
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
+# ── plan mode ───────────────────────────────────────────────────────────────
+- id: planning
+  name: cordis:group
+  group: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: |
+              You are in plan mode. Stay in plan mode until exit_plan_mode succeeds. Use non-mutating reads, searches, and static analysis to ground the analysis. Do not edit or write files. When ready, call exit_plan_mode with the complete analysis.
+
+# ── compaction ──────────────────────────────────────────────────────────────
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+
+# ── web search (scoped domain research) ────────────────────────────────────
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: false
+    searchTimeoutMs: 60000
+
+# ── todo ────────────────────────────────────────────────────────────────────
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: true
+
+# NOTE: NO shell (bash), NO shell group — read-only analysis role. Scoped web search per W-group.
+# NO delegation/workflow realm — subdelegation DENY BY DEFAULT (V1).
+# NO tool-goal, NO tool-ask-user — orchestrator-only.
+# Outputs are evidence/data for the control plane, never authority.

@@ -11,12 +11,13 @@ from orchestrator.dsh import RoleResolver, SubagentInstance
 from orchestrator.dsh.exceptions import RoleResolutionError
 from orchestrator.foundation.contracts import SPECIALIST_ROLES
 
-# The seven specialist roles (peer topology — orchestrator excluded)
-ALL_SPECIALISTS = ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova")
+# The specialist roster derives from the contract (PRD v0.2: 15 roles;
+# ADR 0003 D1). Peer topology — orchestrator excluded.
+ALL_SPECIALISTS = SPECIALIST_ROLES
 
 
 class TestRoleResolution:
-    def test_resolves_all_seven_specialists(self, resolver):
+    def test_resolves_all_specialists(self, resolver):
         """Every specialist role resolves to a SubagentInstance."""
         for role in ALL_SPECIALISTS:
             inst = resolver.resolve(role)
