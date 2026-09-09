@@ -1,26 +1,26 @@
 # ============================================================================
 # AGENT REGISTRY — multi-agent-harness
-# Phase 1 (Foundation)
+# Phase 1 (Foundation) + PRD v0.2 on-demand specialist pool expansion
 #
-# This file is the canonical registry of agents in the system (PRD Appendix B).
-# It lists WHO exists and WHAT their domain is. It does NOT grant authority:
-# technical capability boundaries live in `permissions.yaml` + `agents/<id>/policy.yaml`;
-# project/action authority lives in `authority.yaml`.
+# This file is the canonical registry of agents in the system (PRD Appendix B;
+# PRD v0.2 §10). It lists WHO exists and WHAT their domain is. It does NOT
+# grant authority: technical capability boundaries live in `permissions.yaml`
+# + `agents/<id>/policy.yaml`; project/action authority lives in
+# `authority.yaml`.
 #
 # Registry, permissions, and authority are separate concerns (PRD §6).
 #
-# Phase 1A finalization (2026-08-29): the 7 role definitions
-# (agents/<id>/AGENT.md + policy.yaml) and the role→preset/toolFilter mapping
-# (config/role-preset-mapping.yaml) now exist; `default_policy` references
-# below resolve to real files. This registry records WHO exists and WHAT their
-# domain is; it does NOT grant authority.
+# v3 (2026-09-09, PRD v0.2 / ADR 0003): the pool expands from 7 to 15
+# specialists. The 8 new roles are REGISTERED here; their tool-subagent
+# instances are NOT mounted into the live DSH profile until the separate
+# Human-approved composition exception (ADR 0003 D8). Registration ≠ activation.
 # ============================================================================
 
-registry_version: 2
+registry_version: 3
 status: finalized
 role_mapping: config/role-preset-mapping.yaml
 
-# Orchestrator is a coordination/delegation layer, NOT an eighth specialist
+# Orchestrator is a coordination/delegation layer, NOT a specialist peer
 # (PRD §4, Phase-1 instruction). It is registered here for completeness but
 # carries no specialist domain.
 orchestrator:
@@ -33,7 +33,11 @@ orchestrator:
     authority boundaries, collects and synthesizes results, and enforces gates.
     Does NOT execute specialist work. Has no permanent authority.
 
-# The seven specialist peers (PRD §5). No specialist manages another.
+# The fifteen specialist peers (PRD §5 + PRD v0.2 §9). No specialist manages
+# another. pool_group (PRD v0.2 §10; ADR 0003 D2): domain = original pool,
+# assurance = evidence/policy/audit analysts (read-only, no web),
+# technical_assurance = technical depth analysts (read-only, web),
+# adversarial = the adversarial reviewer (reserved to badsector).
 agents:
   - id: zeko
     role: operations
@@ -41,6 +45,7 @@ agents:
     domain: Operations & Infrastructure
     summary: server/runtime monitoring, process health, logs, deployment operations, operational recovery
     default_policy: agents/zeko/policy.yaml
+    pool_group: domain
 
   - id: cto
     role: engineering
@@ -48,6 +53,7 @@ agents:
     domain: Coding & System Architecture
     summary: coding, architecture, testing, technical feasibility, security, performance, implementation
     default_policy: agents/cto/policy.yaml
+    pool_group: domain
 
   - id: cfo
     role: finance
@@ -55,6 +61,7 @@ agents:
     domain: Finance, Pricing & Economics
     summary: pricing, unit economics, cost, margin, budget, ROI, financial scenario analysis
     default_policy: agents/cfo/policy.yaml
+    pool_group: domain
 
   - id: kai
     role: research
@@ -62,6 +69,7 @@ agents:
     domain: Research, News & Trends
     summary: news, market research, competitor research, trend detection, evidence gathering
     default_policy: agents/kai/policy.yaml
+    pool_group: domain
 
   - id: somad
     role: social
@@ -69,6 +77,7 @@ agents:
     domain: Social Media & Distribution
     summary: social strategy, content, campaigns, editorial calendar, audience analysis, distribution
     default_policy: agents/somad/policy.yaml
+    pool_group: domain
 
   - id: badsector
     role: adversarial_review
@@ -76,6 +85,7 @@ agents:
     domain: Adversarial Review / Validation
     summary: challenge assumptions, red-team plans, identify failure modes, detect contradictions, verify evidence
     default_policy: agents/badsector/policy.yaml
+    pool_group: adversarial
 
   - id: nova
     role: writing
@@ -83,10 +93,75 @@ agents:
     domain: Writing & Novel
     summary: novel writing, editing, continuity, character consistency, worldbuilding, style review
     default_policy: agents/nova/policy.yaml
+    pool_group: domain
+
+  - id: vera
+    role: verification
+    display_name: Vera
+    domain: Verification & Evidence
+    summary: claim verification, evidence chains, acceptance criteria, documented-proof audits
+    default_policy: agents/vera/policy.yaml
+    pool_group: assurance
+
+  - id: argus
+    role: security_engineering
+    display_name: Argus
+    domain: Security Engineering
+    summary: threat modeling, privilege analysis, trust boundaries, security review of delegated scope
+    default_policy: agents/argus/policy.yaml
+    pool_group: technical_assurance
+
+  - id: atlas
+    role: architecture
+    display_name: Atlas
+    domain: Architecture
+    summary: architecture review, dependency boundaries, coupling analysis, module decomposition review
+    default_policy: agents/atlas/policy.yaml
+    pool_group: technical_assurance
+
+  - id: tess
+    role: failure_engineering
+    display_name: Tess
+    domain: Failure Engineering
+    summary: failure-mode analysis, timeout/cancellation semantics, race conditions, fault injection review
+    default_policy: agents/tess/policy.yaml
+    pool_group: technical_assurance
+
+  - id: quill
+    role: policy_specification
+    display_name: Quill
+    domain: Policy & Specification
+    summary: policy drafting, invariant specification, requirement precision, specification review
+    default_policy: agents/quill/policy.yaml
+    pool_group: assurance
+
+  - id: scout
+    role: integration_compatibility
+    display_name: Scout
+    domain: Integration & Compatibility
+    summary: integration surface analysis, version drift, compatibility boundaries, dependency reconciliation
+    default_policy: agents/scout/policy.yaml
+    pool_group: technical_assurance
+
+  - id: talon
+    role: reliability_engineering
+    display_name: Talon
+    domain: Reliability Engineering
+    summary: reliability review, idempotency, retry/rollback semantics, operational resilience analysis
+    default_policy: agents/talon/policy.yaml
+    pool_group: technical_assurance
+
+  - id: ledger
+    role: audit_provenance
+    display_name: Ledger
+    domain: Audit & Provenance
+    summary: audit trail review, provenance chains, lineage reconstruction, record completeness
+    default_policy: agents/ledger/policy.yaml
+    pool_group: assurance
 
 # Registry invariants (enforced by tests/validate-config.py)
 invariants:
-  specialist_count: 7
+  specialist_count: 15
   peer_relationship: true            # no specialist manages another
   badsector_is_reviewer_not_authorizer: true
   zeko_is_operations_not_supervisor: true

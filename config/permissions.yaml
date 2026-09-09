@@ -1,9 +1,10 @@
 # ============================================================================
 # PERMISSION MATRIX — multi-agent-harness
-# Phase 1 (Foundation)
+# Phase 1 (Foundation) + PRD v0.2 specialist pool expansion (v2)
 #
 # This file defines the TECHNICAL CAPABILITY BOUNDARY for each agent
-# (PRD §8). It answers: what may this agent technically do in the system?
+# (PRD §8 + PRD v0.2 §12). It answers: what may this agent technically do
+# in the system?
 #
 # It does NOT grant project/action authority. That is `authority.yaml`.
 # Capability ≠ Permission ≠ Authority (PRD §6).
@@ -18,13 +19,20 @@
 #
 # Tool names are DSH tool-catalog entries verified in Phase 0
 # (docs/tool-catalog.md, v0.1.1-rc.2). See docs/operations.md for the mapping.
+#
+# v2 (2026-09-09, PRD v0.2 / ADR 0003 D5): 8 new capability rows re-declare
+# overlapping competence that stays anchored to its ORIGINAL role
+# (badsector keeps review-class coverage on evidence/security/failure; cto
+# keeps scoped security/architecture/integration; zeko keeps scoped
+# failure/reliability). New roles own their primary capability.
 # ============================================================================
 
-matrix_version: 1
+matrix_version: 2
 status: foundation
-agents: [zeko, cto, cfo, kai, somad, badsector, nova]
+agents: [zeko, cto, cfo, kai, somad, badsector, nova,
+         vera, argus, atlas, tess, quill, scout, talon, ledger]
 
-# ── capability × agent matrix (PRD §8, normalized) ─────────────────────────
+# ── capability × agent matrix (PRD §8 + PRD v0.2 §12, normalized) ──────────
 capabilities:
   server_read:
     zeko: "yes"
@@ -34,6 +42,14 @@ capabilities:
     somad: "no"
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   server_write:
     zeko: scoped          # PRD: "YES/scoped" — scoped default, no standing write
     cto: scoped
@@ -42,6 +58,14 @@ capabilities:
     somad: "no"
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   code_read:
     zeko: scoped
     cto: "yes"
@@ -50,6 +74,14 @@ capabilities:
     somad: "no"
     badsector: review
     nova: "no"
+    vera: scoped
+    argus: scoped
+    atlas: scoped
+    tess: scoped
+    quill: scoped
+    scout: scoped
+    talon: scoped
+    ledger: scoped
   code_write:
     zeko: "no"
     cto: "yes"
@@ -58,6 +90,14 @@ capabilities:
     somad: "no"
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   financial_analysis:
     zeko: "no"
     cto: scoped
@@ -66,6 +106,14 @@ capabilities:
     somad: scoped
     badsector: review
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   financial_transaction:
     zeko: scoped
     cto: "no"
@@ -74,6 +122,14 @@ capabilities:
     somad: "no"
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   web_research:
     zeko: scoped
     cto: scoped
@@ -82,6 +138,14 @@ capabilities:
     somad: scoped
     badsector: scoped
     nova: "no"
+    vera: "no"           # L-group: no web (ADR 0003 D3)
+    argus: scoped        # W-group
+    atlas: scoped
+    tess: scoped
+    quill: "no"          # L-group
+    scout: scoped
+    talon: scoped
+    ledger: "no"         # L-group
   social_drafting:
     zeko: "no"
     cto: "no"
@@ -90,6 +154,14 @@ capabilities:
     somad: "yes"
     badsector: review
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   social_publishing:
     zeko: "no"
     cto: "no"
@@ -98,6 +170,14 @@ capabilities:
     somad: scoped_approval
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   novel_editing:
     zeko: "no"
     cto: "no"
@@ -106,6 +186,14 @@ capabilities:
     somad: "no"
     badsector: review
     nova: "yes"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   adversarial_review:
     zeko: "no"
     cto: "no"
@@ -114,6 +202,14 @@ capabilities:
     somad: "no"
     badsector: "yes"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   production_deploy:
     zeko: scoped
     cto: scoped
@@ -122,6 +218,14 @@ capabilities:
     somad: "no"
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
   destructive_action:
     zeko: approval
     cto: approval
@@ -130,21 +234,163 @@ capabilities:
     somad: approval
     badsector: "no"
     nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
+
+  # ── PRD v0.2 expansion capabilities (ADR 0003 D5) ─────────────────────────
+  evidence_verification:
+    zeko: "no"
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: review    # re-declaration: keeps its documented overlap
+    nova: "no"
+    vera: "yes"          # primary owner
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
+  security_engineering:
+    zeko: "no"
+    cto: scoped          # re-declaration: cto keeps scoped security work
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: review    # re-declaration
+    nova: "no"
+    vera: "no"
+    argus: "yes"         # primary owner
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
+  architecture_review:
+    zeko: "no"
+    cto: scoped          # re-declaration: cto keeps scoped architecture work
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "yes"         # primary owner
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
+  failure_analysis:
+    zeko: scoped         # re-declaration: zeko keeps scoped failure work
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: review    # re-declaration
+    nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "yes"          # primary owner
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "no"
+  policy_specification:
+    zeko: "no"
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "yes"         # primary owner
+    scout: "no"
+    talon: "no"
+    ledger: "no"
+  integration_compatibility:
+    zeko: "no"
+    cto: scoped          # re-declaration: cto keeps scoped integration work
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "yes"         # primary owner
+    talon: "no"
+    ledger: "no"
+  reliability_engineering:
+    zeko: scoped         # re-declaration: zeko keeps scoped reliability work
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "yes"         # primary owner
+    ledger: "no"
+  audit_provenance:
+    zeko: "no"
+    cto: "no"
+    cfo: "no"
+    kai: "no"
+    somad: "no"
+    badsector: "no"
+    nova: "no"
+    vera: "no"
+    argus: "no"
+    atlas: "no"
+    tess: "no"
+    quill: "no"
+    scout: "no"
+    talon: "no"
+    ledger: "yes"        # primary owner
 
 # ── per-agent sandbox + approval defaults ───────────────────────────────────
 # sandbox: read-only | workspace-write | danger-full-access  (verified DSH modes)
 # approval: ask | never                                     (verified DSH policies)
 # These are DEFAULTS only; a project delegation may narrow them, never widen
 # them (least privilege, PRD §19.9).
+#
+# PRD v0.2 (ADR 0003 D3): all 8 expansion roles are read-only analysts with
+# approval never — they analyze, verify, and report; they never execute.
 
-# 2026-09-07 (Human-approved discriminator, task 3 of "laksanakan 1-4"):
-# roles whose toolFilter allow sets are intentionally identical must be
-# declared here; any identical pair NOT covered by a declared group fails
-# validation (tests/validate_config.py). Every declared group's members must
-# actually share one allow set, so a stale declaration also fails loudly.
+# 2026-09-07 (Human-approved discriminator, task 3 of "laksanakan 1-4"),
+# extended 2026-09-09 (PRD v0.2): roles whose toolFilter allow sets are
+# intentionally identical must be declared here; any identical pair NOT
+# covered by a declared group fails validation (tests/validate_config.py).
+# Every declared group's members must actually share one allow set, so a
+# stale declaration also fails loudly.
 tool_surface_equivalence:
-  - [cfo, kai, somad]      # read-only research / finance / social readers
-  - [badsector, nova]      # read-only reviewer + writer (no web_search)
+  - [cfo, kai, somad, argus, atlas, scout, tess, talon]   # W-group: read-only + web_search
+  - [badsector, nova, vera, quill, ledger]                # L-group: read-only, no web_search
 
 agent_defaults:
   zeko:
@@ -168,6 +414,30 @@ agent_defaults:
   nova:
     sandbox: workspace-write  # manuscript editing in workspace
     approval: never        # internal, non-destructive file work
+  vera:
+    sandbox: read-only
+    approval: never        # verification analyst; never executes
+  argus:
+    sandbox: read-only
+    approval: never        # security analyst; never executes
+  atlas:
+    sandbox: read-only
+    approval: never        # architecture analyst; never executes
+  tess:
+    sandbox: read-only
+    approval: never        # failure analyst; never executes
+  quill:
+    sandbox: read-only
+    approval: never        # policy/spec analyst; never executes
+  scout:
+    sandbox: read-only
+    approval: never        # integration analyst; never executes
+  talon:
+    sandbox: read-only
+    approval: never        # reliability analyst; never executes
+  ledger:
+    sandbox: read-only
+    approval: never        # audit analyst; never executes
 
 # Invariants (enforced by tests/validate-config.py)
 invariants:
@@ -176,3 +446,5 @@ invariants:
   kai_never_executes: true                # read-only + approval never
   cfo_no_transaction_by_default: true
   destructive_always_requires_approval_or_denied: true
+  adversarial_review_reserved_to_badsector: true
+  expansion_analysts_read_only: true      # all 8 PRD v0.2 roles: read-only + never
