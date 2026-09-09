@@ -9,7 +9,7 @@ This file is a pointer — the PRD is the authoritative source for the system's 
 > **PRD v0.2** (2026-09-09): the on-demand specialist pool expansion — see
 > `PRD-v0.2.md` (this repo), `docs/adr/0003-specialist-pool-expansion.md`,
 > and the implementation plan at `docs/superpowers/plans/2026-09-09-specialist-pool-expansion.md`.
-> The specialist pool is now **15 specialists** (7 baseline + 8 expansion, registered-not-mounted).
+> The specialist pool is now **15 specialists** (7 baseline + 8 expansion; all mounted in the live composition — expansion mount Human-approved 2026-09-09, ADR 0003 D8).
 
 ---
 

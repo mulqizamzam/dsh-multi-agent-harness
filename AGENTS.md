@@ -65,7 +65,7 @@ The orchestrator has corresponding files under `orchestrator/`.
 
 ## Role → DSH preset mapping
 
-The mapping from role definitions to DSH Agent Presets + per-role `tool-subagent` instances is in `config/role-preset-mapping.yaml` (mapping_version 2). The **7 baseline instances** are **mounted** in the live web profile composition since 2026-09-07 under the Human-approved controlled DSH composition exception (ADR Decision 4/7; verification: `runs/mount-verification-2026-09-07/`). The **8 expansion instances** (`subagent_vera` … `subagent_ledger`) are **registered-not-mounted** (PRD v0.2 / ADR 0003 D8): they become live only through a separate Human per-case composition exception. Registration ≠ activation. Note: zeko's toolFilter no longer carries `edit`/`write` (2026-09-07 discriminator — `capabilities.code_write: no` is enforced at the toolFilter layer; the raw-write/code-mutation actor set is now `{cto}` only).
+The mapping from role definitions to DSH Agent Presets + per-role `tool-subagent` instances is in `config/role-preset-mapping.yaml` (mapping_version 2). All **15 instances** are **mounted** in the live web profile composition: the 7 baseline instances since 2026-09-07 under the Human-approved controlled DSH composition exception (ADR Decision 4/7; verification: `runs/mount-verification-2026-09-07/`), and the 8 expansion instances (`subagent_vera` … `subagent_ledger`) since 2026-09-09 under the Human-approved per-case exception of ADR 0003 D8 (pre-change backup: `runs/specialist-expansion-2026-09-09/backups/`). Note: zeko's toolFilter no longer carries `edit`/`write` (2026-09-07 discriminator — `capabilities.code_write: no` is enforced at the toolFilter layer; the raw-write/code-mutation actor set is now `{cto}` only).
 
 ---
 

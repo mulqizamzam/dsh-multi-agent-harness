@@ -8,7 +8,7 @@
 #
 # PRECONDITION (honesty gate)
 #   A REAL DSH child must be observable: the D4/D7 composition must be mounted
-#   (DSH_LIVE_BRIDGE_ACTIVE=1 AND all 7 subagent_<id> instances mounted).
+#   (DSH_LIVE_BRIDGE_ACTIVE=1 AND all 15 subagent_<id> instances mounted).
 #   In this session the precondition is NOT satisfied (see plan.precondition()),
 #   so the live step is BLOCKED. This package prepares the test; it does NOT
 #   execute it, does NOT claim DSH-native immunity, does NOT enable web_fetch,

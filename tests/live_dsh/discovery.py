@@ -44,7 +44,7 @@ def resolve_role_instance(role: str) -> SubagentInstance:
 
 
 def resolve_all_role_instances() -> dict[str, SubagentInstance]:
-    """Resolve all 7 specialist roles to their approved instances."""
+    """Resolve all 15 specialist roles to their approved instances."""
     resolver = RoleResolver()
     return resolver.all()
 
@@ -52,7 +52,7 @@ def resolve_all_role_instances() -> dict[str, SubagentInstance]:
 def assert_role_resolution() -> dict[str, str]:
     """Assert that every defined specialist role resolves to an instance.
 
-    Returns {role: tool_name} for all 7 roles. Raises on any failure.
+    Returns {role: tool_name} for all 15 roles. Raises on any failure.
     """
     from orchestrator.foundation.contracts import SPECIALIST_ROLES
     resolver = RoleResolver()
@@ -78,7 +78,7 @@ def check_instance_mounted(tool_name: str) -> bool:
 
 
 def probe_all_instances_mounted() -> dict[str, bool]:
-    """Probe all 7 role instances for mount status.
+    """Probe all 15 role instances for mount status.
 
     Returns {tool_name: mounted} for each D4/D7 instance.
     """

@@ -127,6 +127,8 @@ class TestG13LiveExecutionGateAxes:
         assert presets == {
             "role-zeko", "role-cto", "role-cfo", "role-kai",
             "role-somad", "role-badsector", "role-nova",
+            "role-vera", "role-argus", "role-atlas", "role-tess",
+            "role-quill", "role-scout", "role-talon", "role-ledger",
         }, f"unexpected preset set: {presets}"
 
     # ---- Axis 3: DSH_LIVE_BRIDGE_ACTIVE ----

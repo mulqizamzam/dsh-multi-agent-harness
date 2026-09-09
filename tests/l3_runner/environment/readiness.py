@@ -89,22 +89,15 @@ from ..preflight import (
 from orchestrator.foundation.contracts import SPECIALIST_ROLES  # noqa: E402
 
 # D4/D7 role presets and their instance ids (config/role-preset-mapping.yaml).
-# These two tuples pin the LIVE-PROFILE composition: exactly the 7 mounted
-# baseline instances. The 8 expansion instances are registered-not-mounted
-# (PRD v0.2 / ADR 0003 D8) — live-profile presence checks stay at 7 until the
-# separate Human per-case mount exception lands (Task 11). Config-level checks
-# derive the full 15-role roster from SPECIALIST_ROLES instead.
-ROLE_PRESETS = (
-    "role-zeko", "role-cto", "role-cfo", "role-kai",
-    "role-somad", "role-badsector", "role-nova",
-)
-ROLE_INSTANCE_IDS = (
-    "subagent_zeko", "subagent_cto", "subagent_cfo", "subagent_kai",
-    "subagent_somad", "subagent_badsector", "subagent_nova",
-)
-# Full contract roster (PRD v0.2: 15 roles) — config-level use only; NOT a
-# live-profile presence expectation (see D8 above).
-ALL_INSTANCE_IDS = tuple(f"subagent_{rid}" for rid in SPECIALIST_ROLES)
+# The full contract roster derives from SPECIALIST_ROLES (PRD v0.2: 15). The
+# D8 mount exception (Human-approved 2026-09-09) applied all 15 rows + presets
+# to the live profile, so live-profile presence checks now cover the full
+# roster. Pre-change backup: runs/specialist-expansion-2026-09-09/backups/.
+ROLE_PRESETS = tuple(f"role-{rid}" for rid in SPECIALIST_ROLES)
+ROLE_INSTANCE_IDS = tuple(f"subagent_{rid}" for rid in SPECIALIST_ROLES)
+# Explicit alias for config-level rosters (same tuple; kept for readability
+# at call sites that mean "the whole contract pool").
+ALL_INSTANCE_IDS = ROLE_INSTANCE_IDS
 
 # D4/D7 live-bridge marker (tests/live_dsh/discovery.py, docs/testing/0003 §6).
 BRIDGE_MARKER_ENV = "DSH_LIVE_BRIDGE_ACTIVE"
@@ -480,14 +473,14 @@ def _check_d4d7(report: ReadinessReport) -> None:
     marker = _d4d7_bridge_marker_set()
 
     report.add(ReadinessCheck(
-        "L3ENV-D4D7-1", "7 role presets present under $DSH_HOME/.agent-presets/",
+        "L3ENV-D4D7-1", "15 role presets present under $DSH_HOME/.agent-presets/",
         passed=presets,
         required=False,
         detail=f"presets_present={presets} roles={list(ROLE_PRESETS)} "
                f"dsh_home={os.environ.get('DSH_HOME', '(unset)')}"))
 
     report.add(ReadinessCheck(
-        "L3ENV-D4D7-2", "7 tool-subagent instance rows in cordis.patch.yml",
+        "L3ENV-D4D7-2", "15 tool-subagent instance rows in cordis.patch.yml",
         passed=rows,
         required=False,
         detail=f"instance_rows_present={rows} instances={list(ROLE_INSTANCE_IDS)}"))

@@ -175,12 +175,13 @@ def test_answerer_available_in_live_web_session_does_not_false_positive_l3():
 # D4/D7
 # ===========================================================================
 def test_d4d7_presets_present():
-    """On this host the 7 role presets exist under $DSH_HOME/.agent-presets/."""
+    """On this host the 15 role presets exist under $DSH_HOME/.agent-presets/
+    (7 baseline 2026-09-07 + 8 expansion 2026-09-09, ADR 0003 D8)."""
     assert _d4d7_presets_present()
 
 
 def test_d4d7_instance_rows_present():
-    """The 7 tool-subagent rows are composed in cordis.patch.yml."""
+    """The 15 tool-subagent rows are composed in cordis.patch.yml."""
     # The check is robust to a missing DSH_HOME -> returns False; in the
     # current environment the rows are verified present.
     dsh = os.environ.get("DSH_HOME", "")

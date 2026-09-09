@@ -187,6 +187,8 @@ class TestG13RecheckAxes:
         assert presets == {
             "role-zeko", "role-cto", "role-cfo", "role-kai",
             "role-somad", "role-badsector", "role-nova",
+            "role-vera", "role-argus", "role-atlas", "role-tess",
+            "role-quill", "role-scout", "role-talon", "role-ledger",
         }
 
     # ---- Axis 3: REAL backend available ----

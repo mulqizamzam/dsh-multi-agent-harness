@@ -406,8 +406,8 @@ consistency_rules:
 # verified (runs/mount-verification-2026-09-07/). The draft register below is
 # retained for provenance; see docs/phase-1/0002-role-isolation-draft.md.
 draft_artifacts:
-  status: mounted                      # was: draft — mounted 2026-09-07 (Human-approved D4/D7)
+  status: mounted                      # 2026-09-07: 7 baseline (D4/D7); 2026-09-09: + 8 expansion (ADR 0003 D8) — all 15 mounted
   preset_draft_path: 'agents/<id>/agent.cordis.yml'   # per-role preset composition
   instances_draft_path: config/tool-subagent-instances.yaml  # per-role tool-subagent rows
   orchestrator_preset: standard       # root session stays on the shipped standard preset
-  mount_required: false               # exception already executed; no further mount required
+  mount_required: false               # exceptions already executed; no further mount required

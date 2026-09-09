@@ -4,7 +4,8 @@ Locks the live-bridge readiness assessment
 (docs/phase-5/environment/live-bridge/0001-d4d7-live-bridge-readiness.md)
 to the CURRENT environment with read-only checks:
 
-  - D4D7_FILES: 7 role presets + 7 tool-subagent rows present on disk;
+  - D4D7_FILES: 15 role presets + 15 tool-subagent rows present on disk
+    (D8 mount exception applied 2026-09-09);
   - D4D7_COMPOSITION: mapping == policy == instance, allow∩deny=∅,
     deny-list hygiene (no `run_code`, no 25 VERIFIED_UNREGISTERED names),
     post-O5 + 2026-09-07-discriminator role/toolFilter invariants (somad/
@@ -33,9 +34,9 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from tests.l3_runner.environment.readiness import (  # noqa: E402
+    ALL_INSTANCE_IDS,
     BRIDGE_MARKER_ENV,
     ROLE_PRESETS,
-    ROLE_INSTANCE_IDS,
 )
 from tests.live_dsh.discovery import (  # noqa: E402
     assert_role_resolution,
@@ -103,9 +104,11 @@ def test_seven_role_presets_present():
         f"missing presets: {set(ROLE_PRESETS) - present}")
 
 
-def test_seven_instance_rows_present():
+def test_all_instance_rows_present():
+    """All 15 contract instance rows are composed in the live patch
+    (ADR 0003 D8 exception applied 2026-09-09)."""
     text = _live_patch_text()
-    for rid in ROLE_INSTANCE_IDS:
+    for rid in ALL_INSTANCE_IDS:
         assert f"toolName: {rid}" in text, f"missing row: {rid}"
 
 
@@ -114,7 +117,7 @@ def test_seven_instance_rows_present():
 # ---------------------------------------------------------------------------
 
 def test_mapping_matches_policy_and_instances():
-    """mapping == policy == instance for allow+deny across all 7 roles."""
+    """mapping == policy == instance for allow+deny across all 15 roles."""
     import yaml
     with open(os.path.join(_PROJECT_ROOT, "config",
                            "tool-subagent-instances.yaml")) as f:
@@ -162,23 +165,24 @@ def test_post_o5_role_tool_expectations():
         assert {"bash", "write", "edit"} <= deny, rid
 
 
-@pytest.mark.xfail(
-    reason="ADR 0003 D8: the live web profile still carries the pre-v0.2 "
-           "composition — 7 rows with 6-sibling deny lists. Parity with "
-           "mapping v2 (15 roles, 14-sibling denies) returns at the Task 11 "
-           "Human-approved mount; strict xfail makes that transition fail "
-           "loudly so this marker is removed then.",
-    strict=True,
-)
 def test_live_rows_match_config():
-    """Live cordis.patch.yml rows match the mapping allow/deny sets."""
+    """All 15 live cordis.patch.yml rows match mapping v2 allow/deny sets.
+
+    Pre-Task-11 this was xfail(strict) — the D8 mount exception was
+    Human-approved and applied 2026-09-09 (15 mounted rows, pre-change
+    backup in runs/specialist-expansion-2026-09-09/backups/), so
+    live == config now and the marker is removed. The strict-xfail phase
+    made that transition fail loudly, as designed.
+    """
     import yaml
     doc = yaml.safe_load(_live_patch_text())
     rows = doc[0]["insert"]
     live = {r["id"]: r["config"]["toolFilter"]
             for r in rows if r.get("id", "").startswith("tool-subagent-")}
-    assert len(live) == 7
+    assert len(live) == 15
     filters = _role_filters()
+    assert set(filters) == {lid.removeprefix("tool-subagent-")
+                            for lid in live}
     for rid, tf in filters.items():
         lid = f"tool-subagent-{rid}"
         assert set(tf["allow"]) == set(live[lid]["allow"]), rid

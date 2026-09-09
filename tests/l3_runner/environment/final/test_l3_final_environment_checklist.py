@@ -177,7 +177,7 @@ def test_role_instances_persistent_on_disk():
         if os.path.isdir(presets):
             present = set(os.listdir(presets))
             assert all(r in present for r in ROLE_PRESETS), (
-                "expected the 7 role presets on disk")
+                "expected the 15 role presets on disk")
     report = _report()
     for cid in ("L3ENV-D4D7-1", "L3ENV-D4D7-2"):
         check = next(c for c in report.checks if c.check_id == cid)

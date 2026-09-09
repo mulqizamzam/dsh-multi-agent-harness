@@ -10,7 +10,7 @@
 #   ENV-POLICY-2   approval policy is the project baseline (ask)
 #   ENV-APPROVAL-1 a live approval answerer is available (G3)
 #   ENV-MOUNT-1    the DSH live bridge marker is set (DSH_LIVE_BRIDGE_ACTIVE=1)
-#   ENV-MOUNT-2    the 7 D4/D7 role presets are present under $DSH_HOME
+#   ENV-MOUNT-2    the 15 D4/D7 role presets are present under $DSH_HOME
 #   ENV-DSH-1      DSH version pin matches 0.1.1-rc.2
 #
 # THE PREFLIGHT NEVER MODIFIES ANYTHING. It never changes session policy, never
@@ -40,10 +40,13 @@ PROJECT_ROOT = os.path.dirname(
 # DSH version pin (docs/README.md + contract.py).
 DSH_VERSION_PIN = "deepseek-harness-0.1.1-rc.2"
 
-# The 7 D4/D7 role presets (config/role-preset-mapping.yaml).
+# The 15 D4/D7 role presets (config/role-preset-mapping.yaml, PRD v0.2:
+# 7 baseline + 8 expansion mounted 2026-09-09 per ADR 0003 D8).
 ROLE_PRESETS = (
     "role-zeko", "role-cto", "role-cfo", "role-kai",
     "role-somad", "role-badsector", "role-nova",
+    "role-vera", "role-argus", "role-atlas", "role-tess",
+    "role-quill", "role-scout", "role-talon", "role-ledger",
 )
 
 # The D4/D7 mount-marker env var (tests/live_dsh/discovery.py, docs/testing/0003 §6).
@@ -163,7 +166,7 @@ def _bridge_marker_set() -> bool:
 
 
 def _role_presets_present() -> bool:
-    """Detect whether the 7 role presets are present under $DSH_HOME/.agent-presets/."""
+    """Detect whether the 15 role presets are present under $DSH_HOME/.agent-presets/."""
     dsh_home = os.environ.get("DSH_HOME", "")
     if not dsh_home:
         return False
@@ -238,7 +241,7 @@ def run_env_preflight(env: dict | None = None) -> EnvReport:
 
     presets = _role_presets_present()
     report.add(EnvCheck(
-        "ENV-MOUNT-2", "7 D4/D7 role presets present under $DSH_HOME/.agent-presets/",
+        "ENV-MOUNT-2", "15 D4/D7 role presets present under $DSH_HOME/.agent-presets/",
         passed=presets,
         required=False,  # presets may be mounted elsewhere (cordis.patch.yml rows)
         detail=(f"presets_present={presets} roles={list(ROLE_PRESETS)} "

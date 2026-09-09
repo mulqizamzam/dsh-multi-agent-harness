@@ -6,7 +6,8 @@
 # PRECONDITION (checked honestly by precondition())
 #   A REAL DSH child must be observable:
 #     - DSH_LIVE_BRIDGE_ACTIVE=1 (D4/D7 composition mount marker)
-#     - all 7 subagent_<id> instances mounted (discovery probe)
+#     - all 15 subagent_<id> instances mounted (discovery probe; D8 mount
+#       exception applied 2026-09-09)
 #     - probe_backend_kind() == real-dsh
 #   In this session the marker is unset and every instance reports NOT_MOUNTED,
 #   so the precondition FAILS and the live step is BLOCKED (per the brief:

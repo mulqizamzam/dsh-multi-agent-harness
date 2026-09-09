@@ -111,7 +111,7 @@ Notes:
 - `bash` grants the executor the full sandboxed surface (including escalation attempts); roles with `bash` must have it bounded by the session sandbox (`workspace-write`) and the execution gate.
 - CFO and Kai are **read-only by design** (permissions.yaml: sandbox `read-only`, approval `never` intent) — no `write_fs`, no `execute`.
 - BadSector is **review-only**: no `write_fs`, no `execute`, no `delegate`, no `web_search` (review reads project-local evidence; web evidence arrives via the evidence set).
-- **PRD v0.2 expansion (ADR 0003)**: 8 new per-role instance tools — `subagent_vera`, `subagent_argus`, `subagent_atlas`, `subagent_tess`, `subagent_quill`, `subagent_scout`, `subagent_talon`, `subagent_ledger` — are **registered-pending-mount** (`config/tool-subagent-instances.yaml` draft_version 2): valid verified names in allow/deny sets, but **not present in the live composition** until the separate Human per-case mount exception (ADR 0003 D8). L-group (vera, quill, ledger): no web_search. W-group (argus, atlas, tess, scout, talon): scoped web_search, `fetch: false`. All 8 are read-only analysts (no write/exec tools).
+- **PRD v0.2 expansion (ADR 0003)**: 8 new per-role instance tools — `subagent_vera`, `subagent_argus`, `subagent_atlas`, `subagent_tess`, `subagent_quill`, `subagent_scout`, `subagent_talon`, `subagent_ledger` — are **mounted** in the live composition since 2026-09-09 (`config/tool-subagent-instances.yaml` draft_version 2; Human-approved per-case exception, ADR 0003 D8; pre-change backup: `runs/specialist-expansion-2026-09-09/backups/`). L-group (vera, quill, ledger): no web_search. W-group (argus, atlas, tess, scout, talon): scoped web_search, `fetch: false`. All 8 are read-only analysts (no write/exec tools).
 
 ---
 

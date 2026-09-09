@@ -119,7 +119,7 @@ def build_role_adapter(role: str) -> RoleAdapter:
 
 
 def build_all_role_adapters() -> dict[str, RoleAdapter]:
-    """Build adapters for all 7 specialist roles."""
+    """Build adapters for all 15 specialist roles (PRD v0.2)."""
     return {role: build_role_adapter(role) for role in SPECIALIST_ROLES}
 
 

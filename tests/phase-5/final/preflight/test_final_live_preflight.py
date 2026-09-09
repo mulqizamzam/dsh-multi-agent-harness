@@ -114,7 +114,7 @@ def test_g13_precondition_reported_and_unsatisfied():
 def test_checklist_quotes_the_real_g13_precondition_definition():
     text = _checklist_text()
     assert "probe_backend_kind() == real-dsh" in text
-    assert "all 7 `subagent_<id>` instances" in text
+    assert "all 15 `subagent_<id>` instances" in text
     assert "DSH_LIVE_BRIDGE_ACTIVE" in text
 
 

@@ -1,6 +1,6 @@
 # ADR 0003 — Specialist Pool Expansion (PRD v0.2): 7 → 15 specialists
 
-**Status:** Accepted (implementation in progress; live-profile mount pending Human per-case exception)
+**Status:** Accepted (implemented; D8 mount exception Human-approved and applied 2026-09-09 — all 15 rows + presets live; pre-change backup: `runs/specialist-expansion-2026-09-09/backups/`)
 **Date:** 2026-09-09
 **Spec:** `PRD-v0.2.md` (repo root; verbatim from the Human)
 **Version pin:** DeepSeek Harness `0.1.1-rc.2` (unchanged; no DSH core modification)
@@ -53,12 +53,12 @@ Registry schema: agents array 15/15, id/role enums +8, `specialist_count` const 
 
 ### D8 — Deployment sequencing (composition exception is a separate Human gate)
 
-In-repo config (15 rows; 14-sibling denies) intentionally drifts from the live profile `$DSH_HOME/profiles/web/cordis.patch.yml` (7 rows; 6-sibling denies) until the Human approves the per-case composition exception (ADR 0001 D4/D7 pattern): add 8 global-layer instance rows + extend the 7 existing rows' deny lists, row-for-row identical to `config/tool-subagent-instances.yaml`. The drift is caught by design by `test_live_rows_match_config` (expected red until mount). Baseline live spawning is unaffected (their live rows keep working); the eight new roles are REGISTERED but not INVOCABLE live until mount — REGISTRATION ≠ ACTIVATION (PRD v0.2 §7). Live-profile edits are never made silently.
+In-repo config (15 rows; 14-sibling denies) intentionally drifted from the live profile `$DSH_HOME/profiles/web/cordis.patch.yml` (7 rows; 6-sibling denies) until the Human approved the per-case composition exception (ADR 0001 D4/D7 pattern). **Executed 2026-09-09** (Human approval in session): 8 global-layer instance rows added + 7 existing rows' deny lists extended + 8 persona presets installed under `$DSH_HOME/.agent-presets/`, row-for-row identical to `config/tool-subagent-instances.yaml`; pre-change backup in `runs/specialist-expansion-2026-09-09/backups/`. The drift was caught by design by `test_live_rows_match_config` (strict-xfail during the window; marker removed at mount — its XPASS forced this cleanup). Baseline live spawning is unaffected (allow sets unchanged; deny lists only grew). REGISTRATION ≠ ACTIVATION still holds per-session: live dispatch additionally requires the `DSH_LIVE_BRIDGE_ACTIVE=1` runtime marker set for the session. Live-profile edits are never made silently.
 
 ## Consequences
 
 - 15-specialist roster; capability routing selects minimum sets; all new roles read-only analysts.
-- One expected-red parity test during the registration→mount window; documented here so it is not mistaken for a regression.
+- ~~One expected-red parity test during the registration→mount window~~ — resolved at mount (2026-09-09): the strict-xfail phase made the transition fail loudly, as designed, and the marker is removed now that live == config.
 - Regression strategy: baseline suite must be green pre-change (recorded in `runs/specialist-expansion-2026-09-09/`); post-change, only the count-derived test updates (Task 8 of the plan) may touch existing tests, and BadSector semantics stay locked by unchanged `badsector_never_executes`, `never_authorizes`, and AUTH-INV-09 coverage.
 - Future specialists reuse this exact pattern (PRD v0.2 §27): role files → registry/permissions → schemas/validator → deny extension → tests → mount exception.
 
@@ -66,7 +66,7 @@ In-repo config (15 rows; 14-sibling denies) intentionally drifts from the live p
 
 - `tests/validate-config.py` → 0 failures at registration checkpoint (new checks: analyst defaults, adversarial exclusivity, never_authorizes, 14-sibling deny coverage).
 - New coverage: `tests/unit/test_expansion_registry.py`, `tests/authorization/test_expansion_authority.py`, `tests/adversarial/test_expansion_abuse.py`, `tests/workflow/test_expansion_lifecycle.py`, `tests/scenarios/test_expansion_scenarios.py`, `tests/workflow/test_expansion_routing.py`.
-- Full regression green except the documented parity test until the mount exception executes.
+- Full regression green (registration window: only the documented parity test red; post-mount 2026-09-09: fully green — 3387 passed / 1 pre-existing env red, then 1390 passed across the live-bridge/readiness suites after the mount).
 
 ---
 

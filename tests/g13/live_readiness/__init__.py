@@ -9,7 +9,7 @@
 #
 # HONESTY BOUNDARY
 #   The precondition for the live step is a REAL DSH child being observable
-#   (D4/D7 composition mounted: DSH_LIVE_BRIDGE_ACTIVE=1 + all 7 subagent_<id>
+#   (D4/D7 composition mounted: DSH_LIVE_BRIDGE_ACTIVE=1 + all 15 subagent_<id>
 #   instances mounted). In this session the marker is unset and every instance
 #   reports NOT_MOUNTED (probe_backend_kind() == unavailable), so the live step
 #   is BLOCKED. This package PREPARES the test; it does not execute it, does
