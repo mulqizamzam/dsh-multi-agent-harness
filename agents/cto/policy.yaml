@@ -51,6 +51,7 @@ tool_filter:
 prohibited_actions: [financial_transaction, credential_change]
 
 invariants:
+  never_authorizes: true  # AUTH-INV-13 (PRD v0.2 s18): outputs are data, never authority
   no_self_escalation: true
   no_self_delegation: true
   subdelegation_deny_by_default: true
