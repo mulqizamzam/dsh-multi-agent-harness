@@ -162,8 +162,16 @@ def test_post_o5_role_tool_expectations():
         assert {"bash", "write", "edit"} <= deny, rid
 
 
+@pytest.mark.xfail(
+    reason="ADR 0003 D8: the live web profile still carries the pre-v0.2 "
+           "composition — 7 rows with 6-sibling deny lists. Parity with "
+           "mapping v2 (15 roles, 14-sibling denies) returns at the Task 11 "
+           "Human-approved mount; strict xfail makes that transition fail "
+           "loudly so this marker is removed then.",
+    strict=True,
+)
 def test_live_rows_match_config():
-    """All 7 live cordis.patch.yml rows match the mapping allow sets."""
+    """Live cordis.patch.yml rows match the mapping allow/deny sets."""
     import yaml
     doc = yaml.safe_load(_live_patch_text())
     rows = doc[0]["insert"]
@@ -177,9 +185,15 @@ def test_live_rows_match_config():
         assert set(tf["deny"]) == set(live[lid]["deny"]), rid
 
 
-def test_role_resolution_all_seven():
+def test_role_resolution_all_fifteen():
+    """Config-level resolution: every contract role (PRD v0.2: 15) resolves to
+    its `subagent_<id>` instance from mapping v2. This is registry parity, not
+    a live-mount claim (D8: registration ≠ activation)."""
+    from tests.l3_runner.environment.readiness import ALL_INSTANCE_IDS
     result = assert_role_resolution()
-    assert set(result.values()) == set(ROLE_INSTANCE_IDS)
+    assert set(result.values()) == set(ALL_INSTANCE_IDS)
+    from orchestrator.foundation.contracts import SPECIALIST_ROLES
+    assert set(result) == set(SPECIALIST_ROLES)
 
 
 # ---------------------------------------------------------------------------

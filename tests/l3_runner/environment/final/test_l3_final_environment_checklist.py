@@ -34,7 +34,6 @@ if PROJECT_ROOT not in sys.path:
 from tests.l3_runner.environment.readiness import (  # noqa: E402
     BRIDGE_MARKER_ENV,
     EVIDENCE_STORE_DIR,
-    ROLE_INSTANCE_IDS,
     ROLE_PRESETS,
     assess_environment,
 )

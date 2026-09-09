@@ -21,6 +21,8 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
 
+from orchestrator.foundation.contracts import SPECIALIST_ROLES  # noqa: E402
+
 
 # ---------------------------------------------------------------------------
 # Actor set: who can raw-write at the DSH layer (toolFilter allow sets)
@@ -120,13 +122,11 @@ def test_o5_somad_nova_deny_write_edit(role_filters):
 
 def test_specialists_hard_deny_sibling_delegation_instances(role_filters):
     """Subdelegation DENY BY DEFAULT at the REAL delegation surface: every
-    specialist's deny list hard-names its six sibling subagent_<id>
+    specialist's deny list hard-names all fourteen sibling subagent_<id>
     instances (global-layer rows, restrictable from every child). The
     generic "subagent" deny never blocked these — restriction matching is
-    exact-name."""
-    instances = {"subagent_zeko", "subagent_cto", "subagent_cfo",
-                 "subagent_kai", "subagent_somad", "subagent_badsector",
-                 "subagent_nova"}
+    exact-name. Roster derives from the contract (PRD v0.2; ADR 0003 D4)."""
+    instances = {f"subagent_{r}" for r in SPECIALIST_ROLES}
     for rid, f in role_filters.items():
         siblings = instances - {f"subagent_{rid}"}
         assert siblings <= f["deny"], (
@@ -142,10 +142,9 @@ def test_allow_deny_disjoint(role_filters):
 def test_no_delegation_tools_in_specialist_allow(role_filters):
     """Subdelegation DENY BY DEFAULT: no specialist allows a delegation
     tool."""
-    delegation = {"subagent", "subagent_fork", "subagent_cto",
-                  "subagent_cfo", "subagent_kai", "subagent_nova",
-                  "subagent_somad", "subagent_badsector", "subagent_zeko",
-                  "send_message", "workflow", "ralph"}
+    delegation = {"subagent", "subagent_fork", "send_message",
+                  "workflow", "ralph"} | {
+                  f"subagent_{r}" for r in SPECIALIST_ROLES}
     for rid, f in role_filters.items():
         assert not (delegation & f["allow"]), rid
 

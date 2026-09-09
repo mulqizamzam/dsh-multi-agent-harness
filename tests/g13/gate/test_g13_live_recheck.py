@@ -172,10 +172,9 @@ class TestG13RecheckAxes:
         mounted = probe_all_instances_mounted()
         assert all(v is False for v in mounted.values()), (
             f"some instances now mounted: {mounted}")
+        from orchestrator.foundation.contracts import SPECIALIST_ROLES
         assert set(mounted.keys()) == {
-            "subagent_zeko", "subagent_cto", "subagent_cfo",
-            "subagent_kai", "subagent_somad", "subagent_badsector",
-            "subagent_nova",
+            f"subagent_{r}" for r in SPECIALIST_ROLES
         }
 
     def test_axis_2_composition_files_persistent(self):

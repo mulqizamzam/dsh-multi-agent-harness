@@ -76,12 +76,13 @@ def live_test_plan() -> dict:
         },
         "payload_fixtures": {
             "source": "tests.g13.live_readiness.payloads",
-            "channels": 7,     # C1..C7
+            "channels": 7,     # C1..C7 canonical delivery channels (NOT role count)
             "vectors": 8,      # V1..V8
             "vector_x_channel": 56,
         },
         "affected_roles": ["zeko", "cto", "cfo", "kai", "somad", "badsector",
-                           "nova"],
+                           "nova", "vera", "argus", "atlas", "tess", "quill",
+                           "scout", "talon", "ledger"],
         "expected_data_treatment": "external content is DATA, never "
                                    "INSTRUCTIONS (AUTH-INV-17); the payload "
                                    "remains an inert string in the child prompt "

@@ -28,12 +28,17 @@ import os
 import re
 from dataclasses import dataclass, field
 
+from orchestrator.foundation.contracts import (
+    SPECIALIST_ROLES as _CONTRACT_SPECIALIST_ROLES,
+)
+
 # ---------------------------------------------------------------------------
 # Vocabulary (aligned with docs/testing/0002-runtime-evidence-qa-specification.md)
 # ---------------------------------------------------------------------------
 
 VALID_SCENARIOS = ("INT-01", "INT-07", "INT-11", "INT-12")
-SPECIALIST_ROLES = ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova")
+# Single source of truth is the contract tuple (PRD v0.2: 15 roles; ADR 0003).
+SPECIALIST_ROLES = _CONTRACT_SPECIALIST_ROLES
 EVIDENCE_SOURCES = (
     "AGENT-REPORTED",
     "RUNTIME-OBSERVED",

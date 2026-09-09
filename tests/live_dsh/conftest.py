@@ -11,7 +11,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from orchestrator.foundation.contracts import (
-    Task, Delegation, TaskResult, ORCHESTRATOR,
+    Task, Delegation, TaskResult, ORCHESTRATOR, SPECIALIST_ROLES,
 )
 from orchestrator.dsh import (
     FakeSubagentBackend, DelegationResult, RoleResolver,
@@ -146,13 +146,11 @@ def real_backend(recording_bridge):
 
 
 @pytest.fixture(params=[
-    ("zeko", "subagent_zeko"), ("cto", "subagent_cto"),
-    ("cfo", "subagent_cfo"), ("kai", "subagent_kai"),
-    ("somad", "subagent_somad"), ("badsector", "subagent_badsector"),
-    ("nova", "subagent_nova"),
+    (rid, f"subagent_{rid}")
+    for rid in SPECIALIST_ROLES
 ])
 def role_adapter(request):
-    """Parametrized fixture: yields each of the 7 role adapters."""
+    """Parametrized fixture: yields each of the 15 role adapters."""
     role, expected_tool = request.param
     adapter = build_role_adapter(role)
     return adapter, expected_tool

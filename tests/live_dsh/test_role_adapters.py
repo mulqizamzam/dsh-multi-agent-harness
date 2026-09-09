@@ -74,7 +74,8 @@ class TestAllRoleAdapters:
             overlap = delegation_tools & set(adapter.allow)
             assert not overlap, f"{role} allows delegation tools {overlap}"
 
-    def test_all_seven_adapters_present(self):
+    def test_all_adapters_present(self):
+        """One adapter per contract role (PRD v0.2: 15; ADR 0003 D1)."""
         from .adapters import ROLE_ADAPTERS
-        assert set(ROLE_ADAPTERS.keys()) == {
-            "zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"}
+        from orchestrator.foundation.contracts import SPECIALIST_ROLES
+        assert set(ROLE_ADAPTERS.keys()) == set(SPECIALIST_ROLES)

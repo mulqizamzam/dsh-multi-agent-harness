@@ -111,10 +111,9 @@ class TestG13LiveExecutionGateAxes:
     def test_axis_2_blocked(self):
         p = precondition()
         assert p["all_instances_mounted"] is False
+        from orchestrator.foundation.contracts import SPECIALIST_ROLES
         assert set(p["instances_mounted"].keys()) == {
-            "subagent_zeko", "subagent_cto", "subagent_cfo",
-            "subagent_kai", "subagent_somad", "subagent_badsector",
-            "subagent_nova",
+            f"subagent_{r}" for r in SPECIALIST_ROLES
         }
 
     def test_axis_2_d4d7_composition_files_persistent(self):

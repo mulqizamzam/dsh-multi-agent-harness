@@ -86,14 +86,25 @@ from ..preflight import (
     PreflightCheck,
     run_preflight,
 )
+from orchestrator.foundation.contracts import SPECIALIST_ROLES  # noqa: E402
 
-# The 7 D4/D7 role presets and their instance ids (config/role-preset-mapping.yaml).
+# D4/D7 role presets and their instance ids (config/role-preset-mapping.yaml).
+# These two tuples pin the LIVE-PROFILE composition: exactly the 7 mounted
+# baseline instances. The 8 expansion instances are registered-not-mounted
+# (PRD v0.2 / ADR 0003 D8) — live-profile presence checks stay at 7 until the
+# separate Human per-case mount exception lands (Task 11). Config-level checks
+# derive the full 15-role roster from SPECIALIST_ROLES instead.
 ROLE_PRESETS = (
     "role-zeko", "role-cto", "role-cfo", "role-kai",
     "role-somad", "role-badsector", "role-nova",
 )
-ROLE_INSTANCE_IDS = tuple(f"subagent_{rid}" for rid in
-                          ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"))
+ROLE_INSTANCE_IDS = (
+    "subagent_zeko", "subagent_cto", "subagent_cfo", "subagent_kai",
+    "subagent_somad", "subagent_badsector", "subagent_nova",
+)
+# Full contract roster (PRD v0.2: 15 roles) — config-level use only; NOT a
+# live-profile presence expectation (see D8 above).
+ALL_INSTANCE_IDS = tuple(f"subagent_{rid}" for rid in SPECIALIST_ROLES)
 
 # D4/D7 live-bridge marker (tests/live_dsh/discovery.py, docs/testing/0003 §6).
 BRIDGE_MARKER_ENV = "DSH_LIVE_BRIDGE_ACTIVE"

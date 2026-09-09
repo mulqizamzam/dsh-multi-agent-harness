@@ -23,7 +23,6 @@ from tests.l3_runner.environment.readiness import (
     BRIDGE_MARKER_ENV,
     EVIDENCE_STORE_DIR,
     PROJECT_ROOT,
-    ROLE_INSTANCE_IDS,
     ROLE_PRESETS,
     _answerer_available,
     _d4d7_bridge_marker_set,

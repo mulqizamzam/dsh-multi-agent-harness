@@ -13,11 +13,11 @@ from .discovery import (
 
 
 class TestRoleResolution:
-    def test_all_7_roles_resolve(self):
+    def test_all_roles_resolve(self):
         """Every specialist role resolves to a SubagentInstance."""
         resolver = resolve_all_role_instances()
         assert set(resolver.keys()) == set(SPECIALIST_ROLES)
-        assert len(resolver) == 7
+        assert len(resolver) == len(SPECIALIST_ROLES)  # PRD v0.2: 15 (ADR 0003 D1)
 
     def test_each_role_has_correct_tool_name(self):
         """Each role resolves to the expected D4/D7 tool_name."""

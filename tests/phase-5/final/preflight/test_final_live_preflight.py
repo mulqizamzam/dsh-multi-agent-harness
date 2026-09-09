@@ -101,7 +101,14 @@ def test_g13_precondition_reported_and_unsatisfied():
     assert p["marker_set"] is False
     assert p["backend_kind"] != "real-dsh"
     assert all(mounted is False for mounted in p["instances_mounted"].values())
-    assert len(p["instances_mounted"]) == 7
+    # Probe breadth = the full contract roster (PRD v0.2: 15): instance keys
+    # are `subagent_<id>`, derived from the canonical registry FILE (no
+    # production imports in this package). All values unmounted:
+    # registered ≠ active (ADR 0003 D8) — this session has no live bridge.
+    import yaml
+    with open(os.path.join(PROJECT_ROOT, "config", "agents.yaml")) as fh:
+        roster = {a["id"] for a in yaml.safe_load(fh)["agents"]}
+    assert set(p["instances_mounted"]) == {f"subagent_{r}" for r in roster}
 
 
 def test_checklist_quotes_the_real_g13_precondition_definition():
@@ -128,10 +135,14 @@ def test_g13_payload_fixture_matrix_matches_payloads_module():
     # task-context surface.
     channel_roles = {sc["affected_role"] for sc in LIVE_CHANNELS.values()}
     assert channel_roles == {"kai", "cto", "cfo", "nova", "somad", "orchestrator"}
-    # Plan-level registry = all 7 specialists.
+    # Plan-level registry = the full registry roster (PRD v0.2: 15), derived
+    # from the canonical registry FILE — this package must not import
+    # production modules (static guard below enforces that).
     from tests.g13.live_readiness.plan import live_test_plan
-    assert set(live_test_plan()["affected_roles"]) == {
-        "zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"}
+    import yaml
+    with open(os.path.join(PROJECT_ROOT, "config", "agents.yaml")) as fh:
+        roster = {a["id"] for a in yaml.safe_load(fh)["agents"]}
+    assert set(live_test_plan()["affected_roles"]) == roster
     for sc in list(LIVE_CHANNELS.values()) + LIVE_VECTORS:
         assert sc["expected_authority_impact"].startswith("none")
         assert sc["expected_state_mutation"].startswith("none")
