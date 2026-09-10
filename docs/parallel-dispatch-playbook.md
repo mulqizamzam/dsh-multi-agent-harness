@@ -162,6 +162,107 @@
 6. **Fan-out per item** — satu pola, banyak objek identik (#28, 73, 76, 93).
 7. **Workflow skala besar** — puluhan task, multi-fase, hasil terstruktur (#10; minta eksplisit).
 
+## Anatomi prompt level implementasi (10 contoh)
+
+> **Provenance**: 10 contoh level implementasi pertama lahir di sesi 2026-09-10 dan
+> hanya tersimpan di chat; teks aslinya tidak ada di file repo. Seksi ini rekonstruksi
+> 2026-09-10 (disetujui owner) dari distilat yang terdokumentasi di dokumen terkelola
+> Mnemon `a7ad4821` + templat dispatch live pada `runs/smoke-parallel-3cto-2026-09-10/`.
+> Struktur & aturan = distilat asli; wording tiap contoh = rekonstruksi dari entri katalog.
+
+Setiap prompt subagen memuat **4 elemen wajib**: `Tujuan` · `Batasan` (path/scope/tool) ·
+`Kriteria selesai` · `Stop condition`. Dua prompt dalam satu blok paralel tidak boleh
+saling merujuk hasil (aturan 1); referensi lintas-hasil hanya sah antar-gelombang (contoh 10).
+
+**Aturan tambahan** (hasil 10 contoh):
+
+1. **Self-contained** — prompt saudara dalam satu blok paralel TIDAK boleh mengasumsikan
+   atau merujuk hasil satu sama lain; ketergantungan timbal balik = gelombang berikutnya.
+2. **Larangan standar** — read-only kecuali cto; jangan delegasi (sub-delegasi DENY);
+   jangan sentuh path di luar scope yang disebut.
+3. **Batas panjang output eksplisit** per laporan — mencegah laporan melebar.
+4. **Verifikasi programatik parent** setelah blok settle — test suite / hitung artefak /
+   cek file di disk (preseden: smoke 3×CTO 2026-09-10, file census oleh parent).
+
+### Contoh 1 — fan-out riset read-only (katalog #1; blok kai + cfo + somad)
+Prompt `kai`:
+- Tujuan: petakan 5 kompetitor [X]: fitur inti, harga, posisi pasar.
+- Batasan: read-only; hanya `webSearch`; jangan delegasi; jangan tulis file.
+- Kriteria selesai: tabel 5 baris (kompetitor × fitur/harga/posisi) + 3 temuan pembeda.
+- Stop condition: berhenti setelah tabel final; laporan ≤ 30 baris.
+
+### Contoh 2 — saudara self-contained, tanpa rujukan silang (katalog #1; blok sama)
+Prompt `cfo` (saudara contoh 1):
+- Tujuan: bandingkan unit economics 5 kompetitor [X]: harga, margin, model pendapatan.
+- Batasan: read-only; jangan menunggu atau merujuk laporan kai; data harga dari risetmu sendiri.
+- Kriteria selesai: tabel perbandingan + 2 implikasi pricing untuk [kita].
+- Stop condition: laporan ≤ 25 baris.
+
+### Contoh 3 — multi-writer path-disjoint (katalog #4; cto ×3)
+Prompt `subagent_cto` (slot A; slot B & C identik dengan path/topik lain):
+- Tujuan: implementasi modul `cache/` sesuai kontrak antarmuka di plan §3.
+- Batasan: tulis HANYA di `src/cache/**`; jangan sentuh `src/retry/**` (slot B) atau
+  `src/flags/**` (slot C); jangan `git commit`; saudaramu menulis direktori tetangga
+  di workspace yang sama.
+- Kriteria selesai: kode + test modul lulus `pytest src/cache`.
+- Stop condition: laporan ≤ 20 baris setelah test lulus.
+(Preseden live: smoke 3×CTO 2026-09-10 — 3 instance, path disjoint, 0 tabrakan.)
+
+### Contoh 4 — review paralel read-only (katalog #3; badsector + argus + tess + vera)
+Prompt `badsector`:
+- Tujuan: temukan asumsi lemah & kontradiksi di dokumen [D].
+- Batasan: read-only; boleh baca repo; jangan tulis file; jangan delegasi.
+- Kriteria selesai: daftar temuan berperingkat (HIGH/MED/LOW) + kutipan baris sumber.
+- Stop condition: daftar final lalu berhenti; ≤ 40 baris.
+
+### Contoh 5 — red-team standalone (pola 5; counterexample tertangkap)
+Draf SALAH (mengasumsikan output agen lain → melanggar aturan 1):
+- "Red-team rekomendasi kandidat A dari agen lain."
+Draf BENAR (mandiri):
+- Tujuan: identifikasi mode gagal umum untuk keputusan bertipe [ini] + mitigasi per mode.
+- Batasan: read-only; jangan merujuk rekomendasi siapa pun; analisis dari first principles.
+- Kriteria selesai: ≥ 5 mode gagal, masing-masing dengan mitigasi konkret.
+- Stop condition: laporan ≤ 30 baris.
+
+### Contoh 6 — verifikasi acceptance criteria (katalog #5; vera)
+Prompt `vera`:
+- Tujuan: cocokkan klaim selesai [task T] terhadap acceptance criteria di plan §2.
+- Batasan: read-only; TANPA web; verifikasi dari artefak repo, bukan dari klaim teks.
+- Kriteria selesai: tabel klaim ↔ bukti (PASS/FAIL) + daftar klaim tak didukung.
+- Stop condition: laporan ≤ 25 baris.
+
+### Contoh 7 — fan-out per item (katalog #73; scout per modul)
+Prompt `scout` (modul i dari N; pola identik diperbanyak per item):
+- Tujuan: cek kompatibilitas upgrade [dep X vN] untuk modul [i]: API terpakai, versi pin, jalur migrasi.
+- Batasan: read-only; cakupan HANYA modul [i]; jangan menyimpulkan modul lain.
+- Kriteria selesai: verdict (OK/BREAK/RISK) + baris kode bukti.
+- Stop condition: laporan ≤ 15 baris per modul.
+
+### Contoh 8 — boundary web subagen (katalog #12)
+Prompt `kai`:
+- Tujuan: ringkas tren [topik] dari 3 sumber.
+- Batasan: hanya `webSearch`; kau TIDAK punya `read_page` — jika halaman penuh dibutuhkan,
+  berhenti dan laporkan URL-nya untuk di-fetch parent.
+- Kriteria selesai: 3 ringkasan + URL tiap sumber.
+- Stop condition: jangan menunggu fetch parent dalam blok yang sama (fetch = gelombang
+  berikutnya); laporan ≤ 20 baris.
+
+### Contoh 9 — dekomposisi kebijakan (katalog #56; quill)
+Prompt `quill`:
+- Tujuan: dekomposisi kebijakan retensi [X] menjadi invarian yang bisa diuji.
+- Batasan: read-only; TANPA web; analisis risiko sisi teknis/operasional, bukan nasihat hukum.
+- Kriteria selesai: daftar invarian (id, pernyataan, cara uji) + pemetaan ke test yang ada.
+- Stop condition: laporan ≤ 35 baris.
+
+### Contoh 10 — referensi lintas-hasil hanya antar-gelombang (katalog #11; multi-gelombang)
+Gelombang 2 — prompt `cto` SETELAH gelombang 1 (riset) settle dan parent menyalin hasilnya:
+- Tujuan: implementasi [fitur F] memakai keputusan G1 (keputusan final ditempel di prompt ini).
+- Batasan: tulis HANYA di `src/feature/**`; jangan mengevaluasi ulang opsi dari G1.
+- Kriteria selesai: build + test lulus; keputusan G1 tercermin di kode.
+- Stop condition: laporan ≤ 20 baris.
+(Satu-satunya bentuk referensi lintas-hasil yang sah: input ditempel parent ke prompt,
+bukan dirujuk implisit ke agen lain.)
+
 ## Batasan & kalibrasi
 
 - Pemetaan role = komposisi awal; parent menyesuaikan saat eksekusi nyata.
