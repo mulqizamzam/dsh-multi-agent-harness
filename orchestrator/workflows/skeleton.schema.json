@@ -23,7 +23,7 @@
     },
     "selected": {
       "type": "array",
-      "items": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] }
+      "items": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova", "vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger"] }
     },
     "results": {
       "type": "array",
@@ -32,7 +32,7 @@
         "additionalProperties": true,
         "required": ["role", "status", "refs"],
         "properties": {
-          "role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"] },
+          "role": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova", "vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger"] },
           "status": { "type": "string" },
           "refs": { "type": "array", "items": { "type": "string" } }
         }

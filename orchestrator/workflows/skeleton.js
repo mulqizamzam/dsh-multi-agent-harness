@@ -46,10 +46,16 @@ const GATES = {
 // objective AND after the orchestrator has validated the gate placeholders.
 const DRY_RUN = true;
 
-// The 7 specialists (peers) — routing targets. Delegation is orchestrator-only
-// (subdelegation DENY BY DEFAULT); this script only SELECTS, never delegates
-// to a non-role surface. No specialist-to-specialist delegation (V1).
-const SPECIALISTS = ['zeko', 'cto', 'cfo', 'kai', 'somad', 'badsector', 'nova'];
+// The 15 specialists (peers) — routing targets, in
+// config/role-preset-mapping.yaml §roles order (7 baseline + 8 expansion:
+// vera, argus, atlas, tess, quill, scout, talon, ledger). Delegation is
+// orchestrator-only (subdelegation DENY BY DEFAULT); this script only SELECTS,
+// never delegates to a non-role surface. No specialist-to-specialist
+// delegation (V1).
+const SPECIALISTS = [
+  'zeko', 'cto', 'cfo', 'kai', 'somad', 'badsector', 'nova',
+  'vera', 'argus', 'atlas', 'tess', 'quill', 'scout', 'talon', 'ledger',
+];
 
 // Structured output contract (see skeleton.schema.json).
 const outputSchema = {

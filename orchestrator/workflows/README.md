@@ -58,3 +58,10 @@ The orchestrator loads this skeleton, sets `DRY_RUN = false`, populates
 spawns per-role `subagent_<id>` instances (the per-role tool instances defined
 in `config/role-preset-mapping.yaml`). Gates remain placeholders that the
 orchestrator re-checks after collection.
+
+Note on `agent()`: the commented-out `agent()` call in `delegate()` is a
+DRY_RUN-path placeholder for this skeleton, **not** the real delegation
+surface — a child spawned through generic `agent()` does **not** inherit a
+role's fences (persona and `toolFilter`), so it carries none of the role's
+authority boundary. Real delegation to a role goes through that role's
+`subagent_<id>` instance, never through this path.
