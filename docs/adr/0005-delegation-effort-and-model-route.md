@@ -29,13 +29,11 @@ This is the exact analogue of the Claude Code `model:` field cited in item 7: a 
 
 ### 3. Children today inherit the parent's model route — because the lever in item 2 is unused
 
-Absent an override, a child inherits the parent's provider/model/maxTokens route: `resolveChildAgentOptions()` spreads the parent's `provider`, `model`, and `maxTokens` **before** applying any requested override, so the override wins (`packages/subagent/subagent/src/child-agent.ts:68-83`), and the spawn provider README states the child "inherits the parent model unless overridden" (`packages/subagent/subagent-spawn-in-process/README.md:9`). **All fifteen roles currently run on the same model as the parent session.** Role differentiation in this project is persona + `toolFilter` + depth, and — because item 2's lever is unmounted — never model.
-
-This is a **consequence of a choice not yet made**, not a ceiling of the host: pinning a model per role is available at the instance scope (item 2) and would survive inheritance, since the instance's `agentOptions` is applied as the requested override.
+Absent an override, a child inherits the parent's provider/model/maxTokens route: `resolveChildAgentOptions()` spreads the parent's `provider`, `model`, and `maxTokens` **before** applying any requested override, so the override wins (`packages/subagent/subagent/src/child-agent.ts:68-83`), and the spawn provider README states the child "inherits the parent model unless overridden" (`packages/subagent/subagent-spawn-in-process/README.md:9`). **All fifteen roles currently run on the same model as the parent session.** Role differentiation in this project is persona + `toolFilter` + depth, and — because item 2's lever is unmounted — never model. This is a **consequence of a choice not yet made**, not a ceiling of the host: pinning a model per role becomes possible at the instance scope (item 2) and survives inheritance, since the instance's `agentOptions` is applied as the requested override.
 
 ### 4. The call-time model override — and the fence it drops
 
-The workflow `agent(prompt, opts)` hook is the only place a model can be chosen **at call time, per assignment**, via independent `provider`/`model` overrides (DSH checkout `docs/tool-catalog.md:2088`; the supported set is literally `SUPPORTED_AGENT_OPTIONS = new Set(['label', 'phase', 'schema', 'provider', 'model'])` in `packages/workflow/workflow-worker-thread/src/runtime.ts:39`). This is the per-assignment path; the per-instance path of item 2 is a different, static one.
+The workflow `agent(prompt, opts)` hook is the only place a model can be chosen **at call time, per assignment**, via independent `provider`/`model` overrides (DSH checkout `docs/tool-catalog.md:2088`; the supported set is literally `SUPPORTED_AGENT_OPTIONS = new Set(['label', 'phase', 'schema', 'provider', 'model'])` in `packages/workflow/workflow-worker-thread/src/runtime.ts:39`) — the per-instance path of item 2 is a different, static one.
 
 That path **cannot carry a role fence**. The workflow host builds its child start request with only `prompt`, `parent`, `signal`, `outputSchema`, and `agentOptions` (`packages/workflow/workflow-worker-thread/src/host.ts:352-365`), while the subagent start request type supports `persona`, `toolFilter`, and `maxDepth` as well (`packages/subagent/subagent/src/types.ts:100-148`).
 
@@ -51,13 +49,12 @@ ADR 0001 UNKNOWN item 5 reads: per-call `persona`/`toolFilter`/`outputSchema` ar
 
 ### 7. External references (input, not authority)
 
-Recorded as **references**, explicitly **not** decisions — none of these is adopted as a rule here:
+Recorded as **references**, explicitly **not** decisions — none of these is adopted as a rule here. In particular, **no vendor documents a `>=3 subtask` threshold**, and no such number is stated as a rule anywhere in this ADR:
 
 - Anthropic, *How we built our multi-agent research system* (2025-06-13): effort scaled to complexity (one agent with 3–10 tool calls; 2–4 subagents with 10–15; 10+ for complex research); multi-agent systems consume roughly **15×** the tokens of ordinary chat; and the post itself notes that coding tasks parallelize **less** readily than research. [source](https://www.anthropic.com/engineering/multi-agent-research-system)
 - Claude Code's official sub-agent documentation presents `model:` as a field of the **agent definition** (frontmatter) — designating a model **per sub-agent** — not as a call argument. The host analogue is the **per-instance row** (`agentOptions.model` on `subagent_<id>`, item 2), not "deployment-time" in general and not a call argument.
 - Huang et al., *Large Language Models Cannot Self-Correct Reasoning Yet*, ICLR 2024, [arXiv:2310.01798](https://arxiv.org/abs/2310.01798): self-correction without **external feedback** is unreliable — the basis for treating independent verification as a structural requirement, not a hoped-for model behavior.
 - Chen et al., *FrugalGPT*, [arXiv:2305.05176](https://arxiv.org/abs/2305.05176): a model cascade can match a top-tier model at lower cost, or beat it at equal cost — the only one of these four that argues for heterogeneous model routing at all.
-- **No vendor documents a `>=3 subtask` threshold.** No such number is stated as a rule anywhere in this ADR.
 
 ## Decision
 
@@ -146,7 +143,7 @@ sha256sum docs/adr/0001-multi-agent-control-plane-boundary.md | cut -c1-24
 **Boundary (stated, not hidden).**
 
 - The finding is pinned to host **`0.1.1-rc.2`** (checkout `HEAD 7135b5958b`). Two of its facts belong to *this* build and each needs its own re-check on a later release: item 2's lever (if `agentOptions` stops being forwarded to the child) and item 4's gap (if the workflow host starts forwarding `persona`/`toolFilter`, D2's rationale weakens). The version pin is the trigger for re-checking, not a permanent claim.
-- **Items 2 and 4 must be read together** — item 4 alone reads as "models cannot be chosen per role", item 2 alone as "just add a column". The distinction that matters is **instance-scope vs call-time scope**, and it is why this ADR both forbids the `agent()` shortcut (D2) and refuses to call per-role routing impossible (D6).
+- **Items 2 and 4 must be read together** (see D6): each is a property of *this* host build, and neither is a standing claim about the host in general.
 - Line numbers for the two **DSH-generated catalogs** resolve against the **checkout**, not against this repository's own `docs/tool-catalog.md` — a different, project-authored document of **125 lines** where those numbers do not exist. Both catalogs are generated, so a regeneration can move every cited line while the content stands; prefer the surrounding heading text when re-locating. External references (item 7) are inputs recorded with their URLs and are not verifiable from this repository; only D1–D3 and D6 are decisions.
 
 ## Non-goals
