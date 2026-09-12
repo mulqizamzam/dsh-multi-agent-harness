@@ -129,6 +129,7 @@ These corrections are the substance of this revision. Each corrects a previously
 3. **Agent Teams** (`spawn_teammate`, `team_task_*`). Experimental, not mounted in base/web. **BLOCKED/UNKNOWN** — not used for V1.
 4. **Out-of-process subagent backends** (acp/codex/claude-code/dsh-sdk). Disabled by default. **BLOCKED** unless the prerequisite bundle is installed.
 5. **Per-call `persona`/`toolFilter`/`outputSchema`.** These are **config-level**, not per-call model parameters. Whether they can ever be model-controlled is **UNKNOWN**; assumed **no** (config-only).
+   > **Answered 2026-09-14 for `0.1.1-rc.2`** — superseded by `docs/adr/0005-delegation-effort-and-model-route.md` (Context items 1–4): the model route is call-controllable **only** through the workflow `agent()` hook, which carries no `persona`/`toolFilter`. The text above is retained as authored (Revision 3 historical body); no status field in this file is changed by that pointer.
 6. **`web_fetch`** disabled in the standard preset (`fetch: false`) while `web_search` is active. Whether web-fetch is needed for Kai research is **UNKNOWN**.
 7. **`config/permissions.yaml` per-agent `sandbox`/`approval` semantics.** These are intent in the file, non-enforceable per-agent. Their project-level accept is **INFERRED**, pending Human confirmation.
 
