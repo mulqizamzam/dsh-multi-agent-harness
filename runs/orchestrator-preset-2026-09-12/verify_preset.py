@@ -10,6 +10,25 @@ The baseline records the immutable surroundings (shipped `standard` preset, the
 web profile patch, settings.yaml, and every pre-existing preset composition) so
 the post-deploy run can prove the change was purely additive.
 
+UPDATE 2026-09-12 — this baseline was re-recorded SURGICALLY, for six presets
+only: role-badsector, role-cfo, role-kai, role-nova, role-somad, role-zeko. Their
+deployed `agent.cordis.yml` headers still read `DRAFT — NOT MOUNTED` while the
+repo and reality both said `Mounted 2026-09-07`; the recursive tool-row sets were
+byte-for-byte identical in all six, so the re-sync changed comments only. The
+`git diff` for that update was exactly six insertions and six deletions — the six
+hash values, nothing else.
+
+Do NOT re-run `--record-baseline` to refresh this baseline. `snapshot()` records
+every deployed preset, so once the orchestrator preset is deployed a full
+re-record would move `orchestrator` into `existing_presets` and thereby break two
+checks that still matter: `no preset removed` and `exactly one preset added, and
+it is the orchestrator` (the latter's `added` would become empty). Update the
+individual hash values instead, then confirm the resulting diff touches only the
+intended entries. The post-deploy invariant "repo source == deployed file" is now
+additionally guarded by tests/unit/test_preset_deployment_sync.py, which hashes
+raw bytes for all 16 presets and so catches comment-only drift that any
+YAML-equality comparison would miss.
+
 Structural checks parse the composition with `!!js ` tags stripped, because the
 shipped preset uses `disabled: !!js process.platform === ...` and a plain
 yaml.safe_load refuses it. The stripping is a parse convenience only; the
