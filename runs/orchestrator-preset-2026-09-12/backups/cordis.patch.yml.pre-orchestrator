@@ -1,0 +1,285 @@
+- insert:
+    - id: mcp-omni
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: omni
+        transport: stdio
+        command: '/home/administrator/.local/bin/omni'
+        args: ['--mcp']
+        env:
+          OMNI_AGENT_ID: 'dsh'
+        cwd: '/home/administrator/agent-workspace'
+        toolCallTimeoutMs: 60000
+        failOnStartupError: true
+    # Context Mode MCP — TRIAL (2026-09-10, owner-approved). MCP-only mode,
+    # no hooks (riset: dok terkelola d4dac81c). 6 sandbox ctx_* tools + 5
+    # meta tools over local SQLite FTS5; surfaces as
+    # mcp__context_mode__ctx_*. LOCAL-FIRST: cloud forward opt-in only
+    # (~/.context-mode/platform.json absent); automatic network = one npm
+    # version-check GET. npm_config_cache + CONTEXT_MODE_DATA_DIR keep all
+    # writes inside the workspace (npx EROFS-proof). Safe to remove.
+    - id: mcp-context-mode
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: context_mode
+        transport: stdio
+        command: '/home/administrator/.nvm/versions/node/v24.19.0/bin/npx'
+        args: ['-y', 'context-mode']
+        env:
+          npm_config_cache: '/home/administrator/agent-workspace/dsh-custom/plugins/research/.npm-cache'
+          CONTEXT_MODE_DATA_DIR: '/home/administrator/agent-workspace/.dsh/context-mode-data'
+        toolCallTimeoutMs: 120000
+        failOnStartupError: false
+    # DTF Radar MCP tool server (official project path: project/dtf-radar).
+    # Tools: dtf_status, dtf_opportunities, dtf_trends ->
+    # mcp__dtf_radar__{dtf_status,dtf_opportunities,dtf_trends}
+    # Zero-token: local SQLite + public sources only. Added by dtf-radar
+    # integration (2026-09-04); repointed 2026-09-05 after tree move to the
+    # official target path. Touch 2026-09-05 (2): restart MCP server to load
+    # the discovery-vs-validation ranking revision (status taxonomy).
+    # Safe to remove.
+    - id: mcp-dtf-radar
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: dtf_radar
+        transport: stdio
+        command: '/home/administrator/agent-workspace/project/dtf-radar/.venv/bin/python'
+        args: ['-m', 'dtf_radar.mcp_server']
+        cwd: '/home/administrator/agent-workspace/project/dtf-radar'
+        env:
+          CRAWL4_AI_BASE_DIRECTORY: '/home/administrator/agent-workspace/project/dtf-radar'
+        toolCallTimeoutMs: 60000
+        failOnStartupError: false
+    - id: tool-subagent-zeko
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_zeko
+        persona: role-zeko
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          # 2026-09-07 (Human-approved discriminator): edit/write removed —
+          # capabilities.code_write: no is now enforceable at the toolFilter
+          # layer; raw-write actor set {zeko, cto} -> {cto}. Backup of the
+          # pre-change file: runs/mount-verification-2026-09-07/backups/.
+          allow: [bash, read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera]
+    - id: tool-subagent-cto
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_cto
+        persona: role-cto
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [bash, read, read_image, edit, write, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-cfo
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_cfo
+        persona: role-cfo
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-kai
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_kai
+        persona: role-kai
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-somad
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_somad
+        persona: role-somad
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-badsector
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_badsector
+        persona: role-badsector
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-nova
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_nova
+        persona: role-nova
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    # ---------------------------------------------------------------------
+    # PRD v0.2 expansion (2026-09-09, Human-approved per-case exception,
+    # ADR 0003 D8): 8 read-only analyst instances (L-group no web;
+    # W-group scoped web_search, fetch: false). Source of record:
+    # config/tool-subagent-instances.yaml (draft_version 2). Pre-change
+    # backup: runs/specialist-expansion-2026-09-09/backups/.
+    # ---------------------------------------------------------------------
+    - id: tool-subagent-vera
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_vera
+        persona: role-vera
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_zeko]
+    - id: tool-subagent-argus
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_argus
+        persona: role-argus
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-atlas
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_atlas
+        persona: role-atlas
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-tess
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_tess
+        persona: role-tess
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_vera, subagent_zeko]
+    - id: tool-subagent-quill
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_quill
+        persona: role-quill
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-scout
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_scout
+        persona: role-scout
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-talon
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_talon
+        persona: role-talon
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_ledger, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_tess, subagent_vera, subagent_zeko]
+    - id: tool-subagent-ledger
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent_ledger
+        persona: role-ledger
+        backgroundMode: continuable
+        maxDepth: 1
+        toolFilter:
+          allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+          deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_badsector, subagent_cfo, subagent_cto, subagent_kai, subagent_nova, subagent_quill, subagent_scout, subagent_somad, subagent_talon, subagent_tess, subagent_vera, subagent_zeko]
+    # TinyFish search provider (native @deepseek-ai/dsh-web-search-tinyfish):
+    # registers the `tinyfish` provider on ctx.web. The key resolves from the
+    # launch environment ($TINYFISH_API_KEY in $DSH_HOME/.env) — no literal
+    # credential is stored here. $TINYFISH_BASE_URL overrides the endpoint
+    # only when set to a non-empty value; anything else falls back to the
+    # public default https://api.search.tinyfish.ai (an unparseable value
+    # keeps the provider unavailable — fail closed, no silent endpoint swap).
+    - id: web-search-tinyfish
+      name: '@deepseek-ai/dsh-web-search-tinyfish'
+
+- id: web-fetch-monid
+  config:
+    searchEnabled: true
+    baseUrl: "https://api.monid.ai"
+
+# Bounded search fallback (dsh-web-monid-fallback) — DISABLED 2026-09-08:
+# superseded by dsh-free-search (installed same day), whose unified engine
+# chain already covers tinyfish -> firecrawl -> monid -> 8 free engines.
+# Keeping both would retry Monid twice. Rollback: enabled: true.
+- id: dsh-web-monid-fallback
+  config:
+    enabled: false
+    totalTimeoutMs: 30000
+    telemetry: true
+
+# dsh-free-search 0.4.24-chain.1 (local build at ~/dsh-free-search-chain,
+# installed 2026-09-08 as search fallback chain). Unified engine chain:
+# preferred (tinyfish) -> firecrawl -> monid -> bing/anysearch/searxng/
+# ddg/ddg-lite/exa/tavily/keenable, shared 30s budget, keys from env
+# (TINYFISH_API_KEY, MONID_API_KEY) or credentials center.
+# NOTE: the plugin registers ITSELF via its own bundle patch
+# (package.json dsh.bundle.patch -> - insert: web-search-free,
+# provider: tinyfish, bingMarket: zh-CN). Do NOT add a second insert
+# here — duplicate loader id. The `web` row override below just hands
+# the default searchProvider to it ("ddg" = the plugin's master provider,
+# despite the name it routes to cfg.provider = tinyfish first).
+# fetchProvider: http MUST be restated (patch = whole-row replace).
+
+# web.searchProvider pins the search provider behind the standard web_search
+# tool (dsh-tool-web -> ctx.web). Pointed at the free-search master provider
+# ("ddg") on 2026-09-08 — the provider routes internally: tinyfish first,
+# then firecrawl/monid, then free engines. monid-search remains registered
+# above (searchEnabled: true) as an explicitly-selectable mechanism
+# (env: DSH_WEB_SEARCH_PROVIDER=monid-search).
+- id: web
+  config:
+    searchProvider: ddg
+    fetchProvider: http
+
+# Enable the model-facing web_search tool (tool-web was shipped disabled by
+# dsh-web-app; search-only — fetch stays off). Patch replaces the row's whole
+# config, so restate the base bundle's values (search defaults stay active).
+- id: tool-web
+  config:
+    fetch: false
+    searchTimeoutMs: 60000
+  disabled: false

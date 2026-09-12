@@ -1,0 +1,26 @@
+[PASS] repo composition exists — /home/administrator/agent-workspace/project/dsh-multi-agent-harness/orchestrator/agent.cordis.yml
+[PASS] repo metadata exists — /home/administrator/agent-workspace/project/dsh-multi-agent-harness/orchestrator/preset.yml
+[PASS] preset id is a valid DSH preset id — orchestrator
+[PASS] deployed dir exists — /home/administrator/agent-workspace/.dsh/.agent-presets/orchestrator
+[PASS] deployed composition exists
+[PASS] deployed metadata exists
+[PASS] composition sha256 matches repo source — ca7f3caebde3abcc08cbcdc1650c38bfde5b3f1d76a6a2b97bc15c9f1118da72
+[PASS] metadata sha256 matches repo source — 09e6dc3c1b4f8ee8da9fc6a036708ac94b9ddfb6050339bf4fe317357f20076e
+[PASS] composition parses as a list — type=list
+[PASS] every row carries an id (recursive)
+[PASS] row ids are unique (recursive) — 25 rows
+[PASS] deleted row absent: tool-ralph
+[PASS] deleted row absent: tool-pwsh
+[PASS] deleted row absent: tool-subagent-codex
+[PASS] deleted row absent: tool-subagent-claude-code
+[PASS] recursive row count == standard minus 4 — standard=29 orchestrator=25 delta=4
+[PASS] no row added — added=[]
+[PASS] only the four expected rows differ — removed=['tool-pwsh', 'tool-ralph', 'tool-subagent-claude-code', 'tool-subagent-codex']
+[PASS] shipped standard preset unchanged
+[PASS] web profile patch untouched
+[PASS] no pre-existing preset composition modified — changed=[]
+[PASS] no preset removed — removed=[]
+[PASS] exactly one preset added, and it is the orchestrator — added=['orchestrator']
+[PASS] agent-presets.default is still 'standard' — default='standard'
+
+verify_preset: 24 passed, 0 failed

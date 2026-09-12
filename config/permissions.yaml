@@ -25,6 +25,16 @@
 # (badsector keeps review-class coverage on evidence/security/failure; cto
 # keeps scoped security/architecture/integration; zeko keeps scoped
 # failure/reliability). New roles own their primary capability.
+#
+# 2026-09-12 addendum (ADR 0004): the orchestrator is recorded in
+# `agent_defaults` below (its root-session sandbox/approval posture, annotated
+# in place) and in `orchestrator_boundary_note` below that. It is NOT added to
+# `agents:` or to any capability row: the matrix is a specialist column set,
+# and the orchestrator is not a sixteenth specialist (PRD §4; ADR 0001 D3).
+# matrix_version stays 2: that number has
+# tracked capability-ROW changes (v2 added 8 rows), and no row, no row value,
+# and no member of `agents:` changed here — the orchestrator is not a matrix
+# column and cannot become one without an owner decision (see the note).
 # ============================================================================
 
 matrix_version: 2
@@ -393,6 +403,16 @@ tool_surface_equivalence:
   - [badsector, nova, vera, quill, ledger]                # L-group: read-only, no web_search
 
 agent_defaults:
+  # Not a specialist row: the orchestrator is the coordination layer bound to
+  # the root session (orchestrator/AGENT.md; ADR 0001 D3). This records the
+  # ROOT SESSION's posture — it shares that session's sandbox — and is the
+  # policy source for orchestrator/policy.yaml §sandbox_approval_intent and for
+  # the `orchestrator` preset composition (orchestrator/agent.cordis.yml,
+  # ADR 0004). It is deliberately NOT in tool_surface_equivalence: its allow set
+  # matches no specialist group, and a declared group must share one allow set.
+  orchestrator:
+    sandbox: workspace-write  # root session: state/audit maintenance, B-lite reversible writes
+    approval: ask             # HIGH-risk is never direct; authority/destructive ops ask
   zeko:
     sandbox: workspace-write
     approval: ask          # destructive/irreversible ops require human approval
@@ -438,6 +458,34 @@ agent_defaults:
   ledger:
     sandbox: read-only
     approval: never        # audit analyst; never executes
+
+# ── orchestrator — capability boundary (record, not a matrix column) ────────
+# This file is capability-MAJOR: one row per capability, keyed by the 15
+# specialists, and `agents:` above is pinned to exactly that set by
+# tests/validate_config.py ("perm agents list matches specialists"). The
+# orchestrator cannot join the matrix as a 16th column — and no capability row
+# can carry it — without an owner decision that changes that check first. What
+# is recorded here is the boundary that matters, in this file's own vocabulary,
+# and nothing more: direct HIGH-risk execution is `no` (it routes to a
+# specialist under authority + approval — ORC-002), and delegation is
+# orchestrator-only in V1 (subdelegation DENY BY DEFAULT;
+# consistency_rules.delegation_orchestrator_only in role-preset-mapping.yaml).
+# Machine-readable form and the full subset: orchestrator/policy.yaml
+# (§capabilities, §delegation, §authority). Sources: orchestrator/AGENT.md
+# §Capability boundary, ADR 0001 D3, ADR 0004 D4, THREAT-001/002, AUTH-INV-18.
+orchestrator_boundary_note:
+  binding: root_session
+  production_deploy: "no"        # HIGH-risk class — never direct
+  destructive_action: "no"       # HIGH-risk class — never direct
+  financial_transaction: "no"    # HIGH-risk class — never direct
+  social_publishing: "no"        # material publication — never direct
+  server_read: scoped            # B-lite carve-out, through the execution gate
+  code_read: scoped
+  code_write: "no"               # does not execute specialist work
+  web_research: scoped
+  delegation: "yes"              # ORCHESTRATOR-ONLY (V1)
+  subdelegation: "no"            # deny by default for all 15 specialists
+  orchestration_workflow: "yes"  # fan-out/collect; NOT a security boundary
 
 # Invariants (enforced by tests/validate-config.py)
 invariants:

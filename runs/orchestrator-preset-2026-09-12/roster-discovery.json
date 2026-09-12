@@ -1,0 +1,98 @@
+[
+ {
+  "id": "orchestrator",
+  "trust": "user",
+  "broken": null,
+  "description": "Coordination and delegation layer: scopes objectives, routes to the minimum specialist set, and enforces the authority and evidence gates."
+ },
+ {
+  "id": "role-argus",
+  "trust": "user",
+  "broken": null,
+  "description": "Threat modeling, privilege analysis, and security control review."
+ },
+ {
+  "id": "role-atlas",
+  "trust": "user",
+  "broken": null,
+  "description": "Architecture review, dependency boundaries, and coupling analysis."
+ },
+ {
+  "id": "role-badsector",
+  "trust": "user",
+  "broken": null,
+  "description": "Security review, adversarial analysis, and independent evidence verification."
+ },
+ {
+  "id": "role-cfo",
+  "trust": "user",
+  "broken": null,
+  "description": "Financial analysis, cost evaluation, and resource planning."
+ },
+ {
+  "id": "role-cto",
+  "trust": "user",
+  "broken": null,
+  "description": "Engineering, architecture, implementation, testing, and technical execution."
+ },
+ {
+  "id": "role-kai",
+  "trust": "user",
+  "broken": null,
+  "description": "Runtime execution, integration testing, and operational verification."
+ },
+ {
+  "id": "role-ledger",
+  "trust": "user",
+  "broken": null,
+  "description": "Audit-event validation, provenance analysis, and decision lineage."
+ },
+ {
+  "id": "role-nova",
+  "trust": "user",
+  "broken": null,
+  "description": "Research, analysis, investigation, and evidence gathering."
+ },
+ {
+  "id": "role-quill",
+  "trust": "user",
+  "broken": null,
+  "description": "Policy decomposition, invariant definition, and schema implications."
+ },
+ {
+  "id": "role-scout",
+  "trust": "user",
+  "broken": null,
+  "description": "Integration and compatibility analysis, including version drift."
+ },
+ {
+  "id": "role-somad",
+  "trust": "user",
+  "broken": null,
+  "description": "Publishing, social workflow, and externally-facing content operations."
+ },
+ {
+  "id": "role-talon",
+  "trust": "user",
+  "broken": null,
+  "description": "Idempotency, retry semantics, durability, and rollback analysis."
+ },
+ {
+  "id": "role-tess",
+  "trust": "user",
+  "broken": null,
+  "description": "Timeout, cancellation, partial-failure, and recovery-path analysis."
+ },
+ {
+  "id": "role-vera",
+  "trust": "user",
+  "broken": null,
+  "description": "Acceptance-criteria verification, test-result inspection, and evidence completeness."
+ },
+ {
+  "id": "role-zeko",
+  "trust": "user",
+  "broken": null,
+  "description": "General technical execution and operational support."
+ }
+]

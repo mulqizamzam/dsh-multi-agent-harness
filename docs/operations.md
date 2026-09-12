@@ -29,7 +29,7 @@ Derivation (verified): `sandbox-policy.mode = DSH_PERMISSION_MODE ?? 'workspace-
 ### 1.2 Session facts (this environment)
 
 - Workspace root: `/home/administrator/agent-workspace` (`process.cwd()` of the session).
-- Profile: `web`; the web surface mounts the shipped `standard` agent preset per session (agent-presets roster, default `standard`).
+- Profile: `web`; the web surface mounts the shipped `standard` agent preset per session (agent-presets roster, default `standard`). The user preset root `$DSH_HOME/.agent-presets/` additionally supplies the fifteen `role-*` presets and, since ADR 0004, an `orchestrator` preset — all selectable per session. The default is unchanged: a session that names no preset still runs `standard`.
 - The OMNI MCP client (`mcp__omni__*`) is added by the web profile patch — an environment fact, excluded from role toolFilters.
 - DSH checkout (read-only reference): `/home/administrator/deepseek-harness`.
 

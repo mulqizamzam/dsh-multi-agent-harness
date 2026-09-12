@@ -55,13 +55,36 @@ This document describes the **fifteen specialist agents** and the **orchestrator
 
 ## Role files
 
-Each role has three files under `agents/<id>/`:
+Each **specialist** role has three files under `agents/<id>/`:
 
 - **`AGENT.md`** — role definition: identity, domain, mission, responsibilities, capability summary, invariants.
 - **`policy.yaml`** — declarative policy: capability subset, toolFilter intent, invariants, review triggers.
 - **`agent.cordis.yml`** — the per-role DSH preset composition draft (persona, tool mounts, isolation).
 
-The orchestrator has corresponding files under `orchestrator/`.
+The orchestrator does **not** follow that layout. It is bound to the root session
+(`binding: root_session`), not a `tool-subagent` instance, so it has no
+`agents/<id>/` directory. Its artifacts live in `orchestrator/` and in the
+config layer:
+
+- **`orchestrator/AGENT.md`** — role definition (mission, responsibilities, capability boundary).
+- **`orchestrator/contract.md`** — the control-plane contract; this, not the session tool list, is the actual security boundary (THREAT-025).
+- **`orchestrator/policy.yaml`** — declarative policy. Same shape as a specialist `policy.yaml`, plus coordination-only keys (`kind`, `binding`, `delegation`, `authority`). It is **not** schema-checked: validation loads policies only for the fifteen ids under `agents/<id>/`.
+- **`orchestrator/agent.cordis.yml`** — the orchestrator DSH preset composition, derived from the shipped `standard` preset (ADR 0004).
+- **`orchestrator/preset.yml`** — the preset's display metadata (description only).
+- **`config/agents.yaml`** — registry entry (`kind: coordination`).
+- **`config/role-preset-mapping.yaml`** — its own top-level `orchestrator:` key, which has no counterpart under `agents/<id>/`. Its preset binding is recorded at `draft_artifacts.orchestrator_preset`; it cannot live on the entry itself, because `schemas/role-mapping.schema.json` closes `orchestratorEntry` with `additionalProperties: false`.
+
+It is **not a column of `config/permissions.yaml`**: that matrix is a specialist
+column set, and the orchestrator is not a sixteenth specialist. Its root-session
+sandbox/approval posture is recorded in `agent_defaults.orchestrator` there, and
+it is deliberately absent from `tool_surface_equivalence` (its allow set matches
+no specialist group).
+
+The orchestrator's preset is **deployed** as `$DSH_HOME/.agent-presets/orchestrator/`
+(repo source → user preset root, the same pattern as `agents/<id>/agent.cordis.yml`
+→ `role-<id>/`). Deploying it made the orchestrator's declared `toolFilter` an
+enforced composition for any session that selects it; the global default stays
+`standard`.
 
 ## Role → DSH preset mapping
 

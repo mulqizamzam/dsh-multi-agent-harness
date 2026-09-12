@@ -1,0 +1,15 @@
+role-argus
+role-atlas
+role-badsector
+role-cfo
+role-cto
+role-kai
+role-ledger
+role-nova
+role-quill
+role-scout
+role-somad
+role-talon
+role-tess
+role-vera
+role-zeko

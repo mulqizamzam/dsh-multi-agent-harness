@@ -1,0 +1,9 @@
+roster rows                : 16
+broken rows                : 0
+orchestrator present       : true | trust: user | broken: none
+writableRoot == deploy dir : true (/home/administrator/agent-workspace/.dsh/.agent-presets)
+metadata via roster reader : "Coordination and delegation layer: scopes objectives, routes to the minimum specialist set, and enforces the authority and evidence gates."
+readComposition chars      : 14722
+top-level row count        : 15
+row "- id: tool-ralph"      : false (false = correctly absent as a ROW)
+string tool-ralph in file  : 1 occurrence(s) — header comment only, see ADR 0004 delta table

@@ -45,7 +45,10 @@ mapping_version: 2
 status: finalized
 version_pin: deepseek-harness-0.1.1-rc.2
 documentation_ref: docs/tool-catalog.md
-preset_naming_convention: 'role-<id>'          # Agent Preset directory id (not yet authored)
+preset_naming_convention: 'role-<id>'          # Agent Preset directory id for the 15 specialists
+                                               # (authored + mounted; see draft_artifacts.status).
+                                               # Does NOT cover the orchestrator — see
+                                               # draft_artifacts.orchestrator_preset (ADR 0004).
 instance_naming_convention: 'subagent_<id>'   # per-role tool-subagent toolName
 
 # Roles are exposed to the orchestrator via per-role tool-subagent instances.
@@ -409,5 +412,15 @@ draft_artifacts:
   status: mounted                      # 2026-09-07: 7 baseline (D4/D7); 2026-09-09: + 8 expansion (ADR 0003 D8) — all 15 mounted
   preset_draft_path: 'agents/<id>/agent.cordis.yml'   # per-role preset composition
   instances_draft_path: config/tool-subagent-instances.yaml  # per-role tool-subagent rows
-  orchestrator_preset: standard       # root session stays on the shipped standard preset
+  orchestrator_preset: orchestrator   # ADR 0004 D1: the orchestrator composes its own preset
+                                      # (derived from shipped `standard`; see docs/adr/0004),
+                                      # deployed at $DSH_HOME/.agent-presets/orchestrator/.
+                                      # Declared HERE, not on the `orchestrator:` entry: that
+                                      # entry's schema (schemas/role-mapping.schema.json,
+                                      # $defs.orchestratorEntry) is additionalProperties:false,
+                                      # and preset_naming_convention 'role-<id>' does not cover
+                                      # the orchestrator (its id is `orchestrator`, not
+                                      # `role-orchestrator`) — so the binding is not derivable.
+                                      # D5: agent-presets.default in settings.yaml stays
+                                      # `standard` — selection is a per-session Human choice.
   mount_required: false               # exceptions already executed; no further mount required
