@@ -1,7 +1,7 @@
 # ADR 0005 — Delegation Effort Budget and Model Route
 
-- **Status**: **PROPOSED** — awaiting Human decision. Nothing here is a decision of record until the Human accepts it; this file asserts no approval on the Human's behalf.
-- **Date**: 2026-09-14
+- **Status**: **ACCEPTED — "Approve as proposed"** (Human decision, 2026-09-13). Owner's instruction verbatim: *"APPROVE ADR 0005. REJECT perubahan implementasi tambahan yang belum diajukan di ADR ini. Status yang paling tepat: Approve as proposed."* The decisions below are now the record. **This approval carries no implementation authority**: the second sentence withholds approval from any change not stated in this file, so the lever in D6 stays unmounted.
+- **Date**: 2026-09-13 (proposed and accepted the same day; the draft header's "2026-09-14" was an authoring error)
 - **Version pin**: DeepSeek Harness `0.1.1-rc.2` (checkout `/home/administrator/deepseek-harness`, `HEAD 7135b5958b`). Later releases require re-verification — see §Verification, "Boundary".
 - **Scope**: `multi-agent-harness/`. Changes no composition, no schema, and no deployed preset. Documentation and one cross-reference only.
 - **Resolves**: ADR 0001 §"UNKNOWN findings" item 5 — the `UNKNOWN` half of it ("whether they can ever be model-controlled") becomes **ANSWERED for the recorded host version**. The config-level half was already resolved in ADR 0001 and is unchanged.
@@ -94,13 +94,15 @@ It is **not** adopted. What survives is narrower and already shaped by this repo
 
 The instance-scope model lever exists and is **not blocked by the host**; it is simply **unmounted here** (item 2), and it is recorded as an **available, gate-protected choice** so no reader concludes from this ADR that per-role model routing is impossible. Exercising it is a separate, explicitly-scoped decision taken through D3's gate. **Items 2 and 4 must be read together** — item 4 alone reads as "models cannot be chosen per role", item 2 alone as "just add a column"; the distinction that matters is **instance-scope vs call-time scope**. That distinction is why this ADR both forbids the `agent()` shortcut (D2) and refuses to call per-role routing impossible (D6).
 
+**Recorded outcome (2026-09-13).** The owner accepted this ADR as proposed and, in the same instruction, rejected additional implementation changes not proposed in it. The lever is therefore **declined for now, not foreclosed**: it stays unmounted, and using it later takes a fresh owner decision plus everything D3 requires (schema change, validator, per-case composition exception, byte-identical sync test).
+
 ## Consequences
 
 **Positive**
 
 - One meaning per word: "tier" keeps meaning the permission model, and effort means staffing. No new ambiguity enters a config vocabulary that is validated by test.
 - The tension found in Context item 4 is now **written down**. It was previously visible only to someone who read both `runtime.ts` and `workflow-worker-thread/src/host.ts`; the next person to consider "just pick a better model for the hard task" finds the cost stated next to the capability.
-- The **per-role** option is recorded as open rather than foreclosed: a reader who wants model heterogeneity learns that the host supports it at the instance scope with the fence intact (item 2), and which gate must be opened to use it (D3).
+- The **per-role** option is recorded as available rather than foreclosed, and as **declined for now** by the owner's acceptance instruction: a reader who wants model heterogeneity learns that the host supports it at the instance scope with the fence intact (item 2), which gate must be opened to use it (D3), and that opening it is not implied by this ADR.
 - ADR 0001 UNKNOWN item 5 stops being an open question that every reader must re-derive.
 
 **Negative / accepted**
@@ -152,7 +154,7 @@ sha256sum docs/adr/0001-multi-agent-control-plane-boundary.md | cut -c1-24
 - **Does not mount `agentOptions` now** — no `agentOptions`/`model` field is added to any instance row, schema, mapping, or validator by this ADR. The lever is recorded as available and gated (D6), not exercised.
 - Does **not** set a numeric agent-count, token, or cost threshold — no `>=3 subtask` rule, and no `15×` budget cap. Those numbers appear in this ADR only as cited external observations.
 - Does **not** move any gate, change the authority boundary, or relax the read-only posture of any assurance role.
-- Does **not** claim Human approval. The status remains **PROPOSED** until the Human decides.
+- Grants **no implementation authority**. The owner's 2026-09-13 acceptance ("Approve as proposed") came with an explicit rejection of additional implementation changes not proposed here, so nothing in `config/`, `schemas/`, `agents/`, or the deployed presets is approved by this file. For the record: the independence-gate and evidence-fabrication fixes committed the same day (`594b0ae`) were ordered by a separate direct instruction, not by this ADR, and this ADR neither ratifies nor extends them.
 
 ## References
 
