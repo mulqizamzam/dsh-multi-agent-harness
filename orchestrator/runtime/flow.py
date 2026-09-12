@@ -208,6 +208,10 @@ class ExecutionFlow:
         self._collected: list = []
         self._recovery_controller = None
         self._verification_result = None
+        # Data-only trace of withheld verification evidence artifacts (the
+        # independent kinds of an independence-requiring category). Never
+        # verification evidence itself.
+        self._pending_independent_verification: list = []
         self._approval_reference = ""
         self._client: DelegationClient | None = None
 
@@ -1089,21 +1093,63 @@ class ExecutionFlow:
 
     def _attach_evidence(self, engine, plan: ExecutePlan):
         """Attach verification evidence artifacts for the action category
-        (VERIFY-003: required kinds must be present)."""
+        (VERIFY-003: required kinds must be present).
+
+        A category that requires INDEPENDENT verification gets NO fabricated
+        evidence: the orchestrator is the executor, so a self-authored
+        artifact of the required kind would satisfy the presence check while
+        the independent verifier does not exist yet. The kinds are therefore
+        left genuinely missing, so the verification gate answers INSUFFICIENT
+        (fail-closed) until a separate verifier adds real artifacts. The
+        withheld kinds are recorded as data only (never as evidence) in
+        `_pending_independent_verification`.
+        """
         try:
             reqs = engine.request.resolve_action_category()
             from control.verification import verification_requirements
-            required = verification_requirements(reqs).required_evidence
+            requirements = verification_requirements(reqs)
+            required = requirements.required_evidence
+            independence = requirements.independence
         except Exception:  # noqa: BLE001 — fail-closed to a generic artifact
             required = ("artifact",)
+            independence = "self"
         target = plan.target or plan.description or "runtime"
-        for kind in (required or ("artifact",)):
-            try:
-                engine.add_evidence(
-                    kind, f"{target}#{kind}",
-                    verifier="self:orchestrator", independent=False)
-            except Exception:  # noqa: BLE001 — evidence is best-effort data
-                pass
+        if independence != "independent":
+            for kind in (required or ("artifact",)):
+                try:
+                    engine.add_evidence(
+                        kind, f"{target}#{kind}",
+                        verifier="self:orchestrator", independent=False)
+                except Exception:  # noqa: BLE001 — evidence is best-effort data
+                    pass
+            return
+        self._record_pending_independent(reqs, required, target)
+
+    def _record_pending_independent(self, category: str, kinds, target: str):
+        """Record — as DATA, never as verification evidence — that a category
+        requiring independent verification has no independent artifacts yet.
+
+        The pending kinds are exactly the artifacts withheld above; each entry
+        names the artifact an independent verifier must supply. `verdict_until_
+        supplied` states the gate's answer in the meantime (INSUFFICIENT)."""
+        pending = getattr(self, "_pending_independent_verification", None)
+        if pending is None:
+            pending = self._pending_independent_verification = []
+        record = {
+            "action_category": category,
+            "independence": "independent",
+            "executor": "orchestrator",
+            "verifier": "none",
+            "reason": ("no independent verifier is attached: the orchestrator "
+                       "is the executor of this action, so the required kinds "
+                       "are not fabricated"),
+            "pending_kinds": list(kinds or ("artifact",)),
+            "target": target,
+            "verdict_until_supplied": "INSUFFICIENT",
+        }
+        if record not in pending:
+            pending.append(record)
+        return record
 
     # ------------------------------------------------------------------
     # VERIFY

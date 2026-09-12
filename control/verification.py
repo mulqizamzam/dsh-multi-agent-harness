@@ -322,18 +322,28 @@ def evaluate_verification(
 
     # Independence check.
     if reqs.independence == "independent":
+        # Fail closed when the executor identity is unknown: independence
+        # cannot be established without knowing who executed (VERIFY-004).
+        if not isinstance(executor, str) or not executor.strip():
+            return VerificationResult(
+                "INSUFFICIENT",
+                "action category requires INDEPENDENT verification; executor "
+                "identity is unknown — independence cannot be established "
+                "(VERIFY-004)",
+                detail,
+            )
         has_independent = False
         for e in ev_list:
             if getattr(e, "independent", False):
                 ver = getattr(e, "verifier", "")
-                if not executor or ver != executor:
+                if ver and ver != executor:
                     has_independent = True
                     break
         if not has_independent:
             return VerificationResult(
                 "INSUFFICIENT",
                 "action category requires INDEPENDENT verification; executor "
-                "self-verification is insufficient",
+                "self-verification is insufficient (VERIFY-003)",
                 detail,
             )
 

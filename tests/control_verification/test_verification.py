@@ -257,6 +257,7 @@ class TestVerify003:
             observed_outcome={"amount": 1000, "currency": "USD"},
             evidence=(ev,),
             human_confirmation=False,
+            executor="cfo",
         )
         assert result.verdict == "INSUFFICIENT"
         assert "Human confirmation" in result.reason
@@ -273,6 +274,7 @@ class TestVerify003:
             observed_outcome={"amount": 1000, "currency": "USD"},
             evidence=(ev,),
             human_confirmation=True,
+            executor="cfo",
         )
         assert result.verdict == "PASSED"
 
@@ -317,7 +319,8 @@ class TestIndependence:
     def test_production_deploy_independent_passes(self):
         """Production deploy with independent verifier passes."""
         session = VerificationSession("t-1", "production_deploy",
-                                      expected={"status": "live"})
+                                      expected={"status": "live"},
+                                      executor="cto")
         session.record_observed({"status": "live", "url": "https://example.com"})
         session.add_evidence("deployment_status", "deploy/report.json",
                              verifier="independent:ops", independent=True)
@@ -328,7 +331,8 @@ class TestIndependence:
     def test_credential_change_requires_independent_and_human(self):
         """Credential change requires independent + Human confirmation."""
         session = VerificationSession("t-1", "credential_change",
-                                      expected={"key": "rotated"})
+                                      expected={"key": "rotated"},
+                                      executor="orchestrator")
         session.record_observed({"key": "rotated", "timestamp": "..."})
         session.add_evidence("audit_record", "audit/events.jsonl",
                              verifier="independent:security", independent=True,
@@ -346,6 +350,7 @@ class TestIndependence:
             observed_outcome={"url": "https://example.com/post"},
             evidence=(ev,),
             human_confirmation=True,
+            executor="somad",
         )
         assert result.verdict == "PASSED"
 
@@ -359,6 +364,7 @@ class TestIndependence:
             expected_outcome={"restored": True, "checksum": "abc123"},
             observed_outcome={"restored": True, "checksum": "abc123"},
             evidence=(ev,),
+            executor="zeko",
         )
         assert result.verdict == "PASSED"
 
@@ -370,6 +376,75 @@ class TestIndependence:
         session.add_evidence("continuity_check", "novel/continuity/v5.md",
                              verifier="self:nova", independent=False)
         assert session.can_emit_complete() is True
+
+    def test_unknown_executor_fails_closed(self):
+        """VERIFY-004: executor identity unknown (empty) → a self-asserted
+        independent=True evidence is NOT accepted (no auto-pass)."""
+        result = evaluate_verification(
+            action_category="production_deploy",
+            expected_outcome={"status": "live"},
+            observed_outcome={"status": "live"},
+            evidence=(
+                VerificationEvidence("deployment_status", "deploy/report.json",
+                                     verifier="independent:ops",
+                                     independent=True),
+                VerificationEvidence("runtime_health", "health/probe.json",
+                                     verifier="independent:ops",
+                                     independent=True),
+            ),
+            executor="",
+        )
+        assert result.verdict == "INSUFFICIENT"
+        assert "executor identity is unknown" in result.reason
+        assert result.can_emit_complete() is False
+
+    def test_verifier_equals_executor_is_insufficient(self):
+        """Independence requires a verifier distinct from the executor."""
+        result = evaluate_verification(
+            action_category="production_deploy",
+            expected_outcome={"status": "live"},
+            observed_outcome={"status": "live"},
+            evidence=(
+                VerificationEvidence("deployment_status", "deploy/report.json",
+                                     verifier="cto", independent=True),
+                VerificationEvidence("runtime_health", "health/probe.json",
+                                     verifier="cto", independent=True),
+            ),
+            executor="cto",
+        )
+        assert result.verdict == "INSUFFICIENT"
+        assert "self-verification is insufficient" in result.reason
+
+    def test_distinct_verifier_and_executor_passes(self):
+        """Independent evidence with a named, distinct verifier passes."""
+        result = evaluate_verification(
+            action_category="production_deploy",
+            expected_outcome={"status": "live"},
+            observed_outcome={"status": "live"},
+            evidence=(
+                VerificationEvidence("deployment_status", "deploy/report.json",
+                                     verifier="independent:ops",
+                                     independent=True),
+                VerificationEvidence("runtime_health", "health/probe.json",
+                                     verifier="independent:ops",
+                                     independent=True),
+            ),
+            executor="cto",
+        )
+        assert result.verdict == "PASSED"
+        assert result.can_emit_complete() is True
+
+    def test_self_verified_category_unaffected_by_executor_identity(self):
+        """Guard: independence != "independent" ignores executor identity."""
+        result = evaluate_verification(
+            action_category="internal_analysis",
+            expected_outcome={"result": "ok"},
+            observed_outcome={"result": "ok"},
+            evidence=(),
+            executor="",
+        )
+        assert result.verdict == "PASSED"
+        assert result.can_emit_complete() is True
 
 
 # ===========================================================================
