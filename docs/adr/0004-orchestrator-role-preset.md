@@ -51,6 +51,8 @@ The four deletions are not stylistic; each is forced by the orchestrator's alrea
 
 This makes the preset the **first enforcement point** of the orchestrator's declared tool surface: for any session that selects it, the declared `toolFilter` stops being an aspiration and becomes the composed reality.
 
+Two of the four deletions rest on "not present in the orchestrator `allow` set". That test was made unambiguous on 2026-09-12, when the allow set was completed to name all fifteen `subagent_<id>` instances. Before that it named only the eight expansion instances, leaving the seven baseline ones in **neither** `allow` nor `deny`, so for those names "deliberately absent from `allow`" and "simply overlooked" were indistinguishable. `tests/validate_config.py` now asserts the coverage (`orchestrator allow covers all 15 instances`), so this derivation can no longer be weakened by an incomplete allow set.
+
 ### D4 — The binding stays `root_session`
 
 This ADR changes **how** the root session may be composed. It does **not**:
@@ -84,7 +86,7 @@ Deployment creates one new directory under the user preset root. It modifies no 
 
 **Residual gaps (stated, not assumed)**
 
-- The preset is only as sound as the `standard` composition it derives from. A future change to the shipped `standard` preset does **not** propagate into the `orchestrator` preset: presets are copies, and the composition a session joined outlives its source file changing. Divergence must be managed by re-deriving, and this ADR creates no mechanism that does so automatically.
+- The preset is only as sound as the `standard` composition it derives from. A future change to the shipped `standard` preset does **not** propagate into the `orchestrator` preset: presets are copies, and the composition a session joined outlives its source file changing. Divergence must be managed by re-deriving. This ADR originally created no mechanism that did so automatically; that gap was closed afterwards by `tests/unit/test_orchestrator_preset_derivation.py`, which asserts the composition is exactly the shipped preset minus the four documented rows (recursively, so the three nested deletions cannot hide) and fails with an `ACTION:` pointer when upstream drifts. It skips cleanly where the read-only DSH checkout is absent, so it is a signal in this environment rather than a universal gate.
 - The preset does not, by itself, enforce anything for sessions that never select it. The control plane (THREAT-025) remains the only boundary that holds regardless of preset.
 
 ## Verification

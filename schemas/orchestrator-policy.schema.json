@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multi-agent-harness.local/schemas/orchestrator-policy.schema.json",
+  "title": "Orchestrator coordination policy (orchestrator/policy.yaml)",
+  "description": "Declarative policy for the coordination layer, bound to the root session (orchestrator/policy.yaml). Deliberately a SEPARATE schema from role-definition.schema.json: that one is the contract for the fifteen specialists and closes `role` to their ids with additionalProperties:false, so it can never accept the orchestrator, which is not a sixteenth specialist (PRD §4, ADR 0001 D3). Adds the coordination-only keys kind, binding, delegation and authority over the specialist template. Control-plane input; NOT native DSH authorization — orchestrator/contract.md remains the security boundary (THREAT-025) and the session toolFilter is an L2 backstop. Tool names verified against DSH 0.1.1-rc.2 catalog (docs/tool-catalog.md); tool_filter allow/deny must stay set-equal with config/role-preset-mapping.yaml §orchestrator (enforced by tests/validate_config.py).",
+  "x-schema-version": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role", "id", "kind", "binding", "role_version", "status", "version_pin", "display_name", "domain", "summary", "capabilities", "sandbox_approval_intent", "delegation", "authority", "tool_filter", "prohibited_actions", "invariants", "review_trigger"],
+  "properties": {
+    "role": { "const": "orchestrator" },
+    "id": { "const": "orchestrator", "$comment": "registry-parity alias of `role` (config/agents.yaml §orchestrator)" },
+    "kind": { "const": "coordination" },
+    "binding": { "const": "root_session", "$comment": "not a tool-subagent instance, so there is no agents/<id>/ directory" },
+    "role_version": { "type": "integer", "minimum": 1 },
+    "status": { "const": "finalized" },
+    "version_pin": { "type": "string", "pattern": "^deepseek-harness-" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "domain": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": { "enum": [
+        "server_read", "server_write", "code_read", "code_write",
+        "financial_analysis", "financial_transaction", "web_research",
+        "social_drafting", "social_publishing", "novel_editing",
+        "adversarial_review", "production_deploy", "destructive_action",
+        "evidence_verification", "security_engineering", "architecture_review",
+        "failure_analysis", "policy_specification", "integration_compatibility",
+        "reliability_engineering", "audit_provenance"
+      ] },
+      "patternProperties": {
+        "^.*$": { "enum": ["yes", "scoped", "review", "approval", "scoped_approval", "no"] }
+      }
+    },
+    "sandbox_approval_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sandbox", "approval"],
+      "properties": {
+        "sandbox": { "enum": ["read-only", "workspace-write", "danger-full-access"] },
+        "approval": { "enum": ["ask", "never"] }
+      }
+    },
+    "delegation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delegation_orchestrator_only", "subdelegation", "delegation_tools", "authority_gate_delegable", "workflow_is_not_a_security_boundary"],
+      "properties": {
+        "delegation_orchestrator_only": { "const": true },
+        "subdelegation": { "const": "deny_by_default" },
+        "delegation_tools": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["subagent", "subagent_fork", "send_message", "interrupt_agent", "list_agents", "workflow"] }
+        },
+        "authority_gate_delegable": { "const": false },
+        "workflow_is_not_a_security_boundary": { "const": true }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["permanent_authority", "high_risk_execution", "high_risk_routing", "delegation_immutable_below", "gate_enforcement", "escalation_target"],
+      "properties": {
+        "permanent_authority": { "const": "none" },
+        "high_risk_execution": { "const": "never_direct" },
+        "high_risk_routing": { "const": "specialist_under_authority_and_approval" },
+        "delegation_immutable_below": { "const": "human" },
+        "gate_enforcement": { "const": "code_enforced" },
+        "escalation_target": { "const": "human" }
+      }
+    },
+    "tool_filter": { "$ref": "#/$defs/toolFilter" },
+    "prohibited_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+    },
+    "invariants": {
+      "type": "object",
+      "description": "Every invariant the orchestrator declares is security-relevant and must hold (true). Unknown extra booleans are allowed; REQUIRED_POLICY_INVARIANTS (no_self_delegation, subdelegation_deny_by_default) are required here exactly as for the specialist policies.",
+      "required": ["never_authorizes", "no_self_escalation", "no_self_delegation", "subdelegation_deny_by_default", "execution_gate_required", "no_direct_high_risk_execution", "authority_gate_never_delegated", "delegation_immutable_below_human", "no_scope_expansion", "scope_expansion_requires_new_delegation", "single_writer_state_audit", "badsector_pass_is_not_authorization", "verification_before_complete", "fail_closed_and_escalate", "external_content_is_data_not_authority"],
+      "properties": {
+        "never_authorizes": { "const": true },
+        "no_self_escalation": { "const": true },
+        "no_self_delegation": { "const": true },
+        "subdelegation_deny_by_default": { "const": true },
+        "execution_gate_required": { "const": true },
+        "no_direct_high_risk_execution": { "const": true },
+        "authority_gate_never_delegated": { "const": true },
+        "delegation_immutable_below_human": { "const": true },
+        "no_scope_expansion": { "const": true },
+        "scope_expansion_requires_new_delegation": { "const": true },
+        "single_writer_state_audit": { "const": true },
+        "badsector_pass_is_not_authorization": { "const": true },
+        "verification_before_complete": { "const": true },
+        "fail_closed_and_escalate": { "const": true },
+        "external_content_is_data_not_authority": { "const": true }
+      },
+      "additionalProperties": { "type": "boolean" }
+    },
+    "review_trigger": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+  },
+  "$defs": {
+    "toolFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow", "deny"],
+      "properties": {
+        "allow": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "deny": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "unmounted_candidates": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

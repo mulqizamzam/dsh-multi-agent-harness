@@ -148,6 +148,14 @@ def run_checks(root):
         except Exception as e:
             policies[rid] = {}
             check(f"agents/{rid}/policy.yaml load", False, str(e))
+    # The orchestrator is bound to the root session, so it has no agents/<id>/
+    # directory and role-definition.schema.json closes `role` to the fifteen
+    # specialist ids: it gets its own file and its own schema.
+    try:
+        orch_policy = load_yaml(os.path.join(root, "orchestrator", "policy.yaml")) or {}
+    except Exception as e:
+        orch_policy = {}
+        check("orchestrator/policy.yaml load", False, str(e))
 
     schemas = {}
     for fn in os.listdir(schemas_dir):
@@ -170,6 +178,7 @@ def run_checks(root):
         schema_valid(mapping, "role-mapping.schema.json", "role-preset-mapping.yaml")
         for rid, pol in policies.items():
             schema_valid(pol, "role-definition.schema.json", f"agents/{rid}/policy.yaml")
+        schema_valid(orch_policy, "orchestrator-policy.schema.json", "orchestrator/policy.yaml")
     else:  # pragma: no cover
         check("jsonschema available", False, "jsonschema not installed; schema checks skipped")
 
@@ -313,6 +322,37 @@ def run_checks(root):
     check("orchestrator allow∩deny=∅", not (orch_allow & orch_deny), f"{orch_allow & orch_deny}")
     check("orchestrator tool names verified", not ((orch_allow | orch_deny) - VERIFIED_TOOLS),
           f"{(orch_allow | orch_deny) - VERIFIED_TOOLS}")
+    # Every specialist instance must be named by the declared allow set: the
+    # orchestrator is the only delegator (consistency_rules.delegation_orchestrator_only),
+    # and ADR 0004 D3 derives the preset's row deletions from exactly this set, so
+    # an instance missing here is an un-enforced narrowing of the delegation surface.
+    missing_instances = {f"subagent_{o}" for o in SPECIALIST_IDS} - orch_allow
+    check("orchestrator allow covers all 15 instances", not missing_instances,
+          f"missing {sorted(missing_instances)}")
+
+    # --- orchestrator policy (declaration ↔ mapping consistency) ------------
+    # orchestrator/policy.yaml COPIES the mapping's tool_filter; without these
+    # checks the copy is prose that can silently diverge from the config.
+    orch_pol_tf = orch_policy.get("tool_filter", {})
+    pol_allow = set(orch_pol_tf.get("allow", []))
+    pol_deny = set(orch_pol_tf.get("deny", []))
+    check("orchestrator policy allow∩deny=∅", not (pol_allow & pol_deny), f"{pol_allow & pol_deny}")
+    check("orchestrator mapping==policy allow", pol_allow == orch_allow, f"{pol_allow ^ orch_allow}")
+    check("orchestrator mapping==policy deny", pol_deny == orch_deny, f"{pol_deny ^ orch_deny}")
+    orch_pol_deleg = orch_policy.get("delegation", {})
+    check("orchestrator mapping==policy delegation_tools",
+          set(orch_pol_deleg.get("delegation_tools", [])) == set(orch.get("delegation_tools", [])),
+          f"{set(orch_pol_deleg.get('delegation_tools', [])) ^ set(orch.get('delegation_tools', []))}")
+    # Same invariant the specialist section asserts (ADR 0002), plus the V1
+    # subdelegation rule the mapping's consistency_rules declare for the root
+    # session: the orchestrator must be the only delegator and may not delegate
+    # to itself.
+    check("orchestrator no_self_delegation invariant declared",
+          orch_policy.get("invariants", {}).get("no_self_delegation") is True,
+          f"{orch_policy.get('invariants', {}).get('no_self_delegation')!r}")
+    check("orchestrator delegation_orchestrator_only declared",
+          orch_pol_deleg.get("delegation_orchestrator_only") is True,
+          f"{orch_pol_deleg.get('delegation_orchestrator_only')!r}")
 
     # --- ADR 0002 protected-path discipline ---------------------------------
     # Any role's allow set must NOT grant a way to write protected paths unless

@@ -20,14 +20,20 @@
 #   - config/permissions.yaml          capability vocabulary + agent_defaults
 #   - docs/adr/0001 (Decision 3, hybrid) and docs/adr/0004 (role preset)
 #
-# Shape note — why this file is not schema-checked: tests/validate_config.py
-# loads policy files only for SPECIALIST_IDS at agents/<id>/policy.yaml, and
+# Shape note — why this file has its OWN schema rather than sharing the
+# specialist one: tests/validate_config.py loads specialist policies from
+# agents/<id>/policy.yaml for SPECIALIST_IDS, and
 # schemas/role-definition.schema.json closes `role` to those fifteen ids. The
 # orchestrator is bound to the root session, so it has no agents/<id>/
-# directory; it therefore falls outside both. The specialist-shared invariants
-# (no_self_delegation, subdelegation_deny_by_default, never_authorizes) are
-# still declared below so the same rules hold if this file is ever brought
-# under validation. Keys below deliberately mirror the specialist template
+# directory and can never satisfy that schema. It is therefore validated by
+# schemas/orchestrator-policy.schema.json, wired into tests/validate_config.py
+# and reachable through the tests/validate-config.py wrapper that the config
+# files name. The specialist-shared invariants (no_self_delegation,
+# subdelegation_deny_by_default, never_authorizes) are declared below and are
+# now actually checked, and the validator additionally asserts that this file's
+# tool_filter and delegation_tools stay set-equal with
+# config/role-preset-mapping.yaml §orchestrator. Keys below deliberately mirror
+# the specialist template
 # (role / role_version / status / version_pin / display_name / domain /
 # summary / capabilities / sandbox_approval_intent / tool_filter /
 # prohibited_actions / invariants / review_trigger); the coordination-only
@@ -113,6 +119,8 @@ tool_filter:
   allow: [read, read_image, glob, grep, edit, write, bash,
           job_kill, job_list, job_output,
           subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+          subagent_zeko, subagent_cto, subagent_cfo, subagent_kai,
+          subagent_somad, subagent_badsector, subagent_nova,
           subagent_vera, subagent_argus, subagent_atlas, subagent_tess,
           subagent_quill, subagent_scout, subagent_talon, subagent_ledger,
           workflow, skill, ask_user_question, exit_plan_mode,
@@ -140,14 +148,16 @@ tool_filter:
     never executed directly — they route to a specialist under authority +
     approval (ORC-002). ralph and the agent-team tools are out of scope for the
     orchestrator (ralph is a fresh-agent loop, not orchestration; agent teams
-    are BLOCKED). Observed asymmetry, copied without correction and flagged for
-    owner review: this allow set names the eight expansion subagent_<id>
-    instances but not the seven baseline ones, which appear in neither allow nor
-    deny. All fifteen instance rows are mounted in the live profile composition
-    and orchestrator/agent.cordis.yml contributes the generic subagent /
-    subagent_fork rows, so the baseline seven stay reachable today — but ADR
-    0004 D3 derives row deletions from exactly this allow set, so a future
-    exact-name narrowing of the root session would leave them out.
+    are BLOCKED). Asymmetry corrected 2026-09-12: this allow set previously
+    named the eight expansion subagent_<id> instances but not the seven baseline
+    ones, which appeared in neither allow nor deny — even though all fifteen
+    instance rows are mounted in the live profile composition and
+    orchestrator/agent.cordis.yml contributes the generic subagent /
+    subagent_fork rows. All fifteen are now named here and in
+    config/role-preset-mapping.yaml §orchestrator, and tests/validate_config.py
+    asserts that coverage (`orchestrator allow covers all 15 instances`), so the
+    reduction cannot silently regress and ADR 0004 D3's derivation basis can no
+    longer drift.
 
 prohibited_actions: [direct_production_deploy, direct_destructive_action,
                      direct_financial_transaction, direct_credential_change,

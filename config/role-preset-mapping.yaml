@@ -371,6 +371,8 @@ orchestrator:
     allow: [read, read_image, glob, grep, edit, write, bash,
             job_kill, job_list, job_output,
             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
+            subagent_zeko, subagent_cto, subagent_cfo, subagent_kai,
+            subagent_somad, subagent_badsector, subagent_nova,
             subagent_vera, subagent_argus, subagent_atlas, subagent_tess,
             subagent_quill, subagent_scout, subagent_talon, subagent_ledger,
             workflow, skill, ask_user_question, exit_plan_mode,

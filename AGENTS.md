@@ -55,11 +55,12 @@ This document describes the **fifteen specialist agents** and the **orchestrator
 
 ## Role files
 
-Each **specialist** role has three files under `agents/<id>/`:
+Each **specialist** role has four files under `agents/<id>/`:
 
 - **`AGENT.md`** — role definition: identity, domain, mission, responsibilities, capability summary, invariants.
 - **`policy.yaml`** — declarative policy: capability subset, toolFilter intent, invariants, review triggers.
 - **`agent.cordis.yml`** — the per-role DSH preset composition draft (persona, tool mounts, isolation).
+- **`preset.yml`** — the preset's display metadata (description only). Carries no `id` and no `trust`: the preset id is the deployed directory name and trust comes from the preset root. Deployed alongside the composition as `role-<id>/preset.yml`.
 
 The orchestrator does **not** follow that layout. It is bound to the root session
 (`binding: root_session`), not a `tool-subagent` instance, so it has no
@@ -68,7 +69,7 @@ config layer:
 
 - **`orchestrator/AGENT.md`** — role definition (mission, responsibilities, capability boundary).
 - **`orchestrator/contract.md`** — the control-plane contract; this, not the session tool list, is the actual security boundary (THREAT-025).
-- **`orchestrator/policy.yaml`** — declarative policy. Same shape as a specialist `policy.yaml`, plus coordination-only keys (`kind`, `binding`, `delegation`, `authority`). It is **not** schema-checked: validation loads policies only for the fifteen ids under `agents/<id>/`.
+- **`orchestrator/policy.yaml`** — declarative policy. Same shape as a specialist `policy.yaml`, plus coordination-only keys (`kind`, `binding`, `delegation`, `authority`). It cannot use `role-definition.schema.json` (that schema closes `role` to the fifteen specialist ids), so it has its own `schemas/orchestrator-policy.schema.json`, wired into `tests/validate_config.py` and reachable through the `tests/validate-config.py` wrapper that the config files name. The validator additionally asserts this file's `tool_filter` and `delegation_tools` stay set-equal with `config/role-preset-mapping.yaml` §`orchestrator`, so the declaration cannot silently diverge from the mapping.
 - **`orchestrator/agent.cordis.yml`** — the orchestrator DSH preset composition, derived from the shipped `standard` preset (ADR 0004).
 - **`orchestrator/preset.yml`** — the preset's display metadata (description only).
 - **`config/agents.yaml`** — registry entry (`kind: coordination`).
