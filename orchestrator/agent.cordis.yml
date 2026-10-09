@@ -245,8 +245,14 @@
     # matching Bundle in this Profile and restart the Host, then copy this
     # preset and remove `disabled` from the matching tool row. Host availability
     # alone grants no tool.
-    - id: workflow-worker-thread
-      name: '@deepseek-ai/dsh-workflow-worker-thread'
+    # The workflow provider row. UPDATE 2026-10-09 (re-verification against
+    # DSH 0.2.0-rc.2): `@deepseek-ai/dsh-workflow-worker-thread` no longer
+    # exists; the provider shipped in this version is
+    # `@deepseek-ai/dsh-workflow-ptc` (the base bundle mounts the same row
+    # with `provider: spawn`, and disables it on the Web host plane so each
+    # preset mounts its own). Same row position, same provider contract.
+    - id: workflow-ptc
+      name: '@deepseek-ai/dsh-workflow-ptc'
       config:
         provider: spawn
 
