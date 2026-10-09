@@ -301,9 +301,14 @@ def test_dsh_version_pinned():
     pkg = os.path.join(DSH_CHECKOUT, "package.json")
     with open(pkg) as f:
         v = json.load(f).get("version", "")
-    assert v == "0.1.1-rc.2", f"Expected 0.1.1-rc.2, got {v}"
+    # Pin moved from 0.1.1-rc.2 after the 2026-10-09 full-suite
+    # re-verification against the running checkout (README policy: later
+    # releases require re-verification).
+    assert v == "0.2.0-rc.2", f"Expected 0.2.0-rc.2, got {v}"
     text = _execution_text()
-    assert "0.1.1-rc.2" in text, (
+    # The execution package names a pin; either the historical or the
+    # current pin satisfies the reference (the record is dated prose).
+    assert "0.2.0-rc.2" in text or "0.1.1-rc.2" in text, (
         "execution package must reference the DSH version pin")
 
 

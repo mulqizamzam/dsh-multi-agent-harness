@@ -168,20 +168,27 @@ def test_g13_expected_behaviour_documented_in_checklist():
 
 def test_l3_environment_probe_reports_honest_blockers():
     from tests.l3_runner.environment.readiness import assess_environment
+    from tests.environment.approval_composition import authorized_web_url
 
     report = assess_environment(scenario_id="L3-TEST-001",
                                 orchestrator_uid=os.getuid())
     assert report.l3_claim_possible is False
     assert report.rehearsal_ready is True
     blocked_ids = {b.split(":")[0] for b in report.blocked}
-    # Independent L3 blockers (answerer NOT among them: with the corrected
-    # composition-based detection the answerer IS available in a web GUI
-    # session, so L3ENV-ANS-1/ANS-2 are honestly no longer blockers).
+    # Independent L3 blockers. With an authorized (launch-token) browser
+    # answerer attached the corrected composition-based detection makes the
+    # answerer available, so L3ENV-ANS-1/ANS-2 are honestly no longer
+    # blockers; without attachment they block fail-closed.
     for blocker in ("L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"):
         assert blocker in blocked_ids, blocker
-    # The answerer is available by composition; it must NOT falsely block L3.
-    for not_blocker in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
-        assert not_blocker not in blocked_ids, not_blocker
+    if authorized_web_url():
+        # The answerer is available by composition; it must NOT falsely
+        # block L3.
+        for not_blocker in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
+            assert not_blocker not in blocked_ids, not_blocker
+    else:
+        for blocker in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
+            assert blocker in blocked_ids, blocker
 
 
 def test_l3_claim_gate_returns_false_on_current_facts(tmp_path):

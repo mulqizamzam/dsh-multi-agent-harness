@@ -70,12 +70,18 @@ def test_answerer_detection_uses_composition_not_disabled_convention(monkeypatch
     monkeypatch.setenv("DSH_APPROVAL_PROMPTS_DISABLED", "1")
     report = run_env_preflight(env={})
     a = next(c for c in report.checks if c.check_id == "ENV-APPROVAL-1")
-    # On this host the DSH base bundle composes the approval service and the
-    # web-app bundle composes the answerer surface; the session is a web GUI
-    # session, so the answerer is available by composition. The obsolete
-    # convention must not flip it to unavailable.
-    assert a.passed
-    assert report.ready_for_interactive
+    # Live (no injection): the check may fail closed when no authorized
+    # browser answerer is attached to this session — but never BECAUSE of the
+    # obsolete convention, which must not appear as the reason.
+    assert "DSH_APPROVAL_PROMPTS_DISABLED" not in a.detail
+    # Deterministic: the documented snapshot injection wins, so the corrected
+    # detection passes regardless of the ambient attachment state — proof the
+    # convention is not what drives the result.
+    injected = run_env_preflight(env={"approval_answerer_available": True})
+    a_injected = next(c for c in injected.checks
+                      if c.check_id == "ENV-APPROVAL-1")
+    assert a_injected.passed
+    assert injected.ready_for_interactive
 
 
 def test_answerer_unavailable_without_composition(monkeypatch, tmp_path):

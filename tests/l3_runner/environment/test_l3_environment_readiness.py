@@ -110,16 +110,31 @@ def test_uid_detection_same_uid(monkeypatch):
 # ===========================================================================
 # Answerer honesty (corrected detection)
 # ===========================================================================
-def test_answerer_available_by_composition_in_web_session():
-    """With the corrected detection, in a web GUI session where the DSH
-    base bundle composes the approval service and the web-app bundle composes
-    the answerer surface, the answerer IS available by composition. The obsolete
-    DSH_APPROVAL_PROMPTS_DISABLED convention is NEVER consulted (DSH does not
-    read it)."""
+def test_answerer_available_by_composition_in_web_session(monkeypatch):
+    """With the corrected detection, the answerer surface is composed (DSH
+    base bundle + web-app bundle), so availability follows from composition
+    plus an attached, authorized browser answerer — never from the obsolete
+    DSH_APPROVAL_PROMPTS_DISABLED convention (which DSH never reads).
+
+    Availability additionally requires an authorized (launch-token) web
+    URL: a bare exported URL is composed-but-not-attached and fails closed.
+    The composition sub-facts are asserted unconditionally; the live
+    availability probe is asserted whenever a browser answerer is attached.
+    """
     # Setting the obsolete convention must NOT flip detection to unavailable.
-    import os
-    val = os.environ.get("DSH_APPROVAL_PROMPTS_DISABLED", "")
-    assert _answerer_available(env={})
+    monkeypatch.setenv("DSH_APPROVAL_PROMPTS_DISABLED", "1")
+    from tests.environment.approval_composition import (
+        approval_readiness, authorized_web_url,
+    )
+    r = approval_readiness()
+    # Composition is source truth on this host.
+    assert r.composed
+    assert r.approval_service_composed
+    assert r.answerer_surface_composed
+    assert not r.headless_unavailable
+    # Live: available only when a browser answerer is actually attached.
+    if authorized_web_url():
+        assert _answerer_available(env={})
     # The snapshot override still works for deterministic injection.
     assert _answerer_available(env={"approval_answerer_available": True})
     assert not _answerer_available(env={"approval_answerer_available": False})
@@ -145,14 +160,14 @@ def test_answerer_absent_blocks_l3():
     assert any("L3ENV-ANS-1" in b for b in report.blocked)
 
 
-def test_answerer_available_in_live_web_session_does_not_false_positive_l3():
-    """With the corrected detection, in this live web GUI session the answerer
-    is available by composition (DSH base + web-app bundles), so L3ENV-ANS-1
-    PASSES — the probe no longer under-reports. L3 remains blocked by the
-    independent blockers (UID-2, D4D7-3, PLAN-REAL), never by a false-negative
-    answerer check."""
+def test_answerer_available_does_not_false_positive_l3():
+    """With the answerer available (injected via the documented snapshot),
+    L3ENV-ANS-1 PASSES — the probe no longer under-reports a composed,
+    attached answerer. L3 remains blocked by the independent blockers
+    (UID-2, D4D7-3, PLAN-REAL), never by a false-negative answerer check."""
     report = assess_environment(
-        env={"sandbox_mode": "workspace-write", "approval_policy": "ask"},
+        env={"sandbox_mode": "workspace-write", "approval_policy": "ask",
+             "approval_answerer_available": True},
         orchestrator_uid=int(os.getuid()),
     )
     ans1 = next(c for c in report.checks if c.check_id == "L3ENV-ANS-1")
@@ -167,6 +182,27 @@ def test_answerer_available_in_live_web_session_does_not_false_positive_l3():
                     if not c.passed and c.required_for_l3)
     assert "L3ENV-ANS-1" not in failed, (
         f"answerer check must not falsely block L3: {failed}")
+
+
+def test_answerer_headless_blocks_l3_fail_closed():
+    """Without injection and without an authorized browser answerer attached,
+    L3ENV-ANS-1 blocks L3 — the fail-closed counterpart of the test above. A
+    composed-but-unattached surface never counts as a live Human answerer."""
+    from tests.environment.approval_composition import authorized_web_url
+    if authorized_web_url():
+        pytest.skip("authorized browser answerer attached; live probe passes")
+    report = assess_environment(
+        env={"sandbox_mode": "workspace-write", "approval_policy": "ask"},
+        orchestrator_uid=int(os.getuid()),
+    )
+    ans1 = next(c for c in report.checks if c.check_id == "L3ENV-ANS-1")
+    assert not ans1.passed
+    assert any("L3ENV-ANS-1" in b for b in report.blocked)
+    # The independent blockers still hold: L3 is blocked by the missing
+    # answerer AND by UID-2, D4D7-3, PLAN-REAL — the answerer is additive,
+    # never the sole or a false blocker.
+    failed = sorted(c.check_id for c in report.checks
+                    if not c.passed and c.required_for_l3)
     for cid in ("L3ENV-D4D7-3", "L3ENV-PLAN-REAL", "L3ENV-UID-2"):
         assert cid in failed, f"independent blocker {cid} missing from {failed}"
 

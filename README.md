@@ -1,8 +1,8 @@
 # Multi-Agent Harness — Control Plane
 
-A **fifteen-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.1.1-rc.2`): 7 active baseline specialists + 8 registered-not-mounted expansion specialists (PRD v0.2 / ADR 0003).
+A **fifteen-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.2.0-rc.2`): 7 active baseline specialists + 8 registered-not-mounted expansion specialists (PRD v0.2 / ADR 0003).
 
-**Version pin: DeepSeek Harness `0.1.1-rc.2`** — verified locally. Later releases require re-verification.
+**Version pin: DeepSeek Harness `0.2.0-rc.2`** — re-verified 2026-10-09 by the full test suite against the running checkout (previously `0.1.1-rc.2`). Later releases require re-verification.
 
 ---
 
@@ -127,4 +127,4 @@ All D1–D7 decisions were explicitly approved by the Human (2026-08-29). Fixed 
 
 ---
 
-*Version-pinned to DeepSeek Harness `0.1.1-rc.2`. See `docs/` for full documentation set.*
+*Version-pinned to DeepSeek Harness `0.2.0-rc.2` (re-verified 2026-10-09; previously `0.1.1-rc.2`). See `docs/` for full documentation set.*

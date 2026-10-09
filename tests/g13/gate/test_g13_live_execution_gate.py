@@ -124,11 +124,14 @@ class TestG13LiveExecutionGateAxes:
         assert os.path.isdir(presets_dir)
         presets = {d for d in os.listdir(presets_dir)
                    if os.path.isdir(os.path.join(presets_dir, d))}
+        # The 15 role presets plus the orchestrator root-session preset
+        # deployed 2026-09-12 (ADR 0004).
         assert presets == {
             "role-zeko", "role-cto", "role-cfo", "role-kai",
             "role-somad", "role-badsector", "role-nova",
             "role-vera", "role-argus", "role-atlas", "role-tess",
             "role-quill", "role-scout", "role-talon", "role-ledger",
+            "orchestrator",
         }, f"unexpected preset set: {presets}"
 
     # ---- Axis 3: DSH_LIVE_BRIDGE_ACTIVE ----

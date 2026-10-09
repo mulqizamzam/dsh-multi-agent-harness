@@ -55,6 +55,7 @@ import json
 import os
 import subprocess
 import sys
+from urllib.parse import parse_qs, urlsplit
 from dataclasses import dataclass, field
 
 # DSH checkout path (version pin 0.1.1-rc.2); overridable for tests via
@@ -170,19 +171,35 @@ def approval_service_composed() -> bool:
 def answerer_surface_composed() -> bool:
     """True when the DSH web-app bundle composes the browser answerer surface.
 
-    The web answerer is the apiproxy row (forwards approval/request to the
-    browser) plus the browser half (ui-user-questions + ui-conversation
-    ApprovalPanel).
+    The web answerer is the Host→browser forwarding row plus the browser half
+    that answers it. The composition changed after the original version pin:
+    the forwarding row was `@deepseek-ai/dsh-host-apiproxy`, and the approval
+    UI lived as the ui-conversation ApprovalPanel. The current row is
+    `@deepseek-ai/dsh-api-remotes` (two-sided BFF for Host Remote
+    capabilities), and the approval UI is the dedicated
+    `@deepseek-ai/dsh-client-ui-approval` package. Detection therefore
+    requires all four rows: forwarding, approval presentation, question
+    surface, and the conversation composer the approval UI takes over.
     """
     if not os.path.isfile(_web_patch()):
         return False
     try:
         with open(_web_patch()) as f:
             text = f.read()
-        has_apiproxy = "@deepseek-ai/dsh-host-apiproxy" in text
+        has_forwarding = (
+            "- id: api-remotes" in text
+            and "@deepseek-ai/dsh-api-remotes" in text
+        )
+        has_approval_ui = (
+            "- id: ui-approval" in text
+            and "@deepseek-ai/dsh-client-ui-approval" in text
+        )
         has_questions = "- id: ui-user-questions" in text
         has_conversation = "- id: ui-conversation" in text
-        return has_apiproxy and has_questions and has_conversation
+        return (
+            has_forwarding and has_approval_ui and has_questions
+            and has_conversation
+        )
     except OSError:
         return False
 
@@ -225,6 +242,23 @@ def _dsh_reads_prompts_disabled() -> bool:
 def web_session() -> bool:
     """Whether the current session is a web GUI session (DSH_WEB_URL set)."""
     return bool(os.environ.get(DSH_WEB_URL_ENV, ""))
+
+
+def authorized_web_url() -> str | None:
+    """DSH_WEB_URL when it carries the launch token — the attached-answerer URL.
+
+    A bare DSH_WEB_URL proves only that the harness exported a web server
+    URL to this session. The GUI answers 401 until the launch-token query is
+    presented, so "a browser answerer is attached to this session" requires
+    the tokenized URL the operator's browser holds. Returns None for a bare
+    or unset URL — the honest signal that no browser is attached.
+    """
+    web_url = os.environ.get(DSH_WEB_URL_ENV, "")
+    if not web_url:
+        return None
+    if "token" not in parse_qs(urlsplit(web_url).query):
+        return None
+    return web_url
 
 
 def web_server_reachable() -> bool:

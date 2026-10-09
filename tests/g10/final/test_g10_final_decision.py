@@ -101,7 +101,10 @@ def test_dsh_version_pin():
     pkg = os.path.join(DSH_CHECKOUT, "package.json")
     with open(pkg) as f:
         v = json.load(f).get("version", "")
-    assert v == "0.1.1-rc.2", f"Expected 0.1.1-rc.2, got {v}"
+    # Pin moved from 0.1.1-rc.2 after the 2026-10-09 full-suite
+    # re-verification against the running checkout (README policy: later
+    # releases require re-verification).
+    assert v == "0.2.0-rc.2", f"Expected 0.2.0-rc.2, got {v}"
 
 
 # ===========================================================================

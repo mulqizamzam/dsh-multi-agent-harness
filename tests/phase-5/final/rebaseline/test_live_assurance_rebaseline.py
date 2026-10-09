@@ -120,11 +120,27 @@ class TestBaselineHonesty:
 
     def test_exactly_3_blockers(self):
         r = _l3_readiness()
-        # Only checks marked required_for_l3=True and not passed are blockers
-        blockers = [c for c in r.checks if c.required_for_l3 and not c.passed]
-        assert len(blockers) == 3, f"Expected 3 blockers, got {len(blockers)}: {[b.check_id for b in blockers]}"
-        blocked_ids = {b.check_id for b in blockers}
-        assert blocked_ids == {"L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"}
+        # Only checks marked required_for_l3=True and not passed are blockers.
+        # With an authorized (launch-token) browser answerer attached the
+        # answerer checks PASS, leaving exactly the three independent
+        # blockers; without attachment the answerer checks additionally
+        # block fail-closed (composed != attached).
+        from tests.environment.approval_composition import authorized_web_url
+        independent = {"L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"}
+        if authorized_web_url():
+            blockers = [c for c in r.checks if c.required_for_l3 and not c.passed]
+            assert len(blockers) == 3, f"Expected 3 blockers, got {len(blockers)}: {[b.check_id for b in blockers]}"
+            assert {b.check_id for b in blockers} == independent
+        else:
+            blockers = [c for c in r.checks if c.required_for_l3 and not c.passed]
+            blocked_ids = {b.check_id for b in blockers}
+            for cid in independent:
+                assert cid in blocked_ids, (
+                    f"independent blocker {cid} missing: {sorted(blocked_ids)}")
+            for cid in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
+                assert cid in blocked_ids, (
+                    f"answerer blocker {cid} must block without attachment: "
+                    f"{sorted(blocked_ids)}")
 
 
 # ---------------------------------------------------------------------------
@@ -132,31 +148,46 @@ class TestBaselineHonesty:
 # ---------------------------------------------------------------------------
 
 class TestApprovalCorrection:
-    """The approval-path correction must be verified live: L3ENV-ANS-1/2 PASS."""
+    """The approval-path correction must be verified live: with an attached
+    authorized browser answerer L3ENV-ANS-1/2 PASS; without one they block
+    fail-closed."""
 
     def test_approval_readiness_checks_pass(self):
+        from tests.environment.approval_composition import authorized_web_url
         r = _l3_readiness()
         ans1 = next((c for c in r.checks if c.check_id == "L3ENV-ANS-1"), None)
         ans2 = next((c for c in r.checks if c.check_id == "L3ENV-ANS-2"), None)
-        assert ans1 is not None and ans1.passed is True, \
-            f"L3ENV-ANS-1 should PASS (answerer by composition), got pass={ans1.passed}"
-        assert ans2 is not None and ans2.passed is True, \
-            f"L3ENV-ANS-2 should PASS (approval path available), got pass={ans2.passed}"
+        if authorized_web_url():
+            assert ans1 is not None and ans1.passed is True, \
+                f"L3ENV-ANS-1 should PASS (answerer by composition), got pass={ans1.passed}"
+            assert ans2 is not None and ans2.passed is True, \
+                f"L3ENV-ANS-2 should PASS (approval path available), got pass={ans2.passed}"
+        else:
+            assert ans1 is not None and ans1.passed is False, \
+                f"L3ENV-ANS-1 must fail closed without an attached answerer, got pass={ans1.passed}"
+            assert ans2 is not None and ans2.passed is False, \
+                f"L3ENV-ANS-2 must fail closed without an attached answerer, got pass={ans2.passed}"
 
     def test_approval_composition_holds(self):
+        from tests.environment.approval_composition import authorized_web_url
         r = _approval_readiness()
         assert r.composed is True
-        assert r.interactive_ready is True
-        # 2026-09-07: a real approval has since flowed through the Web GUI
-        # (sanctioned escalation of the zeko live-row edit), so the ladder
-        # may legitimately sit at E2E_VERIFIED (strictly above
-        # INTERACTIVE_READY; both require full composition).
-        assert r.status.value in ("APPROVAL_INTERACTIVE_READY",
-                                  "APPROVAL_E2E_VERIFIED")
         assert r.approval_service_composed is True
         assert r.answerer_surface_composed is True
         assert r.web_session is True
         assert r.effective_policy == "ask"
+        if authorized_web_url():
+            assert r.interactive_ready is True
+            # 2026-09-07: a real approval has since flowed through the Web GUI
+            # (sanctioned escalation of the zeko live-row edit), so the ladder
+            # may legitimately sit at E2E_VERIFIED (strictly above
+            # INTERACTIVE_READY; both require full composition).
+            assert r.status.value in ("APPROVAL_INTERACTIVE_READY",
+                                      "APPROVAL_E2E_VERIFIED")
+        else:
+            # Fail-closed: composed but unattached — never promoted.
+            assert r.interactive_ready is False
+            assert r.status.value == "APPROVAL_COMPOSED"
 
     def test_e2e_status_matches_session_log_not_pinned(self):
         r = _approval_readiness()

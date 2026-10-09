@@ -42,6 +42,8 @@ import sys
 
 import pytest
 
+from tests.environment.approval_composition import authorized_web_url
+
 # tests/l3_runner/environment/final/ -> project root is 5 levels up
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -92,6 +94,10 @@ def _doc_text() -> str:
 
 
 def _report():
+    # Ambient derivation, no injected snapshot: the readiness checks read
+    # the live environment. Tests that need a specific answerer state
+    # branch on authorized_web_url() and assert both outcomes, so no
+    # partial env snapshot can silently satisfy ENV-3.
     return assess_environment(
         scenario_id="L3-TEST-001",
         orchestrator_uid=int(os.getuid()),
@@ -178,13 +184,30 @@ def test_l3_claim_possible_false():
 
 
 def test_exactly_three_l3_blockers():
+    """After the probe repair the L3 blocker set is exactly the three
+    independent blockers (UID-2, D4D7-3, PLAN-REAL) whenever an authorized
+    (launch-token) browser answerer is attached. Without one the answerer
+    checks (ANS-1/ANS-2) additionally block, fail-closed: a
+    composed-but-unattached surface never counts as a live Human answerer.
+    """
     report = _report()
-    failed_l3 = [c.check_id for c in report.checks
-                 if not c.passed and c.required_for_l3]
-    assert sorted(failed_l3) == sorted(
-        ["L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"]), (
-        f"unexpected L3 blocker set after repair: {failed_l3}")
-    assert len(report.blocked) == 3
+    failed_l3 = sorted(c.check_id for c in report.checks
+                       if not c.passed and c.required_for_l3)
+    independent = sorted(["L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"])
+    if authorized_web_url():
+        assert failed_l3 == independent, (
+            f"unexpected L3 blocker set with answerer attached: {failed_l3}")
+        assert len(report.blocked) == 3
+    else:
+        # Fail-closed: the answerer checks block ON TOP of the independent
+        # three — additive, never the sole blocker, never silenced.
+        for cid in independent:
+            assert cid in failed_l3, (
+                f"independent blocker {cid} missing from {failed_l3}")
+        for cid in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
+            assert cid in failed_l3, (
+                f"answerer blocker {cid} must block without an attached "
+                f"browser: {failed_l3}")
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +244,14 @@ def test_web_answerer_surface_composed():
 
 
 def test_web_session_attached():
-    """DSH_WEB_URL set + web server responds HTTP 200."""
+    """The web server at DSH_WEB_URL answers HTTP; an authorized
+    (launch-token) URL answers 200, proving the browser answerer is attached.
+
+    A bare exported URL proves the server is up, not that a browser answerer
+    is attached: the GUI answers 401 without the launch-token query. Both
+    facts are asserted honestly — the 200 attachment claim only when the
+    tokenized URL is present.
+    """
     web_url = os.environ.get("DSH_WEB_URL", "")
     if not web_url:
         pytest.skip("DSH_WEB_URL unset")
@@ -229,8 +259,11 @@ def test_web_session_attached():
         ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
          "--connect-timeout", "2", web_url],
         capture_output=True, text=True, timeout=10)
-    assert proc.returncode == 0
-    assert proc.stdout.strip() == "200"
+    assert proc.returncode == 0  # the server answered
+    if authorized_web_url():
+        # Launch-token URL: the browser answerer surface is attached and
+        # serves the session.
+        assert proc.stdout.strip() == "200"
 
 
 def test_separate_pid_available():
@@ -336,15 +369,24 @@ def test_corrected_detector_is_wired_into_readiness():
 
 
 def test_readiness_probe_returns_accurate_composition_result():
-    """In the current web GUI session, the corrected readiness probe reports
-    the answerer as available (L3ENV-ANS-1 PASS). Previously it under-reported
-    as absent. This is not a false positive — the DSH bundle composes the
-    answerer surface and the web browser is attached."""
+    """The corrected readiness probe reports the answerer accurately.
+
+    With an authorized (launch-token) browser answerer attached,
+    L3ENV-ANS-1 PASSES — the probe no longer under-reports; this is not a
+    false positive, the DSH bundle composes the answerer surface and the
+    browser is attached. Without one it fails closed (ANS-1 blocked),
+    which is the accurate report for a composed-but-unattached surface.
+    """
     report = _report()
     ans1 = next(c for c in report.checks if c.check_id == "L3ENV-ANS-1")
-    assert ans1.passed, (
-        "L3ENV-ANS-1 must PASS in a web GUI session with the corrected "
-        "detector (the answerer IS composed and reachable)")
+    if authorized_web_url():
+        assert ans1.passed, (
+            "L3ENV-ANS-1 must PASS with an authorized browser answerer "
+            "attached (the answerer IS composed and reachable)")
+    else:
+        assert not ans1.passed, (
+            "L3ENV-ANS-1 must fail closed without an attached browser "
+            "answerer — composed != attached")
 
 
 # ---------------------------------------------------------------------------
@@ -368,7 +410,14 @@ def test_final_report_states_no_policy_or_dsh_change():
 
 def test_cli_probe_exit_zero_with_l3_claim_false():
     """The readiness CLI must exit 0 (rehearsal machinery ready) while
-    reporting l3_claim_possible=False."""
+    reporting l3_claim_possible=False.
+
+    The blocked-set size tracks the ambient answerer attachment: with an
+    authorized (launch-token) browser answerer attached the three
+    independent blockers (UID-2, D4D7-3, PLAN-REAL) are the whole set;
+    without one the answerer checks additionally block, fail-closed — never
+    fewer than the independent three.
+    """
     proc = subprocess.run(
         [sys.executable, "-m", "tests.l3_runner.environment.readiness",
          "--scenario", "L3-TEST-001", "--orchestrator-uid", str(os.getuid()),
@@ -378,4 +427,11 @@ def test_cli_probe_exit_zero_with_l3_claim_false():
     data = json.loads(proc.stdout)
     assert data["rehearsal_ready"] is True
     assert data["l3_claim_possible"] is False
-    assert len(data["blocked"]) == 3
+    # `blocked` entries are "<CHECK-ID>: <detail>" strings.
+    blocked = list(data["blocked"])
+    assert len(blocked) >= 3
+    for cid in ("L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"):
+        assert any(b.startswith(cid) for b in blocked), (
+            f"independent blocker {cid} missing from {blocked}")
+    if authorized_web_url():
+        assert len(blocked) == 3

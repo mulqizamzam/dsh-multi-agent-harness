@@ -152,7 +152,10 @@ class TestLiveEnvironmentFacts:
     def test_dsh_version(self):
         result = subprocess.run(["dsh", "--version"], capture_output=True,
                                 text=True, timeout=30)
-        assert "0.1.1-rc.2" in result.stdout or result.stderr
+        # Pin moved from 0.1.1-rc.2 after the 2026-10-09 full-suite
+        # re-verification against the running checkout (README policy: later
+        # releases require re-verification).
+        assert "0.2.0-rc.2" in result.stdout or result.stderr
 
     def test_dsh_live_bridge_marker_unset(self):
         import os
@@ -206,23 +209,44 @@ class TestLiveEnvironmentFacts:
         assert report.rehearsal_ready is True
 
     def test_approval_interactive_ready(self):
-        from tests.environment.approval_composition import approval_readiness
+        from tests.environment.approval_composition import (
+            approval_readiness, authorized_web_url,
+        )
         r = approval_readiness()
-        assert r.interactive_ready is True, f"Expected interactive, got interactive_ready={r.interactive_ready}"
+        if authorized_web_url():
+            assert r.interactive_ready is True, f"Expected interactive, got interactive_ready={r.interactive_ready}"
+        else:
+            # No authorized (launch-token) browser answerer attached: a
+            # composed-but-unattached surface fails closed to COMPOSED.
+            assert r.interactive_ready is False, (
+                "interactive_ready must be False without an attached "
+                f"browser answerer; got {r.interactive_ready}")
+            assert r.status.value == "APPROVAL_COMPOSED"
 
     def test_approval_status_interactive_ready(self):
-        from tests.environment.approval_composition import approval_readiness, ApprovalStatus
+        from tests.environment.approval_composition import (
+            approval_readiness, authorized_web_url, ApprovalStatus,
+        )
         r = approval_readiness()
-        # In this Web GUI session, the service is composed and interactive-
-        # ready. Since 2026-09-07 a real approval has also flowed through the
-        # Web GUI (sanctioned escalation of the zeko live-row edit), so the
-        # ladder may legitimately sit at E2E_VERIFIED — the rung strictly
-        # above INTERACTIVE_READY, with identical composition requirements.
-        assert r.status in (ApprovalStatus.APPROVAL_INTERACTIVE_READY,
-                            ApprovalStatus.APPROVAL_E2E_VERIFIED)
+        if authorized_web_url():
+            # In an attached Web GUI session, the service is composed and
+            # interactive-ready. Since 2026-09-07 a real approval has also
+            # flowed through the Web GUI (sanctioned escalation of the zeko
+            # live-row edit), so the ladder may legitimately sit at
+            # E2E_VERIFIED — the rung strictly above INTERACTIVE_READY, with
+            # identical composition requirements.
+            assert r.status in (ApprovalStatus.APPROVAL_INTERACTIVE_READY,
+                                ApprovalStatus.APPROVAL_E2E_VERIFIED)
+        else:
+            # Fail-closed: composed but not attached → COMPOSED, never
+            # promoted to the interactive rung.
+            assert r.status is ApprovalStatus.APPROVAL_COMPOSED
 
     def test_l3_blockers_exclude_ans_in_web_gui_session(self):
-        """In the current Web GUI session, L3ENV-ANS-1 must NOT be a blocker."""
+        """With an authorized (launch-token) browser answerer attached,
+        L3ENV-ANS-1 must NOT be a blocker. Without one the answerer checks
+        block L3 fail-closed — composed != attached."""
+        from tests.environment.approval_composition import authorized_web_url
         from tests.l3_runner.environment.readiness import assess_environment
         from tests.l3_runner.critical.runner import critical_fixtures_root
         report = assess_environment(
@@ -231,8 +255,13 @@ class TestLiveEnvironmentFacts:
             orchestrator_uid=os.getuid(),
         )
         blocked_ids = {b.split(":")[0] for b in report.blocked}
-        assert "L3ENV-ANS-1" not in blocked_ids, \
-            f"L3ENV-ANS-1 should NOT be blocked in Web GUI session; blocked={blocked_ids}"
+        if authorized_web_url():
+            assert "L3ENV-ANS-1" not in blocked_ids, \
+                f"L3ENV-ANS-1 should NOT be blocked with an attached answerer; blocked={blocked_ids}"
+        else:
+            assert "L3ENV-ANS-1" in blocked_ids, (
+                "L3ENV-ANS-1 must block fail-closed without an attached "
+                f"browser answerer; blocked={blocked_ids}")
 
     def test_l3_blockers_include_uid_2(self):
         from tests.l3_runner.environment.readiness import assess_environment

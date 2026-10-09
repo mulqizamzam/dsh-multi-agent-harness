@@ -404,12 +404,15 @@ class TestClaimGateStatus:
 
         CORRECTED (approval-path correction): with the honest composition-based
         answerer detection the approval answerer IS available in a web GUI
-        session, so L3ENV-ANS-1/ANS-2 are correctly NOT blockers anymore (the
-        obsolete DSH_APPROVAL_PROMPTS_DISABLED convention no longer falsely
-        reports the answerer absent). The genuine independent blockers are
-        UID-2, D4D7-3, PLAN-REAL.
+        session with an attached (launch-token) browser, so L3ENV-ANS-1/ANS-2
+        are correctly NOT blockers (the obsolete
+        DSH_APPROVAL_PROMPTS_DISABLED convention no longer falsely reports the
+        answerer absent). Without an attached browser the answerer checks
+        block L3 fail-closed — composed != attached. The genuine independent
+        blockers are UID-2, D4D7-3, PLAN-REAL in both cases.
         """
         from tests.l3_runner.environment.readiness import assess_environment
+        from tests.environment.approval_composition import authorized_web_url
         report = assess_environment(
             scenario_id="L3-AUTH-001",
             fixtures_root=CRIT_FIXTURES_ROOT,
@@ -419,12 +422,18 @@ class TestClaimGateStatus:
         for expected in ("L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"):
             assert expected in blocked_ids, (
                 f"blocker {expected} missing: {sorted(blocked_ids)}")
-        # The answerer is available by composition in a web GUI session; it is
-        # NOT a blocker anymore (honest correction, never a false-negative).
-        assert "L3ENV-ANS-1" not in blocked_ids, (
-            f"answerer must not falsely block L3: {sorted(blocked_ids)}")
-        assert "L3ENV-ANS-2" not in blocked_ids, (
-            f"answerer path must not falsely block L3: {sorted(blocked_ids)}")
+        if authorized_web_url():
+            # An authorized browser answerer is attached: the answerer is
+            # available by composition and NOT a blocker (honest correction,
+            # never a false-negative).
+            assert "L3ENV-ANS-1" not in blocked_ids, (
+                f"answerer must not falsely block L3: {sorted(blocked_ids)}")
+            assert "L3ENV-ANS-2" not in blocked_ids, (
+                f"answerer path must not falsely block L3: {sorted(blocked_ids)}")
+        else:
+            assert "L3ENV-ANS-1" in blocked_ids, (
+                f"answerer must block fail-closed without attachment: "
+                f"{sorted(blocked_ids)}")
 
 
 # ============================================================================

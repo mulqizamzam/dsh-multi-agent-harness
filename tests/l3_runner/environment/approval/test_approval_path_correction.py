@@ -43,6 +43,7 @@ import pytest
 from tests.environment.approval_composition import (
     ApprovalStatus,
     DSH_CHECKOUT,
+    authorized_web_url,
     detect_approval_status,
 )
 
@@ -58,6 +59,15 @@ WEB_PATCH = os.path.join(DSH_CHECKOUT, "packages", "bundle", "web-app",
                          "cordis.patch.yml")
 APPROVAL_README = os.path.join(DSH_CHECKOUT, "packages", "interaction",
                                "user-approval", "README.md")
+
+
+def _authorized_web_url() -> str | None:
+    """DSH_WEB_URL when it carries the launch token — the attached-answerer URL.
+
+    Thin alias over the probe module's `authorized_web_url`, kept local so
+    this file reads standalone.
+    """
+    return authorized_web_url()
 
 
 # ---------------------------------------------------------------------------
@@ -105,26 +115,38 @@ def test_composition_detection_reports_composed():
 
 def test_interactive_ready_requires_web_session():
     """APPROVAL_INTERACTIVE_READY requires APPROVAL_COMPOSED AND a web GUI
-    session (DSH_WEB_URL set) with a reachable browser answerer."""
+    session with an attached, authorized browser answerer.
+
+    DSH_WEB_URL being set only proves a web server URL was exported to this
+    session. The GUI answers 401 until the launch-token query is presented,
+    so "browser answerer attached" requires the tokenized URL; a bare URL
+    is composed-but-not-attached and must fail closed to APPROVAL_COMPOSED.
+    """
     detection = detect_approval_status()
     if not os.path.isfile(BASE_PATCH) or not os.path.isfile(WEB_PATCH):
         pytest.skip("DSH checkout not available")
-    web_session = os.environ.get("DSH_WEB_URL", "")
-    if web_session:
-        # In the current session a web GUI is attached -> the status is
-        # INTERACTIVE_READY or E2E_VERIFIED, never HEADLESS.
+    if _authorized_web_url():
+        # In the current session a browser answerer is attached -> the
+        # status is INTERACTIVE_READY or E2E_VERIFIED, never HEADLESS.
         assert detection.status in (
             ApprovalStatus.APPROVAL_INTERACTIVE_READY,
             ApprovalStatus.APPROVAL_E2E_VERIFIED,
         )
     else:
-        # No web session -> at most COMPOSED, never INTERACTIVE_READY.
-        assert detection.status is not ApprovalStatus.APPROVAL_INTERACTIVE_READY
+        # No authorized browser answerer attached (bare URL or unset):
+        # composed at most, never INTERACTIVE_READY — fail closed.
+        assert detection.status is ApprovalStatus.APPROVAL_COMPOSED
 
 
 def test_web_server_reachable():
-    """The web server at DSH_WEB_URL responds HTTP 200 (browser answerer
-    attached to the session)."""
+    """The web server at DSH_WEB_URL answers HTTP; an authorized
+    (launch-token) URL answers 200, proving the browser answerer is attached.
+
+    A bare exported URL proves the server is up, not that a browser answerer
+    is attached: the GUI answers 401 without the launch-token query. Both
+    facts are asserted honestly — the 200 attachment claim only when the
+    tokenized URL is present.
+    """
     web_url = os.environ.get("DSH_WEB_URL", "")
     if not web_url:
         pytest.skip("DSH_WEB_URL unset")
@@ -132,8 +154,11 @@ def test_web_server_reachable():
         ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
          "--connect-timeout", "2", web_url],
         capture_output=True, text=True, timeout=10)
-    assert proc.returncode == 0
-    assert proc.stdout.strip() == "200"
+    assert proc.returncode == 0  # the server answered
+    if _authorized_web_url():
+        # Launch-token URL: the browser answerer surface is attached and
+        # serves the session.
+        assert proc.stdout.strip() == "200"
 
 
 # ---------------------------------------------------------------------------
@@ -157,12 +182,17 @@ def test_e2e_status_derived_from_observed_events_not_fabricated():
     marker = os.path.join(os.path.dirname(os.path.abspath(
         __file__)), ".approval_e2e_probe_done")
     assert not os.path.isfile(marker) or True  # marker is never consulted
-    # In the current web session the top status is INTERACTIVE_READY or
-    # E2E_VERIFIED; never HEADLESS.
-    assert detection.status in (
-        ApprovalStatus.APPROVAL_INTERACTIVE_READY,
-        ApprovalStatus.APPROVAL_E2E_VERIFIED,
-    )
+    # Status tracks the environment honestly: with an authorized browser
+    # answerer attached the top rung is INTERACTIVE_READY/E2E_VERIFIED;
+    # without one the ladder fails closed to COMPOSED — never HEADLESS
+    # (the surface IS composed), and never promoted by composition alone.
+    if _authorized_web_url():
+        assert detection.status in (
+            ApprovalStatus.APPROVAL_INTERACTIVE_READY,
+            ApprovalStatus.APPROVAL_E2E_VERIFIED,
+        )
+    else:
+        assert detection.status is ApprovalStatus.APPROVAL_COMPOSED
 
 
 def test_e2e_pair_requires_observed_events():

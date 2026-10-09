@@ -214,6 +214,7 @@ def test_five_l3_blockers_named_exactly():
 def test_environment_facts_consistent_with_probe():
     from tests.l3_runner.environment.readiness import assess_environment
     from tests.l3_runner.critical.runner import critical_fixtures_root
+    from tests.environment.approval_composition import authorized_web_url
     report = assess_environment(
         scenario_id="L3-AUTH-001",
         fixtures_root=critical_fixtures_root(),
@@ -223,12 +224,18 @@ def test_environment_facts_consistent_with_probe():
     assert report.rehearsal_ready is True
     blocked_ids = {b.split(":")[0] for b in report.blocked}
     # Independent L3 blockers. With the corrected composition-based detection
-    # the answerer IS available in a web GUI session, so L3ENV-ANS-1/ANS-2 are
-    # honestly NOT blockers (the obsolete under-reporting is fixed).
+    # the answerer IS available when an authorized (launch-token) browser
+    # answerer is attached, so L3ENV-ANS-1/ANS-2 are honestly NOT blockers
+    # (the obsolete under-reporting is fixed). Without attachment they block
+    # fail-closed — composed != attached.
     for blocker in ("L3ENV-UID-2", "L3ENV-D4D7-3", "L3ENV-PLAN-REAL"):
         assert blocker in blocked_ids, blocker
-    for not_blocker in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
-        assert not_blocker not in blocked_ids, not_blocker
+    if authorized_web_url():
+        for not_blocker in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
+            assert not_blocker not in blocked_ids, not_blocker
+    else:
+        for blocker in ("L3ENV-ANS-1", "L3ENV-ANS-2"):
+            assert blocker in blocked_ids, blocker
 
 
 def test_same_uid_host_fact():

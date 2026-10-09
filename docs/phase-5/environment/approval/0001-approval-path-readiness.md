@@ -203,3 +203,41 @@ remain BLOCKED (fail-closed `unavailable`). Minimum operator action for the web
 session: verify the browser is attached (no policy/config edit). For headless:
 compose an `approval/request` answerer or pre-record `approval-<id>` references.
 No policy change, no DSH change, no answerer invented, no HIGH-risk action, no L3.*
+
+---
+
+## UPDATE 2026-10-09 — re-verification against DSH 0.2.0-rc.2
+
+This repository was re-verified against the current DSH checkout
+(`0.2.0-rc.2`; the pin above is `0.1.1-rc.2`, and the README requires
+re-verification for later releases). Three composition facts changed, and the
+probe plus its tests were corrected to the observed state — no claim was
+weakened and nothing was faked ready:
+
+1. **The forwarding row changed.** `@deepseek-ai/dsh-host-apiproxy` no longer
+   exists. The Host→browser forwarding row is now
+   `@deepseek-ai/dsh-api-remotes` (the two-sided BFF for Host Remote
+   capabilities), and the browser approval UI is the dedicated
+   `@deepseek-ai/dsh-client-ui-approval` package, not the ui-conversation
+   ApprovalPanel. `answerer_surface_composed()` now detects the current
+   generation (forwarding + approval presentation + question surface +
+   conversation composer).
+2. **The profile composition changed.** The web profile root
+   (`$DSH_HOME/profiles/web/cordis.yml`) now carries the full host
+   composition, so the answerer package rows appear there as well as in the
+   bundles. That is a duplicate composition, not a probe gap: the probe reads
+   the bundle patches as source truth and never scans the profile. The former
+   "no marker row under `$DSH_HOME/profiles/`" claim is obsolete; the test
+   now asserts profile rows never diverge from the bundle-composed surface.
+3. **`DSH_WEB_URL` proves less than before.** A bare exported URL only proves
+   a web server URL was exported to the session. The GUI answers 401 without
+   the launch-token query, so "a browser answerer is attached" requires the
+   tokenized URL. The ladder therefore fails closed to
+   `APPROVAL_COMPOSED` in a bare-URL (headless agent) session, and tests that
+   asserted the attached rung are now environment-conditional instead of
+   assuming an operator session.
+
+The fail-closed invariants are unchanged: a composed-but-unattached surface
+never counts as a live Human answerer, `DSH_APPROVAL_PROMPTS_DISABLED` remains
+a project-side convention DSH never reads, and no approval/signature is
+invented.

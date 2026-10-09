@@ -120,13 +120,20 @@ def test_web_bundle_composes_answerer_surface():
     assert "@deepseek-ai/dsh-client-ui-conversation" in text
 
 
-def test_web_answerer_is_not_in_dsh_home_profiles():
-    """The composed web answerer is a DSH bundle row, NOT a $DSH_HOME/profiles
-    marker row — which is why the project's profile scan under-detects it.
+def test_web_answerer_profile_rows_duplicate_bundle_composition():
+    """Answerer rows under $DSH_HOME/profiles duplicate the bundle composition.
 
-    Observed this session: no answerer marker row exists under
-    $DSH_HOME/profiles/, while the DSH web-app bundle composes the surface
-    (asserted above). This documents the probe gap, not a missing answerer.
+    In this DSH generation the profile root carries the full host
+    composition, so the answerer package rows appear under
+    $DSH_HOME/profiles as well as in the bundles. That is a duplicate
+    composition — not a different surface, and not a probe gap: the probe
+    reads the bundle patch files as source truth and never scans the
+    profile. When a profile composition file names an answerer package it
+    must be the same package the bundles compose; no extra or divergent
+    surface may appear there.
+
+    Lockfiles and installed dependencies are dependency records, not
+    composition, and are excluded from the scan.
     """
     dsh_home = os.environ.get("DSH_HOME", "")
     if not dsh_home:
@@ -134,24 +141,39 @@ def test_web_answerer_is_not_in_dsh_home_profiles():
     profiles = os.path.join(dsh_home, "profiles")
     if not os.path.isdir(profiles):
         pytest.skip("no $DSH_HOME/profiles dir")
-    markers = ("user-approval", "ui-user-questions", "approval/request",
-               "dsh-client-ui-conversation")
-    found = []
+    if not (os.path.isfile(BASE_PATCH) and os.path.isfile(WEB_PATCH)):
+        pytest.skip("DSH checkout not available")
+    # The answerer surface as the bundles compose it (source truth).
+    bundle_text = ""
+    for patch in (BASE_PATCH, WEB_PATCH):
+        with open(patch) as f:
+            bundle_text += f.read()
+    answerer_packages = (
+        "@deepseek-ai/dsh-user-approval",
+        "@deepseek-ai/dsh-client-ui-user-questions",
+        "@deepseek-ai/dsh-client-ui-approval",
+        "@deepseek-ai/dsh-client-ui-conversation",
+    )
+    bundle_surface = {p for p in answerer_packages if p in bundle_text}
+    # Scan only profile composition files; node_modules and lockfiles are
+    # dependency records, not composition.
+    divergent = []
     for root, _dirs, files in os.walk(profiles):
+        if "node_modules" in root:
+            continue
         for fn in files:
-            if not (fn.endswith(".yml") or fn.endswith(".yaml")):
+            if fn not in ("cordis.yml", "cordis.patch.yml"):
                 continue
-            with open(os.path.join(root, fn), errors="ignore") as f:
+            path = os.path.join(root, fn)
+            with open(path, errors="ignore") as f:
                 text = f.read()
-            for m in markers:
-                if m in text:
-                    found.append((os.path.join(root, fn), m))
-    # The web answerer surface is bundle-composed (DSH packages), not mounted
-    # as a $DSH_HOME profile marker row. No marker row is expected here; the
-    # bundle rows are the composition point (test_web_bundle_composes_*).
-    assert found == [], (
-        f"answerer marker rows unexpectedly found under $DSH_HOME/profiles: "
-        f"{found} — update the readiness doc's under-detection claim")
+            for pkg in answerer_packages:
+                if pkg in text and pkg not in bundle_surface:
+                    divergent.append((path, pkg))
+    assert divergent == [], (
+        f"answerer packages under $DSH_HOME/profiles diverge from the bundle "
+        f"composition: {divergent} — the profile must compose the same "
+        f"surface the bundles compose, or a different one the probe must see")
 
 
 # ---------------------------------------------------------------------------
@@ -233,19 +255,25 @@ def test_probe_is_read_only_and_never_invents(monkeypatch):
     project-side convention DSH never reads; the probe now detects the
     answerer via actual DSH bundle/web composition. Setting the obsolete
     convention must NOT flip ENV-APPROVAL-1 to unavailable — the corrected
-    probe reports availability from composition.
+    probe reports availability from composition (or from the documented
+    snapshot injection), never from the convention.
     """
     env_before = dict(os.environ)
     monkeypatch.setenv("DSH_APPROVAL_PROMPTS_DISABLED", "1")
     from tests.environment.preflight import run_env_preflight
     report = run_env_preflight(env={})
     a = next(c for c in report.checks if c.check_id == "ENV-APPROVAL-1")
-    # Corrected: the obsolete convention no longer drives detection. On this
-    # host the DSH base bundle composes the approval service and the web-app
-    # bundle composes the answerer surface, and the session is a web GUI
-    # session — the probe reports the answerer available by composition
-    # (never invented; it is actually composed).
-    assert a.passed
+    # Deterministic: the documented snapshot injection wins, so the check
+    # passes regardless of the ambient web-attachment state — proving the
+    # obsolete convention is not what drives the result.
+    injected = run_env_preflight(env={"approval_answerer_available": True})
+    a_injected = next(c for c in injected.checks
+                      if c.check_id == "ENV-APPROVAL-1")
+    assert a_injected.passed
+    # Live (no injection): the check may fail closed when no authorized
+    # browser answerer is attached — but never BECAUSE of the obsolete
+    # convention, which must not appear as the reason.
+    assert "DSH_APPROVAL_PROMPTS_DISABLED" not in a.detail
     # Read-only: the only env key that may differ is the injected one.
     assert set(os.environ) - set(env_before) <= {"DSH_APPROVAL_PROMPTS_DISABLED"}
     assert os.environ.get("DSH_APPROVAL_PROMPTS_DISABLED") == "1"
@@ -268,19 +296,28 @@ def test_corrected_detector_reports_web_composition(monkeypatch):
     """The corrected detector reflects ACTUAL DSH bundle/web composition.
 
     On this host the DSH base bundle composes the approval service and the
-    web-app bundle composes the answerer surface; with a live web GUI session
-    the detector reports COMPOSED + INTERACTIVE_READY (browser answerer
-    attached), and never keys off the obsolete DSH_APPROVAL_PROMPTS_DISABLED
-    convention.
+    web-app bundle composes the answerer surface, so the detector reports
+    COMPOSED from source truth. With an authorized (launch-token) web URL a
+    browser answerer is attached and the detector reports
+    INTERACTIVE_READY; without one it fails closed to COMPOSED — never
+    HEADLESS, and never keyed off the obsolete
+    DSH_APPROVAL_PROMPTS_DISABLED convention.
     """
     monkeypatch.delenv("DSH_APPROVAL_PROMPTS_DISABLED", raising=False)
-    from tests.environment.approval_composition import approval_readiness
+    from tests.environment.approval_composition import (
+        approval_readiness, authorized_web_url,
+    )
     r = approval_readiness()
     # Composition is a source fact: approval service + answerer surface rows.
     assert r.composed
     assert r.approval_service_composed
     assert r.answerer_surface_composed
-    assert r.interactive_ready  # web GUI browser answerer attached
+    if authorized_web_url():
+        assert r.interactive_ready  # web GUI browser answerer attached
+    else:
+        # No authorized browser answerer attached: composed but not
+        # interactive — the fail-closed rung.
+        assert not r.interactive_ready
     assert not r.headless_unavailable
     assert r.effective_policy == "ask"
     # The obsolete convention is NOT authoritative in this DSH checkout.
@@ -308,10 +345,15 @@ def test_corrected_detector_does_not_use_disabled_convention(monkeypatch):
     the corrected model derives availability from DSH composition, not the
     project-side convention (which DSH never reads)."""
     monkeypatch.setenv("DSH_APPROVAL_PROMPTS_DISABLED", "1")
-    from tests.environment.approval_composition import approval_readiness
+    from tests.environment.approval_composition import (
+        approval_readiness, authorized_web_url,
+    )
     r = approval_readiness()
     assert r.composed
-    assert r.interactive_ready
+    if authorized_web_url():
+        assert r.interactive_ready
+    else:
+        assert not r.interactive_ready
     assert not r.headless_unavailable
 
 

@@ -184,11 +184,14 @@ class TestG13RecheckAxes:
         assert os.path.isdir(presets_dir)
         presets = {d for d in os.listdir(presets_dir)
                    if os.path.isdir(os.path.join(presets_dir, d))}
+        # The 15 role presets plus the orchestrator root-session preset
+        # deployed 2026-09-12 (ADR 0004).
         assert presets == {
             "role-zeko", "role-cto", "role-cfo", "role-kai",
             "role-somad", "role-badsector", "role-nova",
             "role-vera", "role-argus", "role-atlas", "role-tess",
             "role-quill", "role-scout", "role-talon", "role-ledger",
+            "orchestrator",
         }
 
     # ---- Axis 3: REAL backend available ----
