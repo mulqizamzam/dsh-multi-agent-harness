@@ -416,7 +416,10 @@ draft_artifacts:
   instances_draft_path: config/tool-subagent-instances.yaml  # per-role tool-subagent rows
   orchestrator_preset: orchestrator   # ADR 0004 D1: the orchestrator composes its own preset
                                       # (derived from shipped `standard`; see docs/adr/0004),
-                                      # deployed at $DSH_HOME/.agent-presets/orchestrator/.
+                                      # registered by the dsh-multi-agent-harness plugin from
+                                      # orchestrator/ in this repo (2026-10-10: direct
+                                      # registration replaced the $DSH_HOME/.agent-presets/
+                                      # deploy copy and the dsh-agent-preset-roster scan).
                                       # Declared HERE, not on the `orchestrator:` entry: that
                                       # entry's schema (schemas/role-mapping.schema.json,
                                       # $defs.orchestratorEntry) is additionalProperties:false,

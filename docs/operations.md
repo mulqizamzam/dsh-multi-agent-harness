@@ -2,7 +2,7 @@
 
 - **Status**: final (Phase 1A)
 - **Date**: 2026-08-29
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2` (verified locally)
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2` (re-pinned 2026-10-10 with the direct-registration plugin; session facts re-verified then, previously `0.1.1-rc.2`)
 - **Purpose**: operator-facing mapping of how the project's control-plane intent maps onto the actual DSH runtime — session policy, permission presets, headless/CI behavior, role instantiation, state/audit operations, recovery. Resolves the reference in `config/permissions.yaml`.
 - **Scope**: `multi-agent-harness/`. Documentation only; no deployment changes are made by this document.
 
@@ -29,7 +29,7 @@ Derivation (verified): `sandbox-policy.mode = DSH_PERMISSION_MODE ?? 'workspace-
 ### 1.2 Session facts (this environment)
 
 - Workspace root: `/home/administrator/agent-workspace` (`process.cwd()` of the session).
-- Profile: `web`; the web surface mounts the shipped `standard` agent preset per session (agent-presets roster, default `standard`). The user preset root `$DSH_HOME/.agent-presets/` additionally supplies the fifteen `role-*` presets and, since ADR 0004, an `orchestrator` preset — all selectable per session. The default is unchanged: a session that names no preset still runs `standard`.
+- Profile: `web`; the web surface mounts the shipped `standard` agent preset per session (agent-presets roster, default `standard`). Since 2026-10-10 the fifteen `role-*` presets and the `orchestrator` preset (ADR 0004) are registered **directly from this repository** by the `dsh-multi-agent-harness` plugin (root `index.js` + `cordis.patch.yml`, mounted as a profile bundle entry): it reads `agents/<id>/agent.cordis.yml` + `preset.yml` and `orchestrator/` and registers ids `role-<id>` + `orchestrator` at host boot. The hand-deployed copy root `$DSH_HOME/.agent-presets/` and the `dsh-agent-preset-roster` plugin that scanned it are retired — these repo files are the single source of truth and must speak the RUNNING harness dialect (persona key `prefix:` on 0.2.0-rc.2, not the 0.1.1-rc.2 `text:`). The default is unchanged: a session that names no preset still runs `standard`.
 - The OMNI MCP client (`mcp__omni__*`) is added by the web profile patch — an environment fact, excluded from role toolFilters.
 - DSH checkout (read-only reference): `/home/administrator/deepseek-harness`.
 
