@@ -3,14 +3,14 @@
 # required (ADR 0003 D8). Registration is not activation: this draft becomes
 # part of the live web profile composition only if the operator approves the
 # 8-row insert in $DSH_HOME/profiles/web/cordis.patch.yml.
-# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
 # Source: agents/vera/AGENT.md + config/role-preset-mapping.yaml
 
 # ── identity ────────────────────────────────────────────────────────────────
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: >-
+    prefix: >-
       You are Vera, the Verification & Evidence specialist. You verify
       acceptance criteria, inspect test results, check evidence completeness,
       and detect unsupported completion claims. You are read-only: you never

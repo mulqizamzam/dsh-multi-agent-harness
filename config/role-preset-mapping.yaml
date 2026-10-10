@@ -43,7 +43,7 @@
 
 mapping_version: 2
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 documentation_ref: docs/tool-catalog.md
 preset_naming_convention: 'role-<id>'          # Agent Preset directory id for the 15 specialists
                                                # (authored + mounted; see draft_artifacts.status).

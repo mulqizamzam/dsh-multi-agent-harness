@@ -1,0 +1,28 @@
+{
+  "name": "dsh-multi-agent-harness",
+  "version": "0.1.0",
+  "description": "DSH plugin that registers the 16 agent presets (15 role-* specialists + orchestrator) directly from this repo's agents/ + orchestrator/ files with the agent-preset registry. Replaces dsh-agent-preset-roster; no .agent-presets/ deployment copy.",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "agents",
+    "orchestrator/agent.cordis.yml",
+    "orchestrator/preset.yml"
+  ],
+  "dependencies": {
+    "@deepseek-ai/cordis-plugin-include": "link:/home/administrator/deepseek-harness/vendor/include",
+    "js-yaml": "link:/home/administrator/deepseek-harness/vendor/include/node_modules/js-yaml"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "cordis.patch.yml"
+    },
+    "engines": {
+      "dsh": ">=0.2.0-rc.2"
+    }
+  },
+  "license": "MIT"
+}

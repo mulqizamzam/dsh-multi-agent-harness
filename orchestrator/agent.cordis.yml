@@ -32,7 +32,7 @@
 # root session stays on `standard` (`draft_artifacts.orchestrator_preset`) until
 # a Human selects this one, and the shipped composition is read-only here.
 #
-# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
 # Sources: orchestrator/AGENT.md + config/role-preset-mapping.yaml (top-level
 # `orchestrator:` key) +
 # /home/administrator/deepseek-harness/apps/cli/config/agent-presets/standard/agent.cordis.yml
@@ -45,7 +45,7 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: >-
+    prefix: >-
       You are the Orchestrator, the coordination layer of this system, running
       on the {{model}} model with working directory {{cwd}}. You are the root
       session: you coordinate and delegate, you do not execute specialist work,

@@ -1,0 +1,15 @@
+# dsh-multi-agent-harness — plugin manifest.
+#
+# One insert row mounts the plugin. The plugin is self-locating: it reads the 16
+# agent presets straight from this repository's own agents/ (15 role presets) and
+# orchestrator/ (the root-session preset) trees and registers them with the
+# agent-preset registry. No config, no env vars, and no `.agent-presets/`
+# deployment copy — this repo is the source of truth.
+#
+# Registered ids: role-<dirname> for each agents/<dirname>, plus orchestrator.
+#
+# This replaces dsh-agent-preset-roster. Install wiring is the same shape: add
+# this package as a profile dependency and this name to the profile bundles.
+- insert:
+    - id: dsh-multi-agent-harness
+      name: dsh-multi-agent-harness

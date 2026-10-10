@@ -1,3 +1,45 @@
+# DSH Plugin
+
+This repository is also a **DSH Cordis plugin** (`dsh-multi-agent-harness`) — not
+just the multi-agent control plane documented below.
+
+It registers the **16 agent presets** — the 15 `role-*` specialists under
+`agents/<id>/` and the `orchestrator` root-session preset under `orchestrator/` —
+directly from this repository's own files with the agent-preset registry
+(`ctx.agentPresets.register`). There is **no `.agent-presets/` deployment copy**:
+these repo files are the single source of truth. The plugin is self-locating —
+it resolves its own root from `import.meta.url`, reads no env vars, and takes no
+configuration.
+
+Registered preset ids (must match the live web profile wiring exactly):
+
+`role-argus`, `role-atlas`, `role-badsector`, `role-cfo`, `role-cto`,
+`role-kai`, `role-ledger`, `role-nova`, `role-quill`, `role-scout`,
+`role-somad`, `role-talon`, `role-tess`, `role-vera`, `role-zeko`, and
+`orchestrator`.
+
+> **Dialect requirement.** Every `agent.cordis.yml` must use the **RUNNING**
+> harness's persona key. `@deepseek-ai/dsh-persona` on `0.2.0-rc.2` takes
+> `prefix:`, **not** the `0.1.1-rc.2` `text:` key. A preset still using `text:`
+> mounts `broken` and cannot be selected in the GUI.
+
+## Install
+
+Wire it into a DSH profile two ways, exactly like any bundle plugin:
+
+- **Profile dependency** — add `dsh-multi-agent-harness` (link to this repo) to
+  the profile's `package.json` `dependencies`.
+- **Bundle entry** — add `dsh-multi-agent-harness` to that profile's
+  `dsh.profile.bundles` list, which mounts this package's own
+  `cordis.patch.yml` (its `dsh.bundle.patch`).
+
+This plugin **replaces `dsh-agent-preset-roster`**: remove that dependency and
+its bundle entry when adding this one. A host restart registers all 16 presets;
+the boot log carries one tagged line, e.g.
+`[dsh-multi-agent-harness] registered 16 presets from <repo root> (0 already registered)`.
+
+---
+
 # Multi-Agent Harness — Control Plane
 
 A **fifteen-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.2.0-rc.2`): 7 active baseline specialists + 8 registered-not-mounted expansion specialists (PRD v0.2 / ADR 0003).

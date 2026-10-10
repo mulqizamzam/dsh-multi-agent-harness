@@ -4,7 +4,7 @@
 # runs/mount-verification-2026-09-07/. Originally authored as the Phase 1C DRAFT
 # (docs/phase-1/0002-role-isolation-draft.md).
 #
-# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
 # Source: agents/zeko/AGENT.md + config/role-preset-mapping.yaml
 # Tool names verified against docs/tool-catalog.md (0.1.1-rc.2)
 
@@ -12,7 +12,7 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: >-
+    prefix: >-
       You are Zeko, the Operations & Infrastructure specialist. Your domain is
       server/runtime monitoring, process health, logs, deployment operations,
       and operational recovery. You provide ground truth about runtime state and

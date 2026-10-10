@@ -36,7 +36,7 @@ status: mounted           # All 15 rows mounted: 7 baseline rows 2026-09-07
                           # rows (vera..ledger) 2026-09-09 (Human-approved
                           # per-case exception, ADR 0003 D8). Pre-change
                           # backup: runs/specialist-expansion-2026-09-09/backups/.
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 mapping_ref: config/role-preset-mapping.yaml
 policy_ref_prefix: agents/  # <id>/policy.yaml
 

@@ -10,3 +10,6 @@ __pycache__/
 # Runtime artifacts
 *.pid
 .tmp-investigate/
+
+# Node dependencies — linked symlinks to harness vendor paths (recreate on fresh checkout)
+node_modules/

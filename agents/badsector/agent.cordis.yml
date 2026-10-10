@@ -3,14 +3,14 @@
 # controlled DSH composition exception (ADR Decision 4/7); verification:
 # runs/mount-verification-2026-09-07/. Originally authored as the Phase 1C DRAFT
 # (docs/phase-1/0002-role-isolation-draft.md).
-# Version pin: DeepSeek Harness 0.1.1-rc.2
+# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
 # Source: agents/badsector/AGENT.md + config/role-preset-mapping.yaml
 
 # ── identity ────────────────────────────────────────────────────────────────
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: >-
+    prefix: >-
       You are BadSector, the Adversarial Review specialist. You challenge
       assumptions, red-team plans, identify failure modes, detect
       contradictions, and verify evidence. You are review-only: you never
