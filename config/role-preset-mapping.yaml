@@ -14,16 +14,19 @@
 #    (mapping_version 2). Their tool-subagent instances are NOT yet mounted
 #    in the live profile: mount is the separate Human per-case exception
 #    (ADR 0003 D8). Registration is not activation.
-#  - Mounted 2026-09-07: per-role presets/instances ARE mounted in the live
-#    web profile composition under the Human-approved D4/D7 exception
-#    (ADR Decision 4/7; verification: runs/mount-verification-2026-09-07/).
-#    Composition changes per case remain a controlled, reversible exception.
-#  - Tool names are verified against the DSH 0.1.1-rc.2 tool catalog
-#    (docs/tool-catalog.md) plus the seven deployed per-role instance tools
-#    (subagent_<id>, mounted as global-layer rows in the live profile
-#    composition). Unknown names fail loudly at child spawn:
-#    tools.restrict() throws on any allow/deny name outside the child's
-#    inherited tool surface (global layer + parent scope chain).
+#  - Mounted 2026-09-07 (D4/D7 exception): per-role presets/instances are
+#    mounted — the presets by the dsh-multi-agent-harness plugin (repo-direct
+#    registration since 2026-10-10) and the instances as rows inside
+#    orchestrator/agent.cordis.yml since 2026-10-11 (moved there from
+#    global-layer rows in the live profile patch; see the section comment in
+#    that composition). Composition changes remain a controlled, reversible
+#    exception per case.
+#  - Tool names are verified against the DSH 0.2.0-rc.2 tool catalog
+#    (docs/tool-catalog.md) plus the fifteen per-role instance tools
+#    (subagent_<id>, rows in the orchestrator preset composition). Unknown
+#    names fail loudly at child spawn: tools.restrict() throws on any
+#    allow/deny name outside the child's inherited tool surface (parent scope
+#    chain).
 #  - DENY CONTRACT (canonical; reconciled with the deployed live profile):
 #    every deny list names exactly the fourteen sibling subagent_<id> instances
 #    (the real delegation surface — restriction matching is exact-name, so

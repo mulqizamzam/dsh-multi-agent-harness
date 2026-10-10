@@ -150,14 +150,15 @@ tool_filter:
     orchestrator (ralph is a fresh-agent loop, not orchestration; agent teams
     are BLOCKED). Asymmetry corrected 2026-09-12: this allow set previously
     named the eight expansion subagent_<id> instances but not the seven baseline
-    ones, which appeared in neither allow nor deny — even though all fifteen
-    instance rows are mounted in the live profile composition and
-    orchestrator/agent.cordis.yml contributes the generic subagent /
-    subagent_fork rows. All fifteen are now named here and in
-    config/role-preset-mapping.yaml §orchestrator, and tests/validate_config.py
-    asserts that coverage (`orchestrator allow covers all 15 instances`), so the
-    reduction cannot silently regress and ADR 0004 D3's derivation basis can no
-    longer drift.
+    ones, which appeared in neither allow nor deny. All fifteen are named here
+    and in config/role-preset-mapping.yaml §orchestrator, and
+    tests/validate_config.py asserts that coverage (`orchestrator allow covers
+    all 15 instances`), so the reduction cannot silently regress and ADR 0004
+    D3's derivation basis can no longer drift. Mount location updated
+    2026-10-11: the fifteen instance rows live in orchestrator/agent.cordis.yml
+    (moved from global-layer rows in the live profile patch), beside the
+    generic subagent / subagent_fork rows this preset already contributed —
+    so only orchestrator-bound sessions carry the delegation surface.
 
 prohibited_actions: [direct_production_deploy, direct_destructive_action,
                      direct_financial_transaction, direct_credential_change,

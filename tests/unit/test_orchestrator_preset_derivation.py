@@ -1,10 +1,17 @@
-"""ADR 0004 regression: the orchestrator preset is exactly `standard` minus 4 rows.
+"""ADR 0004 regression: the orchestrator preset is `standard` minus 4 rows plus 15 named delegation instances.
 
 `orchestrator/agent.cordis.yml` is a DSH preset composition derived by COPY from
 the shipped `standard` preset (read-only checkout), with exactly four rows
 deleted: `tool-pwsh` (top-level) and `tool-subagent-codex`,
 `tool-subagent-claude-code`, `tool-ralph` (all three nested inside the
 `delegation` group).
+
+2026-10-11 addition: the preset also carries fifteen ADDED rows — the
+`tool-subagent-<id>` delegation instances moved here from the global layer of
+the live profile patch (see the section comment in the composition). They are
+the orchestrator's only delegation surface, they exist in no version of
+`standard`, so the set delta is now DELETE 4 + ADD 15 rather than delete-only.
+The derivation's purpose is unchanged: upstream drift must still fail loudly.
 
 A preset is a copy, so an upstream change to `standard` never propagates into it
 and nothing complains — docs/adr/0004-orchestrator-role-preset.md records that as
@@ -19,7 +26,7 @@ runs/orchestrator-preset-2026-09-12/verify_preset.py (fixed with the recursive
 `all_row_ids()` walker that `test_deleted_rows_are_nested_not_top_level` pins
 down). Any future verifier of this preset must count recursively too.
 
-Version pin: DeepSeek Harness 0.1.1-rc.2 — the 29/25 counts are counts *in that
+Version pin: DeepSeek Harness 0.2.0-rc.2 — the 29/40 counts are counts *in that
 composition*, not a universal constant.
 """
 
@@ -31,8 +38,11 @@ import yaml
 # Same constant as tests/g10/conftest.py:DSH_CHECKOUT — the read-only DSH source
 # checkout, which exists only on machines that have one.
 DSH_CHECKOUT = "/home/administrator/deepseek-harness"
-STANDARD_PRESET = os.path.join(
-    DSH_CHECKOUT, "apps", "cli", "config", "agent-presets", "standard", "agent.cordis.yml"
+# 0.2.0-rc.2 moved the shipped presets out of apps/cli/config/agent-presets/
+# into the web-app bundle as patch files; the composition lives in the
+# preset-standard row's `config.plugins`.
+STANDARD_PRESET_PATCH = os.path.join(
+    DSH_CHECKOUT, "packages", "bundle", "web-app", "presets", "standard.patch.yml"
 )
 ORCHESTRATOR_PRESET = os.path.join("orchestrator", "agent.cordis.yml")
 
@@ -44,16 +54,47 @@ DELETED_ROWS = frozenset(
 # The three that are NOT top-level rows — the ones a shallow walk loses.
 NESTED_DELETED_ROWS = DELETED_ROWS - {"tool-pwsh"}
 
-STANDARD_ROW_COUNT = 29
-ORCHESTRATOR_ROW_COUNT = STANDARD_ROW_COUNT - len(DELETED_ROWS)
+# 2026-10-11 discovery: upstream `standard` gained TWO rows since the
+# 0.1.1-rc.2 derivation this preset was copied from — `present`
+# (@deepseek-ai/dsh-tool-present) and `tool-plugin-manager`
+# (@deepseek-ai/dsh-plugin-manager/tools, `disabled: true` upstream). They are
+# ABSENT here, so the measured delta is 6 rows, not 4. Tracked separately from
+# DELETED_ROWS on purpose: the four are the ADR 0004 deletions, these two are
+# un-actioned upstream drift. Re-deriving the preset to carry them is a Human
+# decision (it would add a live tool to the orchestrator surface, which
+# orchestrator/policy.yaml's tool_filter does not yet name).
+DRIFTED_ROWS = frozenset({"present", "tool-plugin-manager"})
+
+# 2026-10-11: the fifteen per-role delegation instances MOVED here from the
+# global layer of the live profile patch ($DSH_HOME/profiles/web/cordis.patch.yml).
+# They are the orchestrator's only delegation surface (role-preset-mapping.yaml
+# §orchestrator) and are named in orchestrator/policy.yaml's tool_filter.allow,
+# so the preset is no longer a pure derivation: standard - 4 - 2 + 15.
+ADDED_ROWS = frozenset(
+    {
+        "tool-subagent-zeko", "tool-subagent-cto", "tool-subagent-cfo",
+        "tool-subagent-kai", "tool-subagent-somad", "tool-subagent-badsector",
+        "tool-subagent-nova", "tool-subagent-vera", "tool-subagent-argus",
+        "tool-subagent-atlas", "tool-subagent-tess", "tool-subagent-quill",
+        "tool-subagent-scout", "tool-subagent-talon", "tool-subagent-ledger",
+    }
+)
+
+STANDARD_ROW_COUNT = 32
+ORCHESTRATOR_ROW_COUNT = (
+    STANDARD_ROW_COUNT - len(DELETED_ROWS) - len(DRIFTED_ROWS) + len(ADDED_ROWS)
+)
 
 # Appended to every drift failure: what the reader is supposed to DO about it.
 ACTION = (
     "ACTION: re-derive orchestrator/agent.cordis.yml from the shipped `standard` "
     "preset (ADR 0004) — copy the current composition verbatim, delete only "
-    f"{sorted(DELETED_ROWS)}, and restore the orchestrator `persona` text. ADR 0004 "
-    "creates no automatic propagation, so this test is the only signal that the "
-    "derived copy has fallen behind upstream."
+    f"{sorted(DELETED_ROWS)}, restore the orchestrator `persona` text, and keep "
+    f"the {len(ADDED_ROWS)} added delegation instances ({sorted(ADDED_ROWS)}) "
+    "moved here from the profile patch on 2026-10-11. Then decide with the Human "
+    "whether to also carry the drifted upstream rows "
+    f"{sorted(DRIFTED_ROWS)}. ADR 0004 creates no automatic propagation, so this "
+    "test is the only signal that the derived copy has fallen behind upstream."
 )
 
 
@@ -89,11 +130,22 @@ JsSafeLoader.add_constructor("tag:yaml.org,2002:js", _construct_js)
 
 
 def load_rows(path):
-    """Parse a composition file into its top-level list of plugin rows."""
+    """Parse a composition file into its top-level list of plugin rows.
+
+    The shipped preset is a PATCH document (one `preset-standard` row); its
+    composition is `config.plugins`. A repo preset file is already a bare list.
+    """
     with open(path, encoding="utf-8") as fh:
-        rows = yaml.load(fh.read(), Loader=JsSafeLoader)
-    assert isinstance(rows, list), f"{path}: composition must be a top-level list, got {type(rows).__name__}"
-    return rows
+        doc = yaml.load(fh.read(), Loader=JsSafeLoader)
+    if (
+        isinstance(doc, list)
+        and len(doc) == 1
+        and isinstance(doc[0], dict)
+        and "insert" in doc[0]
+    ):
+        doc = doc[0]["insert"][0]["config"]["plugins"]
+    assert isinstance(doc, list), f"{path}: composition must be a top-level list, got {type(doc).__name__}"
+    return doc
 
 
 def all_row_ids(rows, _depth=0):
@@ -123,18 +175,18 @@ def ids_of(rows):
 @pytest.fixture(scope="module")
 def standard_rows():
     """Rows of the shipped `standard` preset, or a clean SKIP when no checkout here."""
-    if not os.path.isfile(STANDARD_PRESET):
+    if not os.path.isfile(STANDARD_PRESET_PATCH):
         why = (
             f"the read-only DSH checkout at {DSH_CHECKOUT} is not present in this "
             "environment"
             if not os.path.isdir(DSH_CHECKOUT)
-            else f"the checkout is present but holds no `standard` composition at {STANDARD_PRESET}"
+            else f"the checkout is present but holds no `standard` composition at {STANDARD_PRESET_PATCH}"
         )
         pytest.skip(
-            f"shipped `standard` preset not found at {STANDARD_PRESET}: {why}, so the "
+            f"shipped `standard` preset not found at {STANDARD_PRESET_PATCH}: {why}, so the "
             "upstream side of this derivation invariant cannot be read"
         )
-    return load_rows(STANDARD_PRESET)
+    return load_rows(STANDARD_PRESET_PATCH)
 
 
 @pytest.fixture(scope="module")
@@ -144,32 +196,36 @@ def orchestrator_rows(project_root):
     return load_rows(path)
 
 
-def test_recursive_row_counts_are_29_and_25(standard_rows, orchestrator_rows):
-    """Counts are recursive: 29 upstream, 25 here. A shallow walk reads 16/15."""
+def test_recursive_row_counts_are_32_and_41(standard_rows, orchestrator_rows):
+    """Counts are recursive: 32 upstream, 41 here (26 derivation + 15 added)."""
     std, orc = ids_of(standard_rows), ids_of(orchestrator_rows)
     assert len(std) == STANDARD_ROW_COUNT, (
         f"the shipped `standard` preset now has {len(std)} recursive rows, not the "
-        f"{STANDARD_ROW_COUNT} it had at 0.1.1-rc.2 — upstream changed. {ACTION}"
+        f"{STANDARD_ROW_COUNT} pinned at 0.2.0-rc.2 — upstream changed. {ACTION}"
     )
     assert len(orc) == ORCHESTRATOR_ROW_COUNT, (
         f"orchestrator/agent.cordis.yml has {len(orc)} recursive rows, expected "
-        f"{ORCHESTRATOR_ROW_COUNT} ({STANDARD_ROW_COUNT} - {len(DELETED_ROWS)}). {ACTION}"
+        f"{ORCHESTRATOR_ROW_COUNT} ({STANDARD_ROW_COUNT} - {len(DELETED_ROWS)} "
+        f"- {len(DRIFTED_ROWS)} + {len(ADDED_ROWS)}). {ACTION}"
     )
 
 
-def test_delta_is_exactly_the_four_deleted_rows(standard_rows, orchestrator_rows):
-    """Nothing added, nothing else removed — the set delta is those four ids."""
+def test_delta_is_exactly_four_deleted_two_drifted_fifteen_added(standard_rows, orchestrator_rows):
+    """Set delta vs standard: 4 documented deletions, 2 drifted rows, 15 additions."""
     std, orc = set(ids_of(standard_rows)), set(ids_of(orchestrator_rows))
     removed, added = std - orc, orc - std
-    assert not added, (
+    assert added == set(ADDED_ROWS), (
         "orchestrator/agent.cordis.yml carries rows the shipped `standard` preset does "
-        f"not have: {sorted(added)}. This preset is a derivation, not an original "
-        f"composition. {ACTION}"
+        f"not have beyond the {len(ADDED_ROWS)} documented additions: "
+        f"{sorted(added - set(ADDED_ROWS))}; missing from the documented set: "
+        f"{sorted(set(ADDED_ROWS) - added)}. {ACTION}"
     )
-    assert removed == set(DELETED_ROWS), (
-        "orchestrator/agent.cordis.yml is no longer `standard` minus exactly the four "
-        f"documented rows. Missing here but present upstream: {sorted(removed - DELETED_ROWS)}; "
-        f"deleted rows unexpectedly present here: {sorted(DELETED_ROWS - removed)}. {ACTION}"
+    expected_removed = set(DELETED_ROWS) | set(DRIFTED_ROWS)
+    assert removed == expected_removed, (
+        "orchestrator/agent.cordis.yml no longer differs from `standard` by exactly "
+        f"the documented set. Unexpectedly present here: {sorted(expected_removed - removed)}; "
+        f"absent here but not documented: {sorted(removed - expected_removed)} "
+        f"(a new upstream row needs either re-derivation or a DRIFTED_ROWS entry). {ACTION}"
     )
 
 
