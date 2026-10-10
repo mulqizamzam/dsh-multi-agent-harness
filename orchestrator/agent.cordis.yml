@@ -132,12 +132,20 @@
 
 # ── goals ───────────────────────────────────────────────────────────────────
 
-# Only the model-facing tool. The goal SERVICE, its session driver, and the
-# `/goal` command stay on the host plane: the Gateway serves the goal domain as
-# Remote endpoints whose receiver comes from a generated descriptor, so it
-# resolves `goals` on the host and an entry-local realm here would hide it. The
-# registry is keyed by session anyway, so one host instance serves every
-# session. What a preset chooses is whether its agent can call the goal tool.
+# The goal SERVICE and its session driver stay on the host plane (the Gateway
+# serves the goal domain as Remote endpoints; the registry is keyed by session,
+# so one host instance serves every session). What a preset chooses is whether
+# its agent can call the goal tool AND whether its human sees `/goal`.
+#
+# The `/goal` command row is required here even though `base` mounts it: the
+# web-app bundle disables `command-goal` on the host plane so presets own the
+# human command (packages/bundle/web-app/cordis.patch.yml), and the shipped
+# `standard` preset mounts the pair `tool-goal` + `command-goal`. Without this
+# row the session command registry has no `goal` definition, so typed `/goal`
+# resolves against an empty catalog and falls through as a plain user message.
+- id: command-goal
+  name: '@deepseek-ai/dsh-command-goal'
+
 - id: tool-goal
   name: '@deepseek-ai/dsh-tool-goal'
 
