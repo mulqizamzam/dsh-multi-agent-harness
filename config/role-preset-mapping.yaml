@@ -378,7 +378,7 @@ orchestrator:
             subagent_somad, subagent_badsector, subagent_nova,
             subagent_vera, subagent_argus, subagent_atlas, subagent_tess,
             subagent_quill, subagent_scout, subagent_talon, subagent_ledger,
-            workflow, skill, ask_user_question, exit_plan_mode,
+            workflow, skill, ask_user_question, exit_plan_mode, present,
             create_goal, get_goal, update_goal, todo_write, web_search]
     deny: [ralph, str_replace_editor, lsp, run_code, pwsh, web_fetch,
            terminal_open, terminal_read, terminal_send, terminal_signal,

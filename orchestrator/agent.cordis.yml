@@ -285,6 +285,19 @@
     fetch: false
     searchTimeoutMs: 60000
 
+# Carried from upstream `standard` on 2026-10-11 (re-derivation, Human-approved):
+# two rows the 0.1.1-rc.2-era derivation predated. They sit at their
+# `standard` positions (after `tool-web`). `present` is an ACTIVE tool and is
+# named in orchestrator/policy.yaml's tool_filter.allow and
+# config/role-preset-mapping.yaml §orchestrator; `tool-plugin-manager` is
+# `disabled: true` upstream and stays disabled here — a row copy, not a
+# surface change.
+- id: present
+  name: '@deepseek-ai/dsh-tool-present'
+- id: tool-plugin-manager
+  name: '@deepseek-ai/dsh-plugin-manager/tools'
+  disabled: true
+
 # ── per-role delegation instances (moved here 2026-10-11) ───────────────────
 # The fifteen `tool-subagent-<id>` rows below previously lived as global-layer
 # rows in the live profile patch ($DSH_HOME/profiles/web/cordis.patch.yml).

@@ -54,22 +54,21 @@ DELETED_ROWS = frozenset(
 # The three that are NOT top-level rows — the ones a shallow walk loses.
 NESTED_DELETED_ROWS = DELETED_ROWS - {"tool-pwsh"}
 
-# 2026-10-11 discovery: upstream `standard` gained TWO rows since the
-# 0.1.1-rc.2 derivation this preset was copied from — `present`
+# 2026-10-11 discovery, RESOLVED same day: upstream `standard` had gained two
+# rows since the 0.1.1-rc.2 derivation this preset was copied from — `present`
 # (@deepseek-ai/dsh-tool-present) and `tool-plugin-manager`
-# (@deepseek-ai/dsh-plugin-manager/tools, `disabled: true` upstream). They are
-# ABSENT here, so the measured delta is 6 rows, not 4. Tracked separately from
-# DELETED_ROWS on purpose: the four are the ADR 0004 deletions, these two are
-# un-actioned upstream drift. Re-deriving the preset to carry them is a Human
-# decision (it would add a live tool to the orchestrator surface, which
-# orchestrator/policy.yaml's tool_filter does not yet name).
-DRIFTED_ROWS = frozenset({"present", "tool-plugin-manager"})
+# (@deepseek-ai/dsh-plugin-manager/tools, `disabled: true` upstream). The Human
+# approved carrying them (re-derivation): both rows were added at their
+# `standard` positions after `tool-web`, and `present` was named in
+# orchestrator/policy.yaml and role-preset-mapping.yaml allow lists. They are
+# NO LONGER drift — kept here as the record of the measurement that found them.
+RESOLVED_DRIFTED_ROWS = frozenset({"present", "tool-plugin-manager"})
 
 # 2026-10-11: the fifteen per-role delegation instances MOVED here from the
 # global layer of the live profile patch ($DSH_HOME/profiles/web/cordis.patch.yml).
 # They are the orchestrator's only delegation surface (role-preset-mapping.yaml
 # §orchestrator) and are named in orchestrator/policy.yaml's tool_filter.allow,
-# so the preset is no longer a pure derivation: standard - 4 - 2 + 15.
+# so the preset is no longer a pure derivation: standard - 4 + 15.
 ADDED_ROWS = frozenset(
     {
         "tool-subagent-zeko", "tool-subagent-cto", "tool-subagent-cfo",
@@ -81,9 +80,7 @@ ADDED_ROWS = frozenset(
 )
 
 STANDARD_ROW_COUNT = 32
-ORCHESTRATOR_ROW_COUNT = (
-    STANDARD_ROW_COUNT - len(DELETED_ROWS) - len(DRIFTED_ROWS) + len(ADDED_ROWS)
-)
+ORCHESTRATOR_ROW_COUNT = STANDARD_ROW_COUNT - len(DELETED_ROWS) + len(ADDED_ROWS)
 
 # Appended to every drift failure: what the reader is supposed to DO about it.
 ACTION = (
@@ -91,10 +88,11 @@ ACTION = (
     "preset (ADR 0004) — copy the current composition verbatim, delete only "
     f"{sorted(DELETED_ROWS)}, restore the orchestrator `persona` text, and keep "
     f"the {len(ADDED_ROWS)} added delegation instances ({sorted(ADDED_ROWS)}) "
-    "moved here from the profile patch on 2026-10-11. Then decide with the Human "
-    "whether to also carry the drifted upstream rows "
-    f"{sorted(DRIFTED_ROWS)}. ADR 0004 creates no automatic propagation, so this "
-    "test is the only signal that the derived copy has fallen behind upstream."
+    "moved here from the profile patch on 2026-10-11. The upstream drift found "
+    f"the same day ({sorted(RESOLVED_DRIFTED_ROWS)}) was resolved by carrying both "
+    "rows; if upstream drifts again, repeat that decision explicitly. ADR 0004 "
+    "creates no automatic propagation, so this test is the only signal that the "
+    "derived copy has fallen behind upstream."
 )
 
 
@@ -196,8 +194,8 @@ def orchestrator_rows(project_root):
     return load_rows(path)
 
 
-def test_recursive_row_counts_are_32_and_41(standard_rows, orchestrator_rows):
-    """Counts are recursive: 32 upstream, 41 here (26 derivation + 15 added)."""
+def test_recursive_row_counts_are_32_and_43(standard_rows, orchestrator_rows):
+    """Counts are recursive: 32 upstream, 43 here (28 derivation + 15 added)."""
     std, orc = ids_of(standard_rows), ids_of(orchestrator_rows)
     assert len(std) == STANDARD_ROW_COUNT, (
         f"the shipped `standard` preset now has {len(std)} recursive rows, not the "
@@ -206,12 +204,17 @@ def test_recursive_row_counts_are_32_and_41(standard_rows, orchestrator_rows):
     assert len(orc) == ORCHESTRATOR_ROW_COUNT, (
         f"orchestrator/agent.cordis.yml has {len(orc)} recursive rows, expected "
         f"{ORCHESTRATOR_ROW_COUNT} ({STANDARD_ROW_COUNT} - {len(DELETED_ROWS)} "
-        f"- {len(DRIFTED_ROWS)} + {len(ADDED_ROWS)}). {ACTION}"
+        f"+ {len(ADDED_ROWS)}). {ACTION}"
     )
 
 
-def test_delta_is_exactly_four_deleted_two_drifted_fifteen_added(standard_rows, orchestrator_rows):
-    """Set delta vs standard: 4 documented deletions, 2 drifted rows, 15 additions."""
+def test_delta_is_exactly_four_deleted_and_fifteen_added(standard_rows, orchestrator_rows):
+    """Set delta vs standard: 4 documented deletions, 15 documented additions.
+
+    The 2026-10-11 upstream drift (present, tool-plugin-manager) was resolved by
+    carrying both rows, so it is not part of the live delta; if either goes
+    missing again this test fails with them named as undocumented absences.
+    """
     std, orc = set(ids_of(standard_rows)), set(ids_of(orchestrator_rows))
     removed, added = std - orc, orc - std
     assert added == set(ADDED_ROWS), (
@@ -220,17 +223,16 @@ def test_delta_is_exactly_four_deleted_two_drifted_fifteen_added(standard_rows, 
         f"{sorted(added - set(ADDED_ROWS))}; missing from the documented set: "
         f"{sorted(set(ADDED_ROWS) - added)}. {ACTION}"
     )
-    expected_removed = set(DELETED_ROWS) | set(DRIFTED_ROWS)
-    assert removed == expected_removed, (
+    assert removed == set(DELETED_ROWS), (
         "orchestrator/agent.cordis.yml no longer differs from `standard` by exactly "
-        f"the documented set. Unexpectedly present here: {sorted(expected_removed - removed)}; "
-        f"absent here but not documented: {sorted(removed - expected_removed)} "
-        f"(a new upstream row needs either re-derivation or a DRIFTED_ROWS entry). {ACTION}"
+        f"the four documented rows (previously-resolved drift: {sorted(RESOLVED_DRIFTED_ROWS)}): "
+        f"unexpectedly present here: {sorted(set(DELETED_ROWS) - removed)}; absent here but "
+        f"not documented: {sorted(removed - set(DELETED_ROWS))}. {ACTION}"
     )
 
 
 def test_shared_rows_keep_standard_order(standard_rows, orchestrator_rows):
-    """The 25 shared rows appear in `standard`'s order — nothing reordered.
+    """The 28 shared rows appear in `standard`'s order — nothing reordered.
 
     Both sides are filtered to the shared ids, so this asserts ORDER only and lets
     the delta test own membership: an upstream add/remove must not show up here as

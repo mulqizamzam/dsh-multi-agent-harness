@@ -36,23 +36,30 @@ except ImportError:  # pragma: no cover - degraded mode without jsonschema
     ValidationError = Exception
 
 # ---------------------------------------------------------------------------
-# Tool catalog — verified against DSH 0.1.1-rc.2 (docs/tool-catalog.md).
-# Mirrored here so validation runs without loading the docs.
+# Tool catalog — verified against DSH 0.1.1-rc.2 (docs/tool-catalog.md), with
+# 0.2.0-rc.2 additions noted below. Mirrored here so validation runs without
+# loading the docs.
 #
 # The fifteen subagent_<id> names are the per-role tool-subagent instance
 # tools (7 baseline deployed 2026-09-07; 8 expansion registered PRD v0.2 —
-# mount is the separate Human gate, ADR 0003 D8). They register as global-layer
-# rows in the live profile composition ($DSH_HOME/profiles/web/cordis.patch.yml),
-# so they are part of every specialist child's inherited (restrictable) surface
-# and are valid allow/deny names for tools.restrict() — verified against the
-# engine (packages/core/tools restrict(): throws on names outside the child's
-# global+ancestor-chain surface).
+# mount is the separate Human gate, ADR 0003 D8). Since 2026-10-11 the instance
+# rows live in orchestrator/agent.cordis.yml (moved from global-layer rows in
+# $DSH_HOME/profiles/web/cordis.patch.yml), so they remain part of every
+# specialist child's inherited (restrictable) surface and are valid allow/deny
+# names for tools.restrict() — verified against the engine (packages/core/tools
+# restrict(): throws on names outside the child's global+ancestor-chain
+# surface).
+#
+# `present` added 2026-10-11: verified against the running 0.2.0-rc.2 harness
+# (packages/deliverables/tool-present/src/index.ts registers the tool name
+# 'present'); carried into the orchestrator preset by the Human-approved
+# re-derivation the same day.
 # ---------------------------------------------------------------------------
 VERIFIED_TOOLS = frozenset("""
 ask_user_question bash cordis_define cordis_inspect_list cordis_inspect_query
 cordis_inspect_self cordis_run cordis_stop cordis_undefine create_goal edit
 exit_plan_mode followup_task get_goal glob grep interrupt_agent job_kill
-job_list job_output list_agents lsp pwsh ralph read read_image report run_code
+job_list job_output list_agents lsp present pwsh ralph read read_image report run_code
 schedule_create schedule_delete schedule_list send_message session_event_read
 session_event_search session_event_trace session_search session_trace skill
 spawn_teammate str_replace_editor subagent subagent_fork team_task_create
