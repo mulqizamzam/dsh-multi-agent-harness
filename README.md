@@ -35,8 +35,25 @@ Wire it into a DSH profile two ways, exactly like any bundle plugin:
 
 This plugin **replaces `dsh-agent-preset-roster`**: remove that dependency and
 its bundle entry when adding this one. A host restart registers all 16 presets;
-the boot log carries one tagged line, e.g.
-`[dsh-multi-agent-harness] registered 16 presets from <repo root> (0 already registered)`.
+the boot log carries two tagged lines, e.g.
+
+```
+[dsh-multi-agent-harness] registered 16 presets from <repo root> (skipped 0 already registered, 0 failed)
+[dsh-multi-agent-harness] roster audit: 20 presets in roster, none broken
+```
+
+The first line counts registrations; the second is a deferred roster read that
+reports activation failures, because `register()` settles activation without
+throwing — a preset whose composition cannot mount is recorded `broken` by the
+registry and stays visible in the roster rather than failing the boot.
+
+> **No roster read at apply time.** `agentPresets.list()` re-audits every
+> mounted preset and, while any of them still has a row waiting for a service,
+> awaits the host Loader (`agent-preset-registry/src/index.ts:135-139`) — which
+> waits on this plugin row's own activation, so calling it from `apply` would
+> hang host boot the moment any listed preset had a pending row. This plugin
+> registers without a snapshot: the registry rejects a duplicate id atomically
+> before any await (`src/index.ts:82-85`) and the per-preset catch absorbs it.
 
 ---
 

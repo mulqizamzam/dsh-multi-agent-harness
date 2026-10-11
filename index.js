@@ -27,6 +27,17 @@
 //     registration fails is logged per-preset. Neither throws out of `apply`,
 //     so one bad preset cannot take the host down. The registry itself records
 //     an activation failure `broken` on the row rather than throwing.
+//   - No roster snapshot is read at apply time. `agentPresets.list()`
+//     re-audits every mounted preset and, while any of them still has a
+//     pending row, awaits the host Loader (agent-preset-registry
+//     src/index.ts:135-139) — and that await waits on THIS row's own
+//     activation, so calling it from `apply` would hang host boot the moment
+//     any listed preset has a pending row. The registry rejects a duplicate
+//     id atomically before any await (src/index.ts:82-85), and the per-preset
+//     catch below absorbs that rejection, so no snapshot is needed.
+//   - Boot diagnostics are honest: registration success is not activation
+//     success, so one deferred roster read (scheduled, never awaited — see
+//     the audit note in `apply`) reports how many presets are `broken`.
 
 import { existsSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
@@ -76,61 +87,101 @@ async function readPreset(id, dir) {
   return definition
 }
 
-/** Register one preset under `id` from `dir`, returning its disposer.
+/** Register one preset under `id` from `dir`.
  *
- * `existing` guards against ids another plugin already registered (the registry
- * rejects duplicates). Both the parse and the register call share one guard so a
- * malformed `agent.cordis.yml` or a definition-level fault is logged per-preset
- * and never thrown out of `apply`. Returns null when the caller should skip:
- * already registered, no composition file, or a logged failure. An activation
- * failure is not thrown by register — the registry records it `broken`. */
-async function tryRegister(presets, existing, id, dir) {
-  if (existing.has(id)) return null
+ * Returns `{ dispose, reason }`:
+ *   - `{ dispose, 'registered' }` — the registry accepted the definition and
+ *     activation settled; the caller yields `dispose`.
+ *   - `{ null, 'duplicate' }` — another plugin already owns the id. The
+ *     registry throws before any await, so this is decided atomically.
+ *   - `{ null, 'absent' }` — the directory holds no composition file.
+ *   - `{ null, 'failed' }` — parse or registration fault, logged per preset.
+ *
+ * An activation failure is NOT a failure here: the registry records it
+ * `broken` on the row and still returns the disposer, so the preset stays
+ * visible in the roster and the deferred audit reports it.
+ */
+async function tryRegister(presets, id, dir) {
   try {
     const definition = await readPreset(id, dir)
-    if (definition === null) return null
-    return await presets.register(definition)
+    if (definition === null) return { dispose: null, reason: 'absent' }
+    const dispose = await presets.register(definition)
+    return { dispose, reason: 'registered' }
   } catch (error) {
-    log(`preset ${id} failed to register: ${String(error)}`)
-    return null
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.startsWith('Duplicate agent preset')) {
+      return { dispose: null, reason: 'duplicate' }
+    }
+    log(`preset ${id} failed to register: ${message}`)
+    return { dispose: null, reason: 'failed' }
   }
 }
 
 export async function* apply(ctx) {
   const presets = ctx.agentPresets
-  // Never collide with a preset another plugin already registered under the
-  // same id: the registry rejects duplicates and would fail this plugin.
-  const existing = new Set((await presets.list()).map((row) => row.id))
   let registered = 0
+  let skipped = 0
+  let failed = 0
 
+  let dirs = []
   if (existsSync(AGENTS_ROOT)) {
-    const dirs = (await readdir(AGENTS_ROOT, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort()
-    // Each dirname under agents/ is a role preset: agents/<id> -> role-<id>.
-    for (const dir of dirs) {
-      const dispose = await tryRegister(presets, existing, `role-${dir}`, path.join(AGENTS_ROOT, dir))
-      if (dispose !== null) {
-        yield dispose
-        registered += 1
-      }
+    try {
+      dirs = (await readdir(AGENTS_ROOT, { withFileTypes: true }))
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort()
+    } catch (error) {
+      log(`agents root ${AGENTS_ROOT} unreadable: ${String(error)}`)
     }
   } else {
     log(`agents root ${AGENTS_ROOT} does not exist; skipping role presets`)
   }
+  // Each dirname under agents/ is a role preset: agents/<id> -> role-<id>.
+  for (const dir of dirs) {
+    const outcome = await tryRegister(presets, `role-${dir}`, path.join(AGENTS_ROOT, dir))
+    if (outcome.reason === 'registered') {
+      yield outcome.dispose
+      registered += 1
+    } else if (outcome.reason === 'duplicate') skipped += 1
+    else if (outcome.reason === 'failed') failed += 1
+  }
 
   // The orchestrator is one preset under <pkgroot>/orchestrator, no role prefix.
   if (existsSync(ORCHESTRATOR_DIR)) {
-    const dispose = await tryRegister(presets, existing, ORCHESTRATOR_ID, ORCHESTRATOR_DIR)
-    if (dispose !== null) {
-      yield dispose
+    const outcome = await tryRegister(presets, ORCHESTRATOR_ID, ORCHESTRATOR_DIR)
+    if (outcome.reason === 'registered') {
+      yield outcome.dispose
       registered += 1
-    }
+    } else if (outcome.reason === 'duplicate') skipped += 1
+    else if (outcome.reason === 'failed') failed += 1
   } else {
     log(`orchestrator preset ${ORCHESTRATOR_DIR} does not exist; skipping`)
   }
 
   log(`registered ${registered} presets from ${PKG_ROOT} ` +
-      `(${existing.size} already registered)`)
+      `(skipped ${skipped} already registered, ${failed} failed)`)
+
+  // Boot-log honesty. `register()` settles activation without throwing, so
+  // the count above includes presets the registry recorded `broken`; the
+  // registry warns through its own logger, which this tagged line cannot
+  // see. One deferred roster read reports the activation outcomes. It is
+  // scheduled and never awaited: this row's activation settles first, so the
+  // registry's host-Loader await inside `list()` can no longer wait on this
+  // row — reading the roster from inside `apply` is the boot deadlock the
+  // snapshot removal above avoids.
+  const audit = setTimeout(() => {
+    presets.list().then((rows) => {
+      const broken = rows.filter((row) => row.broken !== undefined)
+      const summary = broken.length === 0
+        ? `${rows.length} presets in roster, none broken`
+        : `${rows.length} presets in roster, ${broken.length} broken — ` +
+          broken.map((row) => `${row.id}: ${row.broken}`).join(' | ')
+      log(`roster audit: ${summary}`)
+    }, (error) => {
+      log(`roster audit failed: ${String(error)}`)
+    })
+  }, 0)
+  // Yielded last, so teardown clears the timer before the disposers that
+  // unregister the presets it would read.
+  yield () => clearTimeout(audit)
 }
