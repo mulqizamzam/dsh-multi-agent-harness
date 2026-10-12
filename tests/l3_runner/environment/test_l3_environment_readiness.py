@@ -211,18 +211,26 @@ def test_answerer_headless_blocks_l3_fail_closed():
 # D4/D7
 # ===========================================================================
 def test_d4d7_presets_present():
-    """On this host the 15 role presets exist under $DSH_HOME/.agent-presets/
-    (7 baseline 2026-09-07 + 8 expansion 2026-09-09, ADR 0003 D8)."""
+    """The 16 preset composition sources persist in the repo.
+
+    2026-10-10 cutover (commit 0477eff): the dsh-multi-agent-harness plugin
+    registers the presets directly from `agents/<id>/agent.cordis.yml` +
+    `orchestrator/agent.cordis.yml`; the `$DSH_HOME/.agent-presets/`
+    deployment copy is retired, so the sources on disk ARE the persistence
+    fact (7 baseline 2026-09-07 + 8 expansion 2026-09-09, ADR 0003 D8).
+    """
     assert _d4d7_presets_present()
 
 
 def test_d4d7_instance_rows_present():
-    """The 15 tool-subagent rows are composed in cordis.patch.yml."""
-    # The check is robust to a missing DSH_HOME -> returns False; in the
-    # current environment the rows are verified present.
-    dsh = os.environ.get("DSH_HOME", "")
-    if dsh and os.path.isfile(os.path.join(dsh, "profiles", "web", "cordis.patch.yml")):
-        assert _d4d7_instance_rows_present()
+    """The 15 tool-subagent rows are composed in orchestrator/agent.cordis.yml.
+
+    The rows moved out of the live profile patch
+    ($DSH_HOME/profiles/web/cordis.patch.yml) on 2026-10-11; the orchestrator
+    composition is the only place they exist now. The repo-based check needs
+    no DSH_HOME and fails loudly when a row disappears.
+    """
+    assert _d4d7_instance_rows_present()
 
 
 def test_d4d7_bridge_marker_unset(monkeypatch):

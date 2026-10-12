@@ -20,8 +20,6 @@ import json
 import os
 import sys
 
-import pytest
-
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))))
 if PROJECT_ROOT not in sys.path:
@@ -32,21 +30,6 @@ if not os.path.exists(PYTHON):
     PYTHON = sys.executable
 
 ORCHESTRATOR_UID = os.getuid()
-
-
-def _extract_allow(block: str) -> set:
-    """Extract the exact tool names from the toolFilter allow list of a block.
-
-    Parses the `allow: [ ... ]` line(s) and returns the set of exact tool
-    names (token-matched, so `todo_write` != `write`).
-    """
-    import re
-    names = set()
-    for m in re.finditer(r"allow:\s*\[([^\]]*)\]", block):
-        for tok in re.split(r"[,\s]+", m.group(1)):
-            if tok:
-                names.add(tok)
-    return names
 
 
 def _l3_readiness():
@@ -213,42 +196,38 @@ class TestApprovalCorrection:
 # ---------------------------------------------------------------------------
 
 class TestO5ContainmentApplied:
-    """O5 must be applied: somad/nova have no write/edit in live patch."""
+    """O5 must be applied: somad/nova have no write/edit in the composed
+    delegation rows (orchestrator/agent.cordis.yml)."""
 
-    def test_live_cordis_patch_somad_no_write_edit(self):
-        """Check the live cordis.patch.yml somad row has no write/edit.
+    def test_orchestrator_composition_somad_nova_no_write_edit(self):
+        """The composed somad/nova delegation rows carry no write/edit.
+
+        The 15 `tool-subagent-<id>` rows moved out of the live profile patch
+        ($DSH_HOME/profiles/web/cordis.patch.yml) into
+        `orchestrator/agent.cordis.yml` on 2026-10-11, so the O5 containment
+        fact is asserted against the composition that actually carries the
+        rows. They are PARSED as YAML, not text-scanned: the old text scan of
+        the patch silently matched nothing once the rows moved (an empty
+        section trivially "passes"), which is exactly the failure shape this
+        rewrite removes.
 
         `todo_write` is a permitted tool and contains the substring 'write';
-        the O5 check must match the EXACT tool name `write` (a token), not a
-        substring, so `todo_write` does not trip it.
+        the check reads exact tool names from the parsed allow list, so
+        `todo_write` does not trip it. Containment is both-sided: write/edit
+        absent from allow AND named in deny (the read-only-roles contract).
         """
-        import os
-        dsh_home = os.environ.get("DSH_HOME", "")
-        if not dsh_home:
-            pytest.skip("DSH_HOME not set")
-        patch = os.path.join(dsh_home, "profiles", "web", "cordis.patch.yml")
-        assert os.path.isfile(patch), f"cordis.patch.yml not found at {patch}"
-        with open(patch) as f:
-            text = f.read()
-        # Find the somad block and check its allow list
-        somad_start = text.find("tool-subagent-somad")
-        nova_start = text.find("tool-subagent-nova")
-        assert somad_start >= 0, "somad row not found in live patch"
-        assert nova_start >= 0, "nova row not found in live patch"
-        # Extract the somad block (from somad_start to nova_start)
-        somad_block = text[somad_start:nova_start]
-        somad_allow = _extract_allow(somad_block)
-        assert "write" not in somad_allow, f"O5 FAIL: somad allow still has write: {somad_allow}"
-        assert "edit" not in somad_allow, f"O5 FAIL: somad allow still has edit: {somad_allow}"
-        # Extract the nova block (from nova_start to end)
-        nova_block = text[nova_start:]
-        # Find the end of nova block (next tool-subagent or end of file)
-        next_tool = nova_block.find("tool-subagent-", 1)
-        if next_tool >= 0:
-            nova_block = nova_block[:next_tool]
-        nova_allow = _extract_allow(nova_block)
-        assert "write" not in nova_allow, f"O5 FAIL: nova allow still has write: {nova_allow}"
-        assert "edit" not in nova_allow, f"O5 FAIL: nova allow still has edit: {nova_allow}"
+        from tests.d4d7_composition import orchestrator_subagent_rows
+        rows = orchestrator_subagent_rows()
+        for rid in ("subagent_somad", "subagent_nova"):
+            assert rid in rows, (
+                f"{rid} row not composed in orchestrator/agent.cordis.yml")
+            tf = rows[rid].get("toolFilter") or {}
+            allow = set(tf.get("allow") or [])
+            deny = set(tf.get("deny") or [])
+            assert "write" not in allow, f"O5 FAIL: {rid} allow still has write: {sorted(allow)}"
+            assert "edit" not in allow, f"O5 FAIL: {rid} allow still has edit: {sorted(allow)}"
+            assert {"write", "edit"} <= deny, (
+                f"O5 FAIL: {rid} deny must name write+edit: {sorted(deny)}")
 
 
 # ---------------------------------------------------------------------------

@@ -33,6 +33,8 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from tests import d4d7_composition
+
 # Project root (three levels up from this file).
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -166,18 +168,18 @@ def _bridge_marker_set() -> bool:
 
 
 def _role_presets_present() -> bool:
-    """Detect whether the 15 role presets are present under $DSH_HOME/.agent-presets/."""
-    dsh_home = os.environ.get("DSH_HOME", "")
-    if not dsh_home:
-        return False
-    presets_dir = os.path.join(dsh_home, ".agent-presets")
-    if not os.path.isdir(presets_dir):
-        return False
+    """Detect whether the 16 preset composition sources persist in the repo.
+
+    2026-10-10 cutover (commit 0477eff): the dsh-multi-agent-harness plugin
+    registers the presets directly from `agents/<id>/` + `orchestrator/` — the
+    live profile depends on this repo by `link:` — and the
+    `$DSH_HOME/.agent-presets/` deployment copy is retired. Presence is
+    therefore a property of the repo sources the live plugin reads.
+    """
     try:
-        present = os.listdir(presets_dir)
+        return d4d7_composition.preset_sources_present()
     except OSError:
         return False
-    return all(p in present for p in ROLE_PRESETS)
 
 
 def _dsh_version(env: dict | None) -> str:
@@ -241,11 +243,15 @@ def run_env_preflight(env: dict | None = None) -> EnvReport:
 
     presets = _role_presets_present()
     report.add(EnvCheck(
-        "ENV-MOUNT-2", "15 D4/D7 role presets present under $DSH_HOME/.agent-presets/",
+        "ENV-MOUNT-2", "16 preset composition sources persist in the repo "
+        "(agents/<id>/ + orchestrator/, registered directly by the plugin)",
         passed=presets,
-        required=False,  # presets may be mounted elsewhere (cordis.patch.yml rows)
-        detail=(f"presets_present={presets} roles={list(ROLE_PRESETS)} "
-                f"dsh_home={os.environ.get('DSH_HOME', '(unset)')}")))
+        required=False,  # presets are repo-registered, not a deployed copy
+        detail=(f"preset_sources_present={presets} "
+                f"presets={list(d4d7_composition.ALL_PRESETS)} "
+                f"source=agents/<id>/agent.cordis.yml + orchestrator/agent.cordis.yml "
+                f"(the $DSH_HOME/.agent-presets/ deployment copy is retired; "
+                f"dsh_home={os.environ.get('DSH_HOME', '(unset)')})")))
 
     # ENV-DSH-1: version pin.
     dsh_ver = _dsh_version(env)

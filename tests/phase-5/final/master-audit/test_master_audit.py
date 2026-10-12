@@ -27,11 +27,8 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 import subprocess
-
-import pytest
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -297,37 +294,34 @@ class TestLiveEnvironmentFacts:
         assert "L3ENV-PLAN-REAL" in blocked_ids
 
     def test_o5_applied_somad_nova_no_write_edit(self):
-        """Verify live cordis.patch.yml has no write/edit for somad/nova."""
-        dsh_home = os.environ.get("DSH_HOME", "")
-        if not dsh_home:
-            # Fallback to known path
-            dsh_home = os.path.expanduser("~/.dsh")
-            if not os.path.isdir(dsh_home):
-                dsh_home = "/home/administrator/agent-workspace/.dsh"
-        patch = os.path.join(dsh_home, "profiles", "web", "cordis.patch.yml")
-        if not os.path.isfile(patch):
-            pytest.skip("cordis.patch.yml not found")
-        with open(patch) as f:
-            text = f.read()
-        # Find the somad toolFilter allow block
-        # If write/edit are in the allow list for somad/nova, O5 is NOT applied
-        somad_section = text.split("tool-subagent-somad")[1].split("tool-subagent-")[0] \
-            if "tool-subagent-somad" in text else ""
-        nova_section = text.split("tool-subagent-nova")[1].split("tool-subagent-")[0] \
-            if "tool-subagent-nova" in text else ""
-        for section_name, section in [("somad", somad_section), ("nova", nova_section)]:
-            if section:
-                # Check that the write/edit TOOLS are NOT in the allow list.
-                # Match on exact tool names, not substring: "todo_write" is a
-                # distinct tool (task-list maintenance) that must not trip the
-                # O5 write/edit guard.
-                allow_match = re.search(r"allow:\s*\[([^\]]*)\]", section)
-                if allow_match:
-                    allow_tools = {t.strip() for t in allow_match.group(1).split(",") if t.strip()}
-                    assert "write" not in allow_tools, \
-                        f"{section_name} allow list still contains 'write' (O5 not applied): {sorted(allow_tools)}"
-                    assert "edit" not in allow_tools, \
-                        f"{section_name} allow list still contains 'edit' (O5 not applied): {sorted(allow_tools)}"
+        """Verify the composed somad/nova delegation rows carry no write/edit.
+
+        The 15 `tool-subagent-<id>` rows moved out of the live profile patch
+        ($DSH_HOME/profiles/web/cordis.patch.yml) into
+        `orchestrator/agent.cordis.yml` on 2026-10-11. The old text-scan of
+        the patch degenerated into a vacuous pass once the rows moved — an
+        empty section matched every `if section:` / `if allow_match:` guard,
+        so the test reported PASS while verifying nothing. This version
+        parses the composition that actually carries the rows, so a missing
+        row or a drifted allow list FAILS loudly.
+
+        `todo_write` is a permitted tool and contains the substring 'write';
+        the parsed allow list holds exact tool names, so `todo_write` does
+        not trip the O5 write/edit guard.
+        """
+        from tests.d4d7_composition import orchestrator_subagent_rows
+        rows = orchestrator_subagent_rows()
+        for rid in ("subagent_somad", "subagent_nova"):
+            assert rid in rows, (
+                f"{rid} row not composed in orchestrator/agent.cordis.yml")
+            tf = rows[rid].get("toolFilter") or {}
+            allow_tools = set(tf.get("allow") or [])
+            assert "write" not in allow_tools, (
+                f"{rid} allow list still contains 'write' (O5 not applied): "
+                f"{sorted(allow_tools)}")
+            assert "edit" not in allow_tools, (
+                f"{rid} allow list still contains 'edit' (O5 not applied): "
+                f"{sorted(allow_tools)}")
 
 
 # =========================================================================

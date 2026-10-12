@@ -16,12 +16,10 @@ import os
 import subprocess
 import sys
 
-import pytest
-
+from tests import d4d7_composition
 from tests.environment.preflight import (
     BRIDGE_MARKER_ENV,
     DSH_VERSION_PIN,
-    ROLE_PRESETS,
     run_env_preflight,
 )
 
@@ -126,33 +124,32 @@ def test_mount_marker_present(monkeypatch):
     assert "REAL DSH" in m.detail
 
 
-def test_role_presets_detection(monkeypatch, tmp_path):
-    # No $DSH_HOME -> absent.
+def test_role_presets_detection(monkeypatch):
+    """ENV-MOUNT-2 reports the 16 preset composition SOURCES.
+
+    Since the 2026-10-10 cutover the presets are registered directly from
+    the repo by the dsh-multi-agent-harness plugin and the
+    `$DSH_HOME/.agent-presets/` deployment copy is retired — presence is a
+    repo fact, NOT a function of $DSH_HOME (deleting it changes nothing),
+    so absence can only be simulated at the source reader.
+    """
     monkeypatch.delenv("DSH_HOME", raising=False)
     report = run_env_preflight(env={})
     p = next(c for c in report.checks if c.check_id == "ENV-MOUNT-2")
-    assert not p.passed
-    assert not p.required  # presets may be mounted via cordis.patch.yml rows
+    assert p.passed, (
+        "the 16 composition sources exist wherever the repo is checked out")
+    assert not p.required
+    assert "retired" in p.detail
 
-    # Fake a $DSH_HOME with all 7 presets -> present.
-    presets_dir = tmp_path / ".agent-presets"
-    presets_dir.mkdir()
-    for role in ROLE_PRESETS:
-        (presets_dir / role).mkdir()
-    monkeypatch.setenv("DSH_HOME", str(tmp_path))
+    monkeypatch.setattr(d4d7_composition, "preset_sources_present", lambda: False)
     report = run_env_preflight(env={})
     p = next(c for c in report.checks if c.check_id == "ENV-MOUNT-2")
-    assert p.passed
+    assert not p.passed
 
 
-def test_ready_for_live_dsh_requires_all(monkeypatch, tmp_path):
-    # marker + presets + policy -> ready_for_live_dsh True
+def test_ready_for_live_dsh_requires_all(monkeypatch):
+    # marker + repo preset sources + policy -> ready_for_live_dsh True
     monkeypatch.setenv(BRIDGE_MARKER_ENV, "1")
-    presets_dir = tmp_path / ".agent-presets"
-    presets_dir.mkdir()
-    for role in ROLE_PRESETS:
-        (presets_dir / role).mkdir()
-    monkeypatch.setenv("DSH_HOME", str(tmp_path))
     report = run_env_preflight(env={
         "sandbox_mode": "workspace-write",
         "approval_policy": "ask",
@@ -161,6 +158,16 @@ def test_ready_for_live_dsh_requires_all(monkeypatch, tmp_path):
 
     # drop the marker -> not ready (fail-closed)
     monkeypatch.delenv(BRIDGE_MARKER_ENV, raising=False)
+    report = run_env_preflight(env={
+        "sandbox_mode": "workspace-write",
+        "approval_policy": "ask",
+    })
+    assert not report.ready_for_live_dsh
+
+    # marker back, sources absent -> not ready: the presets leg is
+    # load-bearing, not decorative
+    monkeypatch.setenv(BRIDGE_MARKER_ENV, "1")
+    monkeypatch.setattr(d4d7_composition, "preset_sources_present", lambda: False)
     report = run_env_preflight(env={
         "sandbox_mode": "workspace-write",
         "approval_policy": "ask",

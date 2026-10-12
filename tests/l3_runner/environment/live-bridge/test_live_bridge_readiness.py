@@ -4,13 +4,16 @@ Locks the live-bridge readiness assessment
 (docs/phase-5/environment/live-bridge/0001-d4d7-live-bridge-readiness.md)
 to the CURRENT environment with read-only checks:
 
-  - D4D7_FILES: 15 role presets + 15 tool-subagent rows present on disk
-    (D8 mount exception applied 2026-09-09);
+  - D4D7_FILES: the 16 preset composition sources (15 roles + orchestrator)
+    persist in the repo and the 15 tool-subagent rows are composed in
+    orchestrator/agent.cordis.yml (2026-10-10/11 cutover: direct plugin
+    registration, rows moved out of the live profile patch; D8 mount
+    exception applied 2026-09-09);
   - D4D7_COMPOSITION: mapping == policy == instance, allow∩deny=∅,
     deny-list hygiene (no `run_code`, no 25 VERIFIED_UNREGISTERED names),
     post-O5 + 2026-09-07-discriminator role/toolFilter invariants (somad/
     nova read-only, cto keeps bash+write+edit, zeko keeps bash only),
-    live rows match config;
+    the composed rows match the config;
   - BRIDGE_MARKER: DSH_LIVE_BRIDGE_ACTIVE is unset (reported, never set);
   - REAL_BACKEND: probe_backend_kind() == UNAVAILABLE (fail-closed);
   - LIVE_DISPATCH_POSSIBLE: NO — RealDSHBackend.start() raises
@@ -36,7 +39,12 @@ if _PROJECT_ROOT not in sys.path:
 from tests.l3_runner.environment.readiness import (  # noqa: E402
     ALL_INSTANCE_IDS,
     BRIDGE_MARKER_ENV,
-    ROLE_PRESETS,
+)
+from tests.d4d7_composition import (  # noqa: E402
+    ALL_PRESETS,
+    orchestrator_subagent_rows,
+    preset_source_path,
+    preset_sources_present,
 )
 from tests.live_dsh.discovery import (  # noqa: E402
     assert_role_resolution,
@@ -81,35 +89,40 @@ def _role_filters():
     return {r["id"]: r["tool_filter"] for r in mapping["roles"]}
 
 
-def _live_patch_text() -> str:
-    dsh_home = os.environ.get("DSH_HOME", "")
-    assert dsh_home, "DSH_HOME unset — cannot verify the live composition"
-    path = os.path.join(dsh_home, "profiles", "web", "cordis.patch.yml")
-    with open(path) as f:
-        return f.read()
-
-
 # ---------------------------------------------------------------------------
-# D4D7_FILES — presets + rows on disk
+# D4D7_FILES — preset sources + delegation rows on disk
 # ---------------------------------------------------------------------------
 
-def test_seven_role_presets_present():
-    dsh_home = os.environ.get("DSH_HOME", "")
-    if not dsh_home:
-        pytest.skip("DSH_HOME unset")
-    presets_dir = os.path.join(dsh_home, ".agent-presets")
-    assert os.path.isdir(presets_dir)
-    present = set(os.listdir(presets_dir))
-    assert all(p in present for p in ROLE_PRESETS), (
-        f"missing presets: {set(ROLE_PRESETS) - present}")
+def test_preset_sources_persistent_on_disk():
+    """All 16 preset composition sources persist in the repo.
+
+    Since the 2026-10-10 cutover the repo IS the plugin: index.js registers
+    `agents/<id>/agent.cordis.yml` as `role-<id>` and
+    `orchestrator/agent.cordis.yml` as `orchestrator` at boot, and the live
+    web profile depends on this repo by `link:`. The retired
+    `$DSH_HOME/.agent-presets/` deployment copy is intentionally NOT checked —
+    the source files the live plugin actually reads are the persistence fact,
+    and they exist wherever the repo is checked out (no DSH_HOME required).
+    """
+    missing = [p for p in ALL_PRESETS
+               if not (os.path.isfile(preset_source_path(p))
+                       and os.path.getsize(preset_source_path(p)) > 0)]
+    assert not missing, f"missing preset composition sources: {missing}"
+    assert preset_sources_present()
 
 
 def test_all_instance_rows_present():
-    """All 15 contract instance rows are composed in the live patch
-    (ADR 0003 D8 exception applied 2026-09-09)."""
-    text = _live_patch_text()
+    """All 15 contract instance rows are composed in the orchestrator preset.
+
+    The rows moved out of the live profile patch into
+    orchestrator/agent.cordis.yml (commit 84e630f) — that composition is the
+    only place they exist now, so it is the only place they are checked.
+    Parsing the file (rather than text-scanning the patch that no longer
+    carries the rows) is what lets this test FAIL when a row disappears.
+    """
+    rows = orchestrator_subagent_rows()
     for rid in ALL_INSTANCE_IDS:
-        assert f"toolName: {rid}" in text, f"missing row: {rid}"
+        assert rid in rows, f"missing row: {rid} (not composed in orchestrator/agent.cordis.yml)"
 
 
 # ---------------------------------------------------------------------------
@@ -166,20 +179,23 @@ def test_post_o5_role_tool_expectations():
 
 
 def test_live_rows_match_config():
-    """All 15 live cordis.patch.yml rows match mapping v2 allow/deny sets.
+    """All 15 composed rows in orchestrator/agent.cordis.yml match mapping v2
+    allow/deny sets.
 
-    Pre-Task-11 this was xfail(strict) — the D8 mount exception was
-    Human-approved and applied 2026-09-09 (15 mounted rows, pre-change
-    backup in runs/specialist-expansion-2026-09-09/backups/), so
-    live == config now and the marker is removed. The strict-xfail phase
-    made that transition fail loudly, as designed.
+    The rows this checks are the ones the live host actually composes (the
+    orchestrator preset is the mounted composition; the retired
+    cordis.patch.yml global rows are gone). The strict-xfail history kept its
+    meaning: live == config, asserted against the composition that carries
+    the rows now.
+
+    This also CLOSES a coverage gap: before the cutover nothing compared the
+    composed rows' toolFilter against the config triple (mapping == policy
+    == instances), so a row could drift silently inside the composition.
     """
-    import yaml
-    doc = yaml.safe_load(_live_patch_text())
-    rows = doc[0]["insert"]
-    live = {r["id"]: r["config"]["toolFilter"]
-            for r in rows if r.get("id", "").startswith("tool-subagent-")}
-    assert len(live) == 15
+    rows = orchestrator_subagent_rows()
+    live = {f"tool-subagent-{name.removeprefix('subagent_')}": cfg["toolFilter"]
+            for name, cfg in rows.items()}
+    assert len(live) == 15, f"expected 15 composed rows, got {sorted(live)}"
     filters = _role_filters()
     assert set(filters) == {lid.removeprefix("tool-subagent-")
                             for lid in live}

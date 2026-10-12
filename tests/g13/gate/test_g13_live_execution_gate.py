@@ -117,22 +117,32 @@ class TestG13LiveExecutionGateAxes:
         }
 
     def test_axis_2_d4d7_composition_files_persistent(self):
-        """Files persist; the live bridge does not (per-session mount)."""
-        dsh_home = os.environ.get("DSH_HOME", "")
-        assert dsh_home, "DSH_HOME not set"
-        presets_dir = os.path.join(dsh_home, ".agent-presets")
-        assert os.path.isdir(presets_dir)
-        presets = {d for d in os.listdir(presets_dir)
-                   if os.path.isdir(os.path.join(presets_dir, d))}
-        # The 15 role presets plus the orchestrator root-session preset
-        # deployed 2026-09-12 (ADR 0004).
-        assert presets == {
-            "role-zeko", "role-cto", "role-cfo", "role-kai",
-            "role-somad", "role-badsector", "role-nova",
-            "role-vera", "role-argus", "role-atlas", "role-tess",
-            "role-quill", "role-scout", "role-talon", "role-ledger",
-            "orchestrator",
-        }, f"unexpected preset set: {presets}"
+        """The composition files persist; the live bridge does not
+        (per-session mount).
+
+        2026-10-10/11 cutover: the 16 presets are registered DIRECTLY from
+        this repo by the dsh-multi-agent-harness plugin (the
+        `$DSH_HOME/.agent-presets/` deployment copy is retired), and the 15
+        `tool-subagent-<id>` delegation rows are composed in
+        `orchestrator/agent.cordis.yml` (moved out of the live profile
+        patch). "Files persist" is therefore a property of the repo sources
+        the live profile links — checked here as source presence plus the
+        composed row set, not as a deployed-copy listing.
+        """
+        from tests.d4d7_composition import (
+            ALL_PRESETS,
+            orchestrator_subagent_rows,
+            preset_source_report,
+        )
+        from orchestrator.foundation.contracts import SPECIALIST_ROLES
+        ok, missing = preset_source_report()
+        assert ok, f"missing composition sources: {missing}"
+        assert len(ALL_PRESETS) == 16
+        rows = orchestrator_subagent_rows()
+        expected = {f"subagent_{r}" for r in SPECIALIST_ROLES}
+        assert expected <= set(rows), (
+            f"rows not composed in orchestrator/agent.cordis.yml: "
+            f"{sorted(expected - set(rows))}")
 
     # ---- Axis 3: DSH_LIVE_BRIDGE_ACTIVE ----
 

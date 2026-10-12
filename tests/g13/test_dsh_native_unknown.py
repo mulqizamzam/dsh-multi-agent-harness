@@ -35,17 +35,22 @@ if PROJECT_ROOT not in sys.path:
 
 def _live_bridge_available() -> bool:
     """The D4/D7 live-DSH dispatch prerequisite (docs/phase-5/environment/
-    0001 §2.2): marker DSH_LIVE_BRIDGE_ACTIVE=1 AND the 7 role presets
-    present. Detection only — nothing here mounts or changes DSH."""
+    0001 §2.2): marker DSH_LIVE_BRIDGE_ACTIVE=1 AND the 16 preset
+    composition sources persist in the repo. Detection only — nothing here
+    mounts or changes DSH.
+
+    2026-10-10 cutover: the presets are registered directly from the repo by
+    the dsh-multi-agent-harness plugin (no `$DSH_HOME/.agent-presets/`
+    deployment copy), so the persistence half of the prerequisite is a repo
+    fact, checked against the sources the live profile links.
+    """
     if os.environ.get("DSH_LIVE_BRIDGE_ACTIVE") != "1":
         return False
-    presets = os.path.join(os.environ.get("DSH_HOME", ""), ".agent-presets")
-    if not presets or not os.path.isdir(presets):
+    try:
+        from tests.d4d7_composition import preset_sources_present
+        return preset_sources_present()
+    except OSError:
         return False
-    expected = {f"role-{r}" for r in
-                ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova")}
-    present = {p for p in os.listdir(presets) if p.startswith("role-")}
-    return expected <= present
 
 
 class TestDshNativeBoundary:

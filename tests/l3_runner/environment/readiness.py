@@ -48,8 +48,12 @@
 #     L3ENV-ANS-1  Human answerer availability (interactive / signed-assertion)
 #     L3ENV-ANS-2  approval path availability (ask policy + a live answerer)
 #   D4/D7 mount persistence (G2):
-#     L3ENV-D4D7-1 role presets present under $DSH_HOME/.agent-presets/
-#     L3ENV-D4D7-2 tool-subagent instance rows present in cordis.patch.yml
+#     L3ENV-D4D7-1 the 16 preset composition sources persist in the repo
+#                    (registered directly by the dsh-multi-agent-harness
+#                    plugin; the $DSH_HOME/.agent-presets/ copy is retired)
+#     L3ENV-D4D7-2 the 15 tool-subagent instance rows are composed in
+#                    orchestrator/agent.cordis.yml (moved out of the live
+#                    profile patch 2026-10-11)
 #     L3ENV-D4D7-3 live bridge marker DSH_LIVE_BRIDGE_ACTIVE=1 set
 #   Human-signed plan (O4 / G7):
 #     L3ENV-PLAN-1..5  plan.json present / schema-valid / pre-runtime signoff /
@@ -87,12 +91,19 @@ from ..preflight import (
     run_preflight,
 )
 from orchestrator.foundation.contracts import SPECIALIST_ROLES  # noqa: E402
+from tests.d4d7_composition import (  # noqa: E402
+    ALL_PRESETS,
+    orchestrator_subagent_rows,
+    preset_sources_present,
+)
 
 # D4/D7 role presets and their instance ids (config/role-preset-mapping.yaml).
 # The full contract roster derives from SPECIALIST_ROLES (PRD v0.2: 15). The
-# D8 mount exception (Human-approved 2026-09-09) applied all 15 rows + presets
-# to the live profile, so live-profile presence checks now cover the full
-# roster. Pre-change backup: runs/specialist-expansion-2026-09-09/backups/.
+# D8 mount exception (Human-approved 2026-09-09) applied all 15 rows + presets;
+# the 2026-10-10/11 cutover then changed WHERE they live: the plugin registers
+# the presets directly from `agents/<id>/` + `orchestrator/` (repo sources are
+# the persistence fact), and the 15 rows are composed inside the orchestrator
+# preset. Pre-change backup: runs/specialist-expansion-2026-09-09/backups/.
 ROLE_PRESETS = tuple(f"role-{rid}" for rid in SPECIALIST_ROLES)
 ROLE_INSTANCE_IDS = tuple(f"subagent_{rid}" for rid in SPECIALIST_ROLES)
 # Explicit alias for config-level rosters (same tuple; kept for readability
@@ -241,33 +252,36 @@ def _answerer_available(env: dict | None) -> bool:
 
 
 def _d4d7_presets_present() -> bool:
-    dsh_home = os.environ.get("DSH_HOME", "")
-    if not dsh_home:
-        return False
-    presets_dir = os.path.join(dsh_home, ".agent-presets")
-    if not os.path.isdir(presets_dir):
-        return False
+    """The 16 preset composition SOURCES persist in the repo.
+
+    Since the 2026-10-10 cutover (commit 0477eff) the repo IS the DSH plugin:
+    `index.js` registers every `agents/<id>/agent.cordis.yml` as `role-<id>` and
+    `orchestrator/agent.cordis.yml` as `orchestrator` straight from these files,
+    and the live web profile depends on this repo by `link:`. The
+    `$DSH_HOME/.agent-presets/` deployment copy is retired, so the persistence
+    fact this check reports is the presence of the sources the live plugin
+    reads — not a copy that no longer exists.
+    """
     try:
-        present = set(os.listdir(presets_dir))
+        return preset_sources_present()
     except OSError:
         return False
-    return all(p in present for p in ROLE_PRESETS)
 
 
 def _d4d7_instance_rows_present() -> bool:
-    """The 7 tool-subagent rows must be composed in the web profile patch."""
-    dsh_home = os.environ.get("DSH_HOME", "")
-    if not dsh_home:
-        return False
-    patch = os.path.join(dsh_home, "profiles", "web", "cordis.patch.yml")
-    if not os.path.isfile(patch):
-        return False
+    """The 15 `tool-subagent-<id>` rows are composed in the orchestrator preset.
+
+    The rows moved out of the live profile patch
+    ($DSH_HOME/profiles/web/cordis.patch.yml) into
+    `orchestrator/agent.cordis.yml` (commit 84e630f), so the composition that
+    carries them is a repo file. Parsing it — instead of scanning the patch
+    that no longer carries the rows — is what keeps this check able to fail.
+    """
     try:
-        with open(patch, "r", errors="ignore") as f:
-            text = f.read()
-    except OSError:
+        rows = orchestrator_subagent_rows()
+    except (OSError, ValueError):
         return False
-    return all(f"toolName: {rid}" in text for rid in ROLE_INSTANCE_IDS)
+    return all(f"subagent_{rid}" in rows for rid in SPECIALIST_ROLES)
 
 
 def _d4d7_bridge_marker_set() -> bool:
@@ -473,17 +487,24 @@ def _check_d4d7(report: ReadinessReport) -> None:
     marker = _d4d7_bridge_marker_set()
 
     report.add(ReadinessCheck(
-        "L3ENV-D4D7-1", "15 role presets present under $DSH_HOME/.agent-presets/",
+        "L3ENV-D4D7-1", "16 preset composition sources persist in the repo "
+        "(agents/<id>/ + orchestrator/, registered directly by the plugin)",
         passed=presets,
         required=False,
-        detail=f"presets_present={presets} roles={list(ROLE_PRESETS)} "
-               f"dsh_home={os.environ.get('DSH_HOME', '(unset)')}"))
+        detail=(f"preset_sources_present={presets} presets={list(ALL_PRESETS)} "
+                f"source=orchestrator/agent.cordis.yml + agents/<id>/agent.cordis.yml "
+                f"(the $DSH_HOME/.agent-presets/ deployment copy is retired; "
+                f"dsh_home={os.environ.get('DSH_HOME', '(unset)')} — irrelevant "
+                f"to this check, the sources are repo files)")))
 
     report.add(ReadinessCheck(
-        "L3ENV-D4D7-2", "15 tool-subagent instance rows in cordis.patch.yml",
+        "L3ENV-D4D7-2", "15 tool-subagent instance rows composed in "
+        "orchestrator/agent.cordis.yml",
         passed=rows,
         required=False,
-        detail=f"instance_rows_present={rows} instances={list(ROLE_INSTANCE_IDS)}"))
+        detail=(f"instance_rows_present={rows} instances={list(ROLE_INSTANCE_IDS)} "
+                f"source=orchestrator/agent.cordis.yml (rows moved out of the "
+                f"live profile patch 2026-10-11)")))
 
     report.add(ReadinessCheck(
         "L3ENV-D4D7-3", f"live bridge marker set ({BRIDGE_MARKER_ENV}=1)",

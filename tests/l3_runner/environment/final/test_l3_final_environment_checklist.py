@@ -36,7 +36,6 @@ if PROJECT_ROOT not in sys.path:
 from tests.l3_runner.environment.readiness import (  # noqa: E402
     BRIDGE_MARKER_ENV,
     EVIDENCE_STORE_DIR,
-    ROLE_PRESETS,
     assess_environment,
 )
 
@@ -202,15 +201,20 @@ def test_bridge_marker_unset():
 
 
 def test_role_instances_persistent_on_disk():
-    """D4/D7 composition files persist (presets + instance rows) even though
-    the live bridge is inactive — READY for item 7, BLOCKED for items 5/6."""
-    dsh_home = os.environ.get("DSH_HOME", "")
-    if dsh_home:
-        presets = os.path.join(dsh_home, ".agent-presets")
-        if os.path.isdir(presets):
-            present = set(os.listdir(presets))
-            assert all(r in present for r in ROLE_PRESETS), (
-                "expected the 15 role presets on disk")
+    """D4/D7 composition files persist (preset sources + instance rows) even
+    though the live bridge is inactive — READY for item 7, BLOCKED for items
+    5/6.
+
+    2026-10-10/11 cutover: the presets are registered directly from the repo
+    by the dsh-multi-agent-harness plugin (no `$DSH_HOME/.agent-presets/`
+    deployment copy), and the 15 rows are composed in
+    `orchestrator/agent.cordis.yml`. The disk fact is therefore the repo
+    sources the live profile links — asserted here and through the
+    readiness probe's L3ENV-D4D7-1/2 checks.
+    """
+    from tests.d4d7_composition import preset_source_report
+    ok, missing = preset_source_report()
+    assert ok, f"missing composition sources: {missing}"
     report = _report()
     for cid in ("L3ENV-D4D7-1", "L3ENV-D4D7-2"):
         check = next(c for c in report.checks if c.check_id == cid)
