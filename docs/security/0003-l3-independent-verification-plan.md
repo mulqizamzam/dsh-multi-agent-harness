@@ -3,7 +3,7 @@
 - **Status**: proposal (design only; **no implementation**)
 - **Date**: 2026-08-30
 - **Companion to**: `docs/adr/0001-multi-agent-control-plane-boundary.md` · `docs/adr/0002-registry-protection-mechanism.md` · `docs/security/0001-control-assurance-spec.md` · `docs/security/0002-threat-model-and-control-architecture.md` · `docs/design/0001-control-design-and-test-plan.md` · `docs/design/0002-l3-verification-specification.md`
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Scope**: `multi-agent-harness/` — design and test-specification only. **Does not implement, run, or claim L3 verification.** Does not modify DSH core, profiles, presets, session policy, or production control-plane code.
 - **Purpose**: define what *qualifies* as **L3 = independently verified runtime enforcement** for the nine critical controls, the environment in which it would be performed, the independence model, the evidence model, the oracle, the failure-classification scheme, the gaps, and the unknowns. Treats the current state as **L1 + partial L2**; nothing is currently L3.
 
@@ -19,10 +19,10 @@ L3 requires *all four* properties simultaneously. A control that satisfies fewer
 
 | # | Property | Meaning | What disqualifies a test |
 |---|---|---|---|
-| **P1 — Runtime** | The control is exercised against a **running** harness session (`DSH 0.1.1-rc.2`) and against a real or emulated filesystem / state / audit, not against a static analysis or a mocked harness. | A pure-Python unit test against `tests/control_plane.py` is **not** runtime — the harness is not running. |
+| **P1 — Runtime** | The control is exercised against a **running** harness session (`DSH 0.2.0-rc.2`) and against a real or emulated filesystem / state / audit, not against a static analysis or a mocked harness. | A pure-Python unit test against `tests/control_plane.py` is **not** runtime — the harness is not running. |
 | **P2 — Independent observer** | The verifier is **not** the agent under test, not its orchestrator, and not any process owned by the acting agent's session tree. The observer holds a separate session, a separate trust root, and reads evidence via channels the acting agent cannot influence. | A subagent of the orchestrator reporting "I am denied" is **not** independent. An audit log written by the same session that performed the action is **not** independent. |
 | **P3 — External oracle** | The expected outcome is computed by a **mechanism outside the control under test** (a reference re-implementation, a policy document authored by a different party, a recorded real-world consequence such as a destroyed file that the agent claims was not destroyed, or a Human-signed expectation). | The same function raising the same exception in its own test is not an oracle — that is tautology. |
-| **P4 — Independently reproducible** | Given (a) the same artifacts, (b) the same seed/fixture, (c) the documented harness version pin (`0.1.1-rc.2`), and (d) the documented environment, an independent third party can rerun the test and observe the same PASS / FAIL outcome. | A one-shot demo, a screenshot, or a manually narrated "I tried it and got denied" is not reproducible. |
+| **P4 — Independently reproducible** | Given (a) the same artifacts, (b) the same seed/fixture, (c) the documented harness version pin (`0.2.0-rc.2`), and (d) the documented environment, an independent third party can rerun the test and observe the same PASS / FAIL outcome. | A one-shot demo, a screenshot, or a manually narrated "I tried it and got denied" is not reproducible. |
 
 **Honesty rule (carried over from `0002 §19`):** *A test that fails P1, P2, P3, or P4 is, at best, L1/L2 evidence.* This plan never upgrades such evidence to L3.
 
@@ -44,7 +44,7 @@ The plan and all reports must keep these four categories separate. Conflating th
 |---|---|---|---|---|
 | **Unit test** | Pure-Python, in-process, against the reference modules (`tests/control_plane.py`, `tests/validate_config.py`, `state/helpers/*`, `audit/helpers/*`, `control/execution_gate.py`). | CI; any developer. | The function returns the value or raises the exception the design specifies, in isolation. | That a real harness session enforces it; that the function is actually reached at runtime; that an attacker cannot bypass it. |
 | **Integration test** | Drives the project execution layer (`control/execution_gate.py` + `audit/helpers/*`) against a temporary real filesystem and a temporary real registry file. May call `write_through` / `registry_write` / `audit_append` and assert side-effects on disk. | CI. | The control plane's *write channel* denies/allows correctly under realistic I/O conditions (atomic temp+rename, version check, traversal, symlink). | That the running harness routes every privileged action through that channel; that the harness itself cannot bypass it via raw `edit`/`write`/`bash`. |
-| **Live runtime test** | Spawns a real DSH `0.1.1-rc.2` session, a real Agent Preset, and a real `tool-subagent` instance; performs the action; observes the runtime result (tool rejection, DSH audit pair, denial error). | A Human-supervised or headless-CI environment with a Human answerer for `ask` policy (or with `ask` answering `unavailable` to test fail-closed). | The harness primitive actually behaves as VERIFIED in Phase-0 — i.e. the L2 enforcement is wired and live. | That the **project control plane** (L1) is the gate — only that the L2 primitive fires. |
+| **Live runtime test** | Spawns a real DSH `0.2.0-rc.2` session, a real Agent Preset, and a real `tool-subagent` instance; performs the action; observes the runtime result (tool rejection, DSH audit pair, denial error). | A Human-supervised or headless-CI environment with a Human answerer for `ask` policy (or with `ask` answering `unavailable` to test fail-closed). | The harness primitive actually behaves as VERIFIED in Phase-0 — i.e. the L2 enforcement is wired and live. | That the **project control plane** (L1) is the gate — only that the L2 primitive fires. |
 | **Independent runtime verification (L3)** | A live runtime test in which the **observer is a separate session owned by a different trust root**, the **oracle is external**, and the **evidence is reproducible by a third party**. | A verifier session; not the orchestrator; not a sibling of the orchestrator. Re-runnable by an auditor. | The control is enforced **at runtime**, by **something other than the agent's own claims**, against an **outcome the agent did not compute**, and the result **can be rerun**. | Everything not under test. |
 
 ### 2.1 Promotion rule
@@ -71,7 +71,7 @@ Nine critical controls are in scope for L3 verification. For each, this section 
 | Aspect | Statement |
 |---|---|
 | **What** | No authority may originate from model text; only structured delegation + Human approval records grant authority. (AUTH-INV-01; THREAT-001/008/020.) |
-| **Authority source** | The **Human**, via the delegation registry (`state/registry/delegations.yaml`) and Human approval records (`state/registry/approvals.yaml` or in-registry `approval_reference`). |
+| **Authority source** | The **Human**, via the delegation registry (`state/registry/delegations.json`) and Human approval records (`state/registry/approvals.json` or in-registry `approval_reference`). |
 | **Enforcer** | L1: project authority gate (`tests/control_plane.py::authorize`, production `control_plane/authority_gate.py` once it exists); L2: DSH session approval `ask`. |
 | **L3-qualifying test profile** | **P1**: live DSH session + control plane. **P2**: a verifier session distinct from the orchestrator's session tree; the orchestrator does not own or co-author the verifier. **P3**: the oracle is a reference re-implementation of the gate (`tests/control_plane.py::authorize`), kept in a separate file from the production gate; the verifier loads the reference, runs it on the captured action+actor+target+delegation, and asserts the reference's verdict matches the runtime's verdict. **P4**: the test is recorded with inputs, harness version pin, and a captured evidence bundle (audit entries, denial errors) reproducible by a third party. |
 | **Expected denial** | A model claiming "Human approved X" in text, with no `approval_reference` for X, **must** be denied at the execution gate; the verifier observes the denial event in audit and the reference re-implementation independently classifies it as DENY. |
@@ -228,7 +228,7 @@ The minimal viable environment is **two processes on the same host** (orchestrat
 
 ### 4.2 Tooling and fixtures
 
-- **Harness**: `DSH 0.1.1-rc.2`, pinned exactly; later releases invalidate L3 results.
+- **Harness**: `DSH 0.2.0-rc.2`, pinned exactly; later releases invalidate L3 results.
 - **Sessions**: an orchestrator session at `workspace-write` + `ask`; a verifier session at `read-only` (no write capability to anything).
 - **Fixtures**: a deterministic seed for any time-dependent check (`datetime.now()` mocked to a fixed UTC instant for each scenario); a frozen tool catalog (no DSH upgrade during the run); a fresh temporary workspace per scenario (no cross-contamination).
 - **Reference re-implementation**: a second, separate-file implementation of the gate, kept in `tests/l3_reference/<gate>.py`, never imported by the production gate. The verifier loads it independently. (P3 — external oracle.)
@@ -311,7 +311,7 @@ A test is L3 only if a third party can rerun it and observe the same PASS/FAIL.
 
 ### 8.1 Required properties
 
-- **Fixture determinism**: every input (time, randomness, environment vars, harness version) is recorded; the verifier pins DSH at `0.1.1-rc.2` exactly.
+- **Fixture determinism**: every input (time, randomness, environment vars, harness version) is recorded; the verifier pins DSH at `0.2.0-rc.2` exactly.
 - **Tooling determinism**: the verifier binary's sha256 is recorded; the schema files' sha256 is recorded; the orchestrator's plan is signed.
 - **Network determinism**: any L3 test that requires network access **must** use a recorded response fixture (`web_search` result, `web_fetch` body, external API response); otherwise it is **not** reproducible and **cannot** be L3.
 - **Documented re-run command**: a shell-runnable script (e.g. `tests/l3/<scenario>/replay.sh`) that an auditor can execute against the captured fixture and obtain the same `verdict-match.json` byte-for-byte.

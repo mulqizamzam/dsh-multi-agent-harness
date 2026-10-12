@@ -2,7 +2,7 @@
 
 - **Status**: implemented (infrastructure + tests only; **no L3 run executed, no L3 claim made**)
 - **Date**: 2026-08-31
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Companion to**: `docs/security/0003-l3-independent-verification-plan.md` · `docs/design/0002-l3-verification-specification.md` · `docs/security/0005-l3-evidence-infrastructure-specification.md` · `docs/testing/0003-l3-evidence-validation-specification.md`
 - **Scope**: `multi-agent-harness/tests/l3_reference/` · `multi-agent-harness/tests/l3_runner/` · `multi-agent-harness/docs/security/` — **only**.
 - **Hard-stop honoured**: no production control code modified, no DSH core/profile/preset/session policy touched, no destructive/high-impact L3 scenario run, no existing control claimed L3.

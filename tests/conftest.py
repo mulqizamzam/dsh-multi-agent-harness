@@ -107,8 +107,6 @@ def start_o3_daemon(root, *, reset_provider=True) -> tuple[str, object, object]:
     daemon roots (nested run dirs — each run gets its own daemon root so
     protected-state isolation is preserved under O3).
     """
-    import threading
-    import time as _time
     from registry_writer.daemon import DaemonConfig, RegistryWriterDaemon
     from registry_writer.client import RegistryWriterClient
     from registry_writer.provider import reset_client as _reset
@@ -133,16 +131,7 @@ def start_o3_daemon(root, *, reset_provider=True) -> tuple[str, object, object]:
         max_doc_bytes=16 * 1024 * 1024,
     )
     daemon = RegistryWriterDaemon(config)
-    t = threading.Thread(target=daemon.start, daemon=True)
-    t.start()
-    deadline = _time.monotonic() + 5.0
-    while _time.monotonic() < deadline:
-        if os.path.exists(socket_path):
-            break
-        _time.sleep(0.01)
-    else:
-        daemon.shutdown()
-        raise RuntimeError(f"O3 daemon did not start at {socket_path} in 5s")
+    _start_o3_daemon_thread(daemon, socket_path)
 
     os.environ["DSH_REGISTRY_WRITER_SOCKET"] = socket_path
     os.environ["DSH_REGISTRY_WRITER_SECRET"] = secret_path
@@ -150,6 +139,50 @@ def start_o3_daemon(root, *, reset_provider=True) -> tuple[str, object, object]:
         _reset()
     client = RegistryWriterClient(socket_path, secret)
     return wsdir, client, daemon
+
+
+def _start_o3_daemon_thread(daemon, socket_path, *, timeout: float = 5.0) -> None:
+    """Run `daemon.start` in a thread and block until it accepts connections.
+
+    Readiness MUST NOT be inferred from `os.path.exists(socket_path)`: the
+    socket FILE is created by bind(), while the kernel only starts queueing
+    connections at listen(). Under scheduler load that window widens, the
+    poll returns early, and the first client connect gets ECONNREFUSED
+    (WriterUnavailable "daemon unreachable"). The daemon exposes
+    `_ready_event`, set immediately after listen() — the only signal that
+    means "connect() will not be refused".
+
+    If the startup thread dies before it is ready (bind failure, unwritable
+    root, ...) its exception is re-raised here instead of the misleading
+    "did not start in 5s" timeout.
+    """
+    errors: list[BaseException] = []
+
+    def _run():
+        try:
+            daemon.start()
+        except BaseException as exc:  # noqa: BLE001 — captured for re-raise
+            errors.append(exc)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    deadline = time.monotonic() + timeout
+    while True:
+        if daemon._ready_event.wait(0.005):
+            return
+        if not t.is_alive():
+            break  # startup failed — surfaced below
+        if time.monotonic() >= deadline:
+            break
+    failed = bool(errors)
+    err = errors[0] if errors else None
+    try:
+        daemon.shutdown()  # best-effort cleanup of whatever got bound
+    except Exception:  # noqa: BLE001 — cleanup must not mask the real error
+        pass
+    if failed:
+        raise err  # the real cause, not a generic timeout
+    raise RuntimeError(f"O3 daemon did not start at {socket_path} in 5s")
 
 
 def stop_o3_daemon(daemon) -> None:

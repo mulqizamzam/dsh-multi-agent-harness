@@ -229,11 +229,13 @@ class TestActionOverrideFromObjectiveText:
         if result.status == "COMPLETE" and result.state:
             plan = result.state.get("plan", {})
             ep = plan.get("execute_plan", {}) if plan else {}
-            # An analysis objective must produce analysis action, not write.
-            expected = "analysis"
+            # An analysis objective must produce the analysis action, never a
+            # write — the caller cannot override the action class. Asserted
+            # directly: the branch that used to sit here (`if action ==
+            # "write": pass`, with a dead `expected = "analysis"` beside it)
+            # accepted the violated property and could not fail.
             action = ep.get("action", "unknown")
-            if action == "write":
-                # The objective may have matched a write domain; if so, it's
-                # still bounded — but we note it. The key property: the action
-                # is derived deterministically, not from chat text override.
-                pass
+            assert action == "analysis", (
+                f"an analysis objective must classify as analysis, got "
+                f"{action!r} — the action class is derived deterministically, "
+                "never upgraded by the objective text")

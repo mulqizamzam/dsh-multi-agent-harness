@@ -3,7 +3,7 @@
 - **Status**: Phase 2 / Session F runbook (operational guidance against the current architecture; no new behavior introduced)
 - **Date**: 2026-08-30
 - **Companion to**: `docs/runbooks/01-authority-denial.md` · `docs/security/0001-control-assurance-spec.md` §2 (INV-13), §3.2, §5 · `docs/security/0002-threat-model-and-control-architecture.md` §3 (THREAT-008), §6.2 · `docs/design/0001-control-design-and-test-plan.md` §6 · `tests/control_plane.py::is_expired` · `tests/authorization/test_authority.py::test_auth_003`
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Scope**: response to a denial where the root cause is **delegation expiry** (AUTH-INV-06, THREAT-008). Builds on Runbook 01's general denial flow; this runbook specialises it.
 
 ---
@@ -25,7 +25,7 @@ Expiry is distinct from revocation (Runbook 03): expiry is the natural end-of-li
 | `Deny("delegation expired (AUTH-INV-06)")` from `tests/control_plane.py::authorize` | control-plane gate |
 | `audit/` event with `event_class == "execution_denial"`, `result == "denied"`, and the gate's reason matches `expired` | `audit/helpers/append_log.py` |
 | `audit/` event with `event_class == "authority_expired_check"` (if the orchestrator records the expiry check separately) | orchestrator working memory |
-| A delegations read by `state/helpers/atomic_write.py::safe_read("state/registry/delegations.yaml")` returns a record whose `expires_at` is in the past relative to `datetime.now(timezone.utc)` (compare via `tests/control_plane.py::is_expired`) | registry read |
+| A delegations read by `state/helpers/atomic_write.py::safe_read("state/registry/delegations.json")` returns a record whose `expires_at` is in the past relative to `datetime.now(timezone.utc)` (compare via `tests/control_plane.py::is_expired`) | registry read |
 
 **Detection discipline:** do **not** rely on a model claim that "the delegation is expired." Expiry is a property of the registry record and the wall clock, both observable by reading the registry with the safe-read helper and comparing ISO timestamps. The orchestrator's role is to perform the read + comparison, not to assert expiry from prose.
 
@@ -44,7 +44,7 @@ Same as Runbook 01:
 
 ## PRESERVE
 
-1. **Read the expired delegation** from `state/registry/delegations.yaml` using `state/helpers/atomic_write.py::safe_read` (fail-closed: `None` on missing/corrupt → treat as "no delegation", which is also a denial). Capture:
+1. **Read the expired delegation** from `state/registry/delegations.json` using `state/helpers/atomic_write.py::safe_read` (fail-closed: `None` on missing/corrupt → treat as "no delegation", which is also a denial). Capture:
    - `id`, `principal`, `delegate`, `project`, `scope` (operations/resources/environments), `prohibited_actions`, `requires_approval`, `expires_at`, `approval_reference` (if any), `status`, `version`, `created_at`, `updated_at`, `revoked_at`.
    - The **wall clock at detection time** (`datetime.now(timezone.utc).isoformat()`), frozen.
 2. **Capture `before` hashes** of `state/registry/`, `audit/`, and any `state/projects/` files the action would have touched. Same procedure as Runbook 01 §PRESERVE.
@@ -90,7 +90,7 @@ The orchestrator **does not recover from an expiry by itself**. The choice is be
 
 1. **On-disk state hash unchanged** for any file the action would have touched (`before.sha256 == after.sha256`). Compute via `audit/helpers/integrity.py::detect_truncation` shape (sha256 comparison) without writing to `state/` or `audit/`.
 2. **Audit chain integrity** holds: `audit/helpers/integrity.py::verify_chain` clean.
-3. **Registry integrity**: `state/registry/delegations.yaml` was **not mutated** by the orchestrator's session. The protected-path execution gate (ADR 0002 / `control/execution_gate.py`) prevents writes; this verification confirms it. The expired record is still on disk with the same `expires_at`, `version`, and `status` it had before the denial.
+3. **Registry integrity**: `state/registry/delegations.json` was **not mutated** by the orchestrator's session. The protected-path execution gate (ADR 0002 / `control/execution_gate.py`) prevents writes; this verification confirms it. The expired record is still on disk with the same `expires_at`, `version`, and `status` it had before the denial.
 5. **No partial execution**: if the successor delegation was used, verify the side-effect (e.g. the file the action wrote) carries the **successor's** `authority_source` in the audit event, not the expired one's.
 
 If verification fails, halt and escalate (`event_class == "escalation"`, `reason = "post_expiry_verification_failed"`).

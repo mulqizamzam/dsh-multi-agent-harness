@@ -103,6 +103,7 @@ def test_no_path_level_filter_exists(checkout):
     terms = ["pathFilter", "pathAllow", "pathDeny", "perPath",
              "allowPaths", "denyPaths", "path-level"]
     hits = []
+    unreadable = []
     for root, dirs, files in os.walk(packages):
         dirs[:] = [d for d in dirs
                    if d not in ("node_modules", "__pycache__", "lib")]
@@ -116,8 +117,11 @@ def test_no_path_level_filter_exists(checkout):
                         for term in terms:
                             if term in line:
                                 hits.append((fpath, i, term, line.strip()))
-            except Exception:
-                pass
+            except Exception as exc:
+                # A silently skipped file shrinks the "exhaustive" scan
+                # surface; record it instead of swallowing it.
+                unreadable.append(f"{fpath}: {exc!r}")
+    assert not unreadable, f"unreadable during scan: {unreadable}"
     # Allow only the known unrelated doc-comment hit.
     legit_hits = [
         h for h in hits

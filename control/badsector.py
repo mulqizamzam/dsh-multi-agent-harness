@@ -88,7 +88,7 @@ class BadSectorGate:
             return True
         if (risk or "").upper() == "HIGH":
             return True
-        if action in MANDATORY_REVIEW_ACTIONS:
+        if (action or "").strip().lower() in MANDATORY_REVIEW_ACTIONS:
             return True
         if uncertainty and str(uncertainty).lower() in (
                 "high", "very high", "critical"):

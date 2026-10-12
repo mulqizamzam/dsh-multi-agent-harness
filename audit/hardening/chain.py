@@ -7,12 +7,11 @@
 
 from __future__ import annotations
 
-import json
 import os
 
 from audit.helpers.integrity import (
     chain_path_for, compute_chain, verify_chain, _canonical_json,
-    _compute_cumulative, _GENESIS,
+    _compute_cumulative, _GENESIS, _read_sidecar,
 )
 from audit.helpers.append_log import (
     read_events_strict, AuditIntegrityError,
@@ -67,8 +66,9 @@ def recompute_and_compare(log_path: str) -> dict:
     problems = []
     sidecar = chain_path_for(log_path)
     if os.path.exists(sidecar):
-        with open(sidecar) as f:
-            rows = [json.loads(l) for l in f if l.strip()]
+        # Reuse the existing side-car reader: a corrupt side-car raises the
+        # module's typed AuditIntegrityError instead of a bare JSONDecodeError.
+        rows = _read_sidecar(sidecar) or []
         if len(rows) != len(recomputed):
             problems.append(
                 f"chain length mismatch: sidecar {len(rows)} vs events {len(recomputed)}")

@@ -281,7 +281,14 @@ def write_through(action, target, data, base=None, encoder=None, writer=False):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from state.helpers.atomic_write import atomic_write
     path = normalize_target(target, base=base)[0]
-    atomic_write(path, data, encoder=encoder)
+    # Arm the helper's defense-in-depth containment guard (F22): explicitly pin
+    # the base to the workspace the gate already validated against, rather than
+    # letting atomic_write default base=None to "the target's own parent" (a
+    # no-op that accepts an absolute target outside the workspace). This is what
+    # makes the guard effective even when authorize_write early-returns for a
+    # non-write action (e.g. a read-classified action still routed here writes).
+    # atomic_write's base=None opt-out is left intact for direct callers.
+    atomic_write(path, data, encoder=encoder, base=workspace_base(base))
     return path
 
 

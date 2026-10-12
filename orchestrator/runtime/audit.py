@@ -76,27 +76,37 @@ def _ledger_lock_for(ledger_path: str) -> threading.RLock:
         return lock
 
 
-def _max_existing_seq(ledger_path: str) -> int:
+def _max_existing_seq(ledger_path: str, *, base=None,
+                      project: str | None = None) -> int:
     """Largest `event-<n>` sequence already present in the ledger (0 if none).
 
     O3 Phase B: the ledger is daemon-owned; the existing max seq is read
     through the O3 daemon (no in-workspace mirror read). `ledger_path` is the
-    workspace-form absolute path used as the allocator key; the events
-    themselves come from the daemon."""
+    workspace-form absolute path used as the allocator key.
+
+    When authoritative `base`/`project` are supplied (the RuntimeAudit
+    instance's own values), they are used verbatim. Do NOT re-parse the ledger
+    path when the base itself contains an "audit" directory (e.g.
+    base=/srv/audit/mah): splitting on the FIRST "audit" segment then yields the
+    wrong base/project, audit_read fails, this returns 0, and _allocate_seq
+    restarts at 1 — duplicate event ids in a live ledger (F9)."""
     max_seq = 0
     try:
         from control.execution_gate import audit_read
-        # Extract base and project from the ledger path:
-        #   base/audit/<project>/events.jsonl
-        parts = ledger_path.replace("\\", "/").split("/")
-        # Find the "audit" marker
-        try:
-            audit_idx = parts.index("audit")
-        except ValueError:
-            return 0
-        project = parts[audit_idx + 1] if audit_idx + 1 < len(parts) else "multi-agent-harness"
-        base = "/".join(parts[:audit_idx])
-        result = audit_read(f"audit/{project}/events.jsonl", base=base)
+        if base is not None and project is not None:
+            rel = f"audit/{project}/events.jsonl"
+        else:
+            # Fallback: extract base and project from the ledger path:
+            #   base/audit/<project>/events.jsonl
+            parts = ledger_path.replace("\\", "/").split("/")
+            try:
+                audit_idx = parts.index("audit")
+            except ValueError:
+                return 0
+            project = parts[audit_idx + 1] if audit_idx + 1 < len(parts) else "multi-agent-harness"
+            base = "/".join(parts[:audit_idx])
+            rel = f"audit/{project}/events.jsonl"
+        result = audit_read(rel, base=base)
         events = result.get("events") or []
     except Exception:
         return 0  # daemon down / not readable → fail-closed: no fabricated seq
@@ -110,11 +120,12 @@ def _max_existing_seq(ledger_path: str) -> int:
     return max_seq
 
 
-def _allocate_seq(ledger_path: str) -> int:
+def _allocate_seq(ledger_path: str, *, base=None,
+                  project: str | None = None) -> int:
     """Advance the per-ledger sequence. Caller holds the path lock."""
     seq = _LEDGER_SEQS.get(ledger_path)
     if seq is None:
-        seq = _max_existing_seq(ledger_path)
+        seq = _max_existing_seq(ledger_path, base=base, project=project)
     seq += 1
     _LEDGER_SEQS[ledger_path] = seq
     return seq
@@ -130,7 +141,7 @@ def allocate_event_id(base, project: str) -> int:
     """
     ledger_path = _ledger_abs_path(base, project)
     with _ledger_lock_for(ledger_path):
-        return _allocate_seq(ledger_path)
+        return _allocate_seq(ledger_path, base=base, project=project)
 
 
 class RuntimeAudit:
@@ -180,7 +191,8 @@ class RuntimeAudit:
         """
         ledger_path = _ledger_abs_path(self.base, self.project)
         with _ledger_lock_for(ledger_path):
-            seq = _allocate_seq(ledger_path)
+            seq = _allocate_seq(ledger_path, base=self.base,
+                                project=self.project)
             self._seq = seq
             event_id = f"event-{seq:06d}"
             event = {

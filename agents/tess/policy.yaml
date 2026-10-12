@@ -5,7 +5,7 @@
 role: tess
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 display_name: Tess
 domain: Failure Engineering
 summary: timeout analysis, cancellation analysis, partial-failure analysis, race-condition analysis, failure injection, degraded-state analysis, recovery-path analysis

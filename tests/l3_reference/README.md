@@ -9,7 +9,7 @@ production control modules (`control/*`, `orchestrator/foundation/*`,
 `audit/helpers/*`, `state/helpers/*`).
 
 - Phase: 4 / Session B — L3 independent verification infrastructure
-- Version pin: DeepSeek Harness `0.1.1-rc.2`
+- Version pin: DeepSeek Harness `0.2.0-rc.2`
 - Companion specs: `docs/security/0003-l3-independent-verification-plan.md`
   · `docs/design/0002-l3-verification-specification.md`
   · `docs/security/0005-l3-evidence-infrastructure-specification.md`

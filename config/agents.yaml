@@ -5,8 +5,10 @@
 # This file is the canonical registry of agents in the system (PRD Appendix B;
 # PRD v0.2 §10). It lists WHO exists and WHAT their domain is. It does NOT
 # grant authority: technical capability boundaries live in `permissions.yaml`
-# + `agents/<id>/policy.yaml`; project/action authority lives in
-# `authority.yaml`.
+# + `agents/<id>/policy.yaml`; project/action authority is carried today by
+# Human delegation records (state/registry/) and the control-plane code
+# (`control/authority.py`, `control/risk.py`). A dedicated `authority.yaml` /
+# risk-policy layer is PLANNED (see docs/phase-1/0001), not yet authored.
 #
 # Registry, permissions, and authority are separate concerns (PRD §6).
 #

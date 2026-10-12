@@ -267,7 +267,10 @@ def terminal_outcome(event: dict) -> str:
     if cls == "production_run":
         return OUTCOME_COMPLETE if event.get("action") == "close" \
             else OUTCOME_BLOCKED
-    result = (event.get("result") or "").upper()
+    # A non-string `result` (dict/list/int) must not crash the whole ingest:
+    # it simply carries no outcome token -> fail-closed BLOCKED below.
+    result = (r.upper() if isinstance(r := event.get("result"), str)
+              else "")
     if cls == "flow_stopped":
         if result in ("ESCALATED", "ESCALATE"):
             return OUTCOME_ESCALATED

@@ -5,7 +5,7 @@
 role: vera
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 display_name: Vera
 domain: Verification & Evidence
 summary: acceptance-criteria verification, test-result inspection, evidence completeness, claimed-result validation, expected-vs-observed comparison, unsupported completion detection

@@ -39,7 +39,7 @@ The O3 acceptance suite is defined in FINAL 0004 as eight categories. The order 
 
 ```bash
 # Pre-condition: the venv is active (or .venv-tests/bin/python is used)
-cd /home/administrator/agent-workspace/multi-agent-harness
+cd /home/administrator/agent-workspace/dsh-custom/plugins/dsh-multi-agent-harness
 
 # Run the full O3 acceptance suite (P0–P7) in a throwaway temp root
 .venv-tests/bin/python -m pytest tests/g10/o3-execution/ -v --tb=long 2>&1 | tee /tmp/o3-acceptance-output.txt

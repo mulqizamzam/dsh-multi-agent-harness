@@ -238,11 +238,26 @@ class RecoveryController:
         allowed_grants = _as_list(
             original_authority.get("grants") or original_authority.get("tools"))
 
-        if allowed_actions and attempt_action and attempt_action not in allowed_actions:
+        # REC-004 / THREAT-017 fail-closed (F12): an empty actions or targets
+        # baseline cannot prove the attempt is bounded — the `and`-guarded checks
+        # below would otherwise no-op and ALLOW anything (the two production
+        # callers build the baseline FROM the attempt, making it tautological).
+        # With no positive baseline there is nothing to compare against, so the
+        # recovery cannot demonstrate "no privilege escalation" → DENY.
+        if not allowed_actions:
+            raise RecoveryRefused(
+                "recovery cannot prove bounded privilege: original authority "
+                "lists no actions (AUTH-INV-12 / REC-004)")
+        if not allowed_targets:
+            raise RecoveryRefused(
+                "recovery cannot prove bounded privilege: original authority "
+                "lists no targets (AUTH-INV-12 / REC-004)")
+
+        if attempt_action and attempt_action not in allowed_actions:
             raise RecoveryRefused(
                 f"recovery privilege escalation: action {attempt_action!r} not "
                 f"covered by original authority (REC-004 / THREAT-017)")
-        if allowed_targets and attempt_target and not _target_in_any(
+        if attempt_target and not _target_in_any(
                 attempt_target, allowed_targets):
             raise RecoveryRefused(
                 f"recovery privilege escalation: target {attempt_target!r} "

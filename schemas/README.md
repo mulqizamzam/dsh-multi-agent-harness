@@ -1,7 +1,7 @@
 # Baseline Schemas — Multi-Agent Harness
 
 - **Status**: finalized (Phase 1A)
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Format**: JSON Schema, draft 2020-12 (`https://json-schema.org/draft/2020-12/schema`)
 
 These are the **baseline schemas** for the project control plane. They validate the project's authoritative documents (registry, role policies, role mapping) and the runtime records the control plane reads/writes (delegations, project state, audit events). Versioning is tracked per-schema via `x-schema-version`.
@@ -22,7 +22,7 @@ These are the **baseline schemas** for the project control plane. They validate 
 
 - Each schema carries `x-schema-version` (integer, starts at 1).
 - A breaking change to a validated document's shape bumps the version **and** requires a corresponding migration note in this README.
-- All schemas are pinned to the DSH `0.1.1-rc.2` tool catalog via the tool names they permit (see `role-mapping.schema.json` `tool_filter` note). If the DSH version changes, re-verify tool names and bump affected schemas.
+- All schemas are pinned to the DSH `0.2.0-rc.2` tool catalog via the tool names they permit (see `role-mapping.schema.json` `tool_filter` note). If the DSH version changes, re-verify tool names and bump affected schemas.
 
 ## Validation approach
 

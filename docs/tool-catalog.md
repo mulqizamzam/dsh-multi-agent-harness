@@ -2,11 +2,11 @@
 
 - **Status**: final (Phase 1A)
 - **Date**: 2026-08-29
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2` (verified locally from `/home/administrator/deepseek-harness/docs/tool-catalog.md` and the shipped `standard` agent preset composition)
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2` (verified locally from `/home/administrator/deepseek-harness/docs/tool-catalog.md` and the shipped `standard` agent preset composition)
 - **Purpose**: the project's **scoped** capability matrix — which DSH tools exist, what they do, what capability class they belong to, and which roles may use them. Resolves the references in `config/permissions.yaml` and `config/role-preset-mapping.yaml`.
 - **Scope**: `multi-agent-harness/`. Documentation only — nothing here mounts tools or changes DSH composition.
 
-> This is a **project-authored** catalog. DSH ships its own generated catalog (`docs/tool-catalog.md` in the DSH checkout); this document is the project's scoped view of it, pinned to `0.1.1-rc.2`.
+> This is a **project-authored** catalog. DSH ships its own generated catalog (`docs/tool-catalog.md` in the DSH checkout); this document is the project's scoped view of it, pinned to `0.2.0-rc.2`.
 
 ---
 
@@ -28,7 +28,7 @@
 
 ---
 
-## 2. Verified tool inventory (DSH 0.1.1-rc.2)
+## 2. Verified tool inventory (DSH 0.2.0-rc.2)
 
 The following names are taken from the verified DSH tool catalog. `mounted` = present in the shipped `standard` web preset composition (the model-facing surface of the current environment); `host` = host-plane row or not mounted in the standard preset; `disabled` = mounted but disabled.
 
@@ -117,10 +117,10 @@ Notes:
 
 ## 4. Version pin and drift guard
 
-- Every tool name above was verified against the DSH `0.1.1-rc.2` tool catalog (generated, boot-time schema) and the shipped `standard` preset composition in the DSH checkout.
+- Every tool name above was verified against the DSH `0.2.0-rc.2` tool catalog (generated, boot-time schema) and the shipped `standard` preset composition in the DSH checkout.
 - **Drift guard**: if the DSH version changes, re-run the catalog verification and update this document **and** `config/role-preset-mapping.yaml` together. A tool name in the mapping that no longer exists fails loudly at mount (config rejects unknown tool names — VERIFIED).
 - `config/permissions.yaml` capability names are project-level abstractions; the tool names in this catalog are the DSH-level ground truth the control plane interprets.
 
 ---
 
-*Version-pinned to DeepSeek Harness `0.1.1-rc.2`. No tool is mounted, disabled, or changed by this document; it records capability facts only.*
+*Version-pinned to DeepSeek Harness `0.2.0-rc.2`. No tool is mounted, disabled, or changed by this document; it records capability facts only.*

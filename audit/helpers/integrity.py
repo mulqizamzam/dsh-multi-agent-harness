@@ -211,8 +211,19 @@ def append_chained_event(log_path, event, encoder=None):
 
     Returns:
         the `_integrity` dict of the last (appended) event, or None on empty
+
+    Raises:
+        AuditIntegrityError if the existing ledger is corrupt — the append is
+        NOT performed, so a partial (durably written but unchained) event can
+        never reach the ledger (FINAL architecture §4.7: never a partial
+        append).
     """
     from .append_log import append_event
+    # Validate the existing ledger BEFORE writing: appending first and only
+    # then computing the chain would leave a durable but unchained event in
+    # the ledger whenever compute_chain() fails, and every later append for
+    # that project would then fail CORRUPTION_DETECTED.
+    read_events_strict(log_path)
     append_event(log_path, event, encoder=encoder)
     events = compute_chain(log_path)
     return events[-1]["_integrity"] if events else None

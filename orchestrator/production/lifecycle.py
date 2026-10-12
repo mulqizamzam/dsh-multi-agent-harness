@@ -285,7 +285,14 @@ class ProductionRun:
                 ReportGenerationFailed) as e:
             state.add_error(str(e))
             state.outcome = "stopped"
-            if isinstance(e, (ProductionEscalated,)):
+            # A Human-attention ESCALATE must be recorded as "escalated", not
+            # "stopped" — otherwise it is indistinguishable from a denial at the
+            # front door and downstream consumers. NoValidDelegation carries
+            # decision="ESCALATE" but subclasses ProductionStopped (not
+            # ProductionEscalated), so key the branch on the decision too. A
+            # DENY decision keeps "stopped" -> BLOCKED (AUTH-INV-05 preserved).
+            if isinstance(e, ProductionEscalated) or \
+                    getattr(e, "decision", "") == "ESCALATE":
                 state.outcome = "escalated"
             eid = audit.emit("production_run", action="stop", target=run_id,
                              task_id=run_id, result="error", error=str(e),

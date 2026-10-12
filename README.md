@@ -59,7 +59,7 @@ registry and stays visible in the roster rather than failing the boot.
 
 # Multi-Agent Harness — Control Plane
 
-A **fifteen-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.2.0-rc.2`): 7 active baseline specialists + 8 registered-not-mounted expansion specialists (PRD v0.2 / ADR 0003).
+A **fifteen-specialist + orchestrator** multi-agent system built on [DeepSeek Harness](https://github.com/deepseek-ai/dsh) (version `0.2.0-rc.2`): 7 active baseline specialists + 8 expansion specialists, all 15 mounted (PRD v0.2 / ADR 0003).
 
 **Version pin: DeepSeek Harness `0.2.0-rc.2`** — re-verified 2026-10-09 by the full test suite against the running checkout (previously `0.1.1-rc.2`). Later releases require re-verification.
 
@@ -82,7 +82,7 @@ Orchestrator                  ←  coordinator + delegated decision-maker
   Somad (social)
   BadSector (adversarial review)
   Nova  (writing)
-+ 8 registered expansion specialists (PRD v0.2, not yet mounted):
++ 8 expansion specialists (PRD v0.2; mounted 2026-09-09):
   Vera (verification)  Argus (security)  Atlas (architecture)
   Tess (failure)  Quill (policy)  Scout (integration)
   Talon (reliability)  Ledger (audit)
@@ -90,7 +90,7 @@ Orchestrator                  ←  coordinator + delegated decision-maker
 
 - **Human** is the ultimate authority: approves, delegates, revokes, and may override.
 - **Orchestrator** coordinates and owns the project control plane; it does **not** own every domain and has no permanent authority.
-- **All fifteen specialists are peers** (7 active baseline + 8 registered expansion). BadSector reviews/challenges; it never authorizes and never executes the reviewed plan.
+- **All fifteen specialists are peers** (7 active baseline + 8 expansion), all mounted. BadSector reviews/challenges; it never authorizes and never executes the reviewed plan.
 
 ## Three enforcement layers
 
@@ -105,58 +105,108 @@ Orchestrator                  ←  coordinator + delegated decision-maker
 ```
 multi-agent-harness/
 ├── README.md                    # this file
-├── AGENTS.md                    # agent operating manual
-├── PRD.md                       # pointer to canonical PRD
+├── AGENTS.md                    # agent operating manual (16 personas)
+├── LICENSE                      # license
+├── PRD.md                       # pointer to canonical PRD (PRD-v0.2.md)
+├── index.js                     # plugin entry: file-driven agent-preset registration
+├── cordis.patch.yml             # plugin manifest (one bundle insert row mounts the plugin)
+├── package.json                 # plugin package metadata (name: dsh-multi-agent-harness)
+├── pytest.ini                   # pytest configuration
 ├── config/
-│   ├── agents.yaml              # agent registry (finalized)
+│   ├── agents.yaml              # agent registry (finalized: 15 specialists + orchestrator)
 │   ├── permissions.yaml         # capability×agent matrix (control-plane input)
-│   └── role-preset-mapping.yaml # role→DSH preset/toolFilter mapping
-├── agents/                        # 15 role dirs (7 baseline + 8 PRD v0.2 expansion);
-│   │                              # each: AGENT.md, policy.yaml, agent.cordis.yml
-│   ├── zeko/ cto/ cfo/ kai/ somad/ badsector/ nova/      # baseline (mounted)
-│   └── vera/ argus/ atlas/ tess/ quill/ scout/ talon/ ledger/  # expansion (registered)
+│   ├── registry-writer.yaml     # single-writer delegation-registry daemon config
+│   ├── role-preset-mapping.yaml # role→DSH preset/toolFilter mapping (mapping_version 2)
+│   └── tool-subagent-instances.yaml # per-role tool-subagent instance rows
+├── agents/                      # 15 role dirs (7 baseline + 8 PRD v0.2 expansion); all mounted;
+│   │                            # each: AGENT.md, policy.yaml, agent.cordis.yml, preset.yml
+│   ├── zeko/ cto/ cfo/ kai/ somad/ badsector/ nova/  # baseline (mounted 2026-09-07)
+│   └── vera/ argus/ atlas/ tess/ quill/ scout/ talon/ ledger/  # expansion (mounted 2026-09-09)
 ├── orchestrator/
 │   ├── AGENT.md                 # orchestrator role definition
 │   ├── contract.md              # orchestrator contract (gate ownership, protocol)
-│   └── workflows/
-│       ├── README.md            # workflow skeleton documentation
-│       └── skeleton.js          # fan-out/collect skeleton with gate placeholders
+│   ├── policy.yaml              # orchestrator declarative policy (coordination-only keys)
+│   ├── agent.cordis.yml         # orchestrator DSH preset composition (15 instance rows)
+│   ├── preset.yml               # orchestrator preset display metadata
+│   ├── foundation/              # gates, state, contracts, messaging, routing, workflow, context
+│   ├── execution/               # engine, recovery_runtime, request
+│   ├── runtime/                 # audit, delegation, lifecycle, flow, gates, parallel, result, store
+│   ├── production/              # planner, executor, lifecycle, report
+│   ├── organization/            # waves, packet, evidence, handoff, metrics, rework, runner, root
+│   ├── entrypoint/              # __main__ + entry
+│   ├── dsh/                     # DSH backend bridge / client / resolver / provenance
+│   └── workflows/               # README.md, skeleton.js, skeleton.schema.json (15-phase chain)
+├── control/                     # control-plane gates (authority, risk, evidence, conflict, execution, recovery, verification)
+├── registry_writer/             # delegation-registry provider / daemon / client
+├── observability/               # audit-derived metrics / ingest / queries vocab
 ├── state/
 │   ├── helpers/                 # atomic-write + version-check helpers (Phase 1B)
 │   └── registry/                # protected delegation registry directory (ADR 0002)
 ├── audit/
-│   └── helpers/                 # append-only audit log helpers (Phase 1B)
-├── tests/                       # validation test suite (Phase 1B)
+│   ├── hardening/               # audit-integrity hardening modules
+│   ├── helpers/                 # append-only audit log helpers
+│   └── runtime/                 # runtime audit emitters
+├── schemas/                     # JSON Schema (draft 2020-12)
+│   ├── README.md                # schema index (version-pinned)
+│   ├── agent-registry.schema.json
+│   ├── audit-event.schema.json
+│   ├── delegation.schema.json
+│   ├── ipc.py                   # IPC type helpers (module, not a schema document)
+│   ├── orchestrator-policy.schema.json
+│   ├── project-state.schema.json
+│   ├── role-definition.schema.json
+│   ├── role-mapping.schema.json
+│   ├── task.schema.json
+│   ├── task-intake.schema.json
+│   └── task-result.schema.json
+├── tests/                       # validation test suite (Phase 1B+)
 │   ├── README.md                # test strategy
 │   ├── validate-config.py       # standalone config validator (referenced by config files)
+│   ├── validate_config.py       # validator module
 │   ├── control_plane.py         # reference authority gate + risk + registry (test-support)
+│   ├── conftest.py              # pytest fixtures
+│   ├── d4d7_composition.py      # D4/D7 composition checks
 │   ├── unit/                    # config, schema, state/audit helper tests
 │   ├── authorization/           # AUTH-*, ISO-*, REG-*, DLG-*, RISK-* executable tests
 │   ├── adversarial/             # INJ-* quarantine + BAD-* provenance tests
-│   ├── scenarios/               # PRD §17 Phase-6 scenario skeletons
-│   └── workflow/                # workflow skeleton shape validation
-├── schemas/                     # JSON Schema (draft 2020-12)
-│   ├── README.md
-│   ├── delegation.schema.json
-│   ├── project-state.schema.json
-│   ├── audit-event.schema.json
-│   ├── role-definition.schema.json
-│   ├── role-mapping.schema.json
-│   └── agent-registry.schema.json
+│   ├── audit_hardening/         # audit-integrity hardening tests
+│   ├── control_risk/            # risk-gate control tests
+│   ├── control_verification/    # verification-gate control tests
+│   ├── environment/             # environment tests
+│   ├── evidence/                # evidence-gate tests
+│   ├── observability/           # observability tests
+│   ├── orchestrator/            # orchestrator control-plane tests
+│   ├── organization/            # organization/wave orchestration tests
+│   ├── recovery_hardening/      # recovery-path hardening tests
+│   ├── resilience/              # resilience tests
+│   ├── scenarios/               # PRD §17 scenario skeletons
+│   ├── workflow/                # workflow skeleton shape validation
+│   ├── g10/ g13/ o3/            # operator / front-door decision-package suites
+│   ├── l3_reference/ l3_runner/ live_dsh/ live_evidence/  # L3 independent-verification + live-DSH suites
+│   ├── integration/             # cross-module integration tests
+│   ├── phase-5/                 # Phase-5 validation
+│   ├── phase4_integration/      # Phase-4 integration
+│   ├── phase5_role_validation/  # Phase-5 role validation
+│   └── phase5_security/         # Phase-5 security tests
+├── runs/                        # frozen live-run evidence (read-only; do not modify)
 └── docs/
     ├── README.md                # doc index
-    ├── adr/0001-multi-agent-control-plane-boundary.md  # ADR 0001 (accepted foundation)
-    ├── adr/0002-registry-protection-mechanism.md  # ADR 0002 (delegation registry protection, Phase 1B)
+    ├── adr/                     # 0001 boundary · 0002 registry-protection · 0003 pool-expansion · 0004 orchestrator-preset · 0005 delegation/model-route
+    ├── design/                  # 0001 control-design + test plan · 0002 L3 verification spec
+    ├── security/                # 0001 assurance-spec · 0002 threat-model · 0003..0008 external-content/L3/G5
+    ├── phase-1/                 # 0001 spec · 0002 role-isolation draft · 0003..0006 composition exceptions
+    ├── phase-2/ phase-3/ phase-4/  # phase implementation specs + governance
+    ├── phase-5/                 # Phase-5 validation records
     ├── tool-catalog.md          # Phase-0: scoped capability matrix
     ├── operations.md            # Phase-0: operator/deployment mapping
     ├── architecture.md          # Phase-0: architecture summary
     ├── authority.md             # Phase-0: authority model doc
-    ├── runbooks/                # Phase-5: intent / placeholders
-    ├── phase-1/0001-phase-1-implementation-spec.md  # Phase-1 spec
-    ├── security/
-    │   ├── 0001-control-assurance-spec.md
-    │   └── 0002-threat-model-and-control-architecture.md
-    └── design/0001-control-design-and-test-plan.md
+    ├── parallel-dispatch-playbook.md  # parallel dispatch playbook
+    ├── runbooks/                # 10 authored runbooks (see docs/runbooks/README.md) + 8 Phase-5 placeholders retained
+    ├── testing/                 # testing docs (see docs/testing/README.md)
+    ├── operations/              # operations docs
+    ├── governance/              # governance records
+    └── superpowers/plans/       # superpowers session plans
 ```
 
 ## Phase status

@@ -6,7 +6,7 @@
 # wrapper tests/validate-config.py (hyphenated) which is the file the configs
 # name. It NEVER executes anything consequential — it only reads and validates.
 #
-# Version pin: DeepSeek Harness 0.1.1-rc.2 (tool names verified).
+# Version pin: DeepSeek Harness 0.2.0-rc.2 (tool names verified).
 
 import os
 import re
@@ -92,6 +92,12 @@ DELEGATION_TOOLS = {
 WRITE_EXEC_TOOLS = {"bash", "edit", "write", "str_replace_editor", "run_code", "pwsh"}
 # Permission-matrix vocabulary (config/permissions.yaml, PRD §8 normalized)
 CAPABILITY_VALUES = {"yes", "scoped", "review", "approval", "scoped_approval", "no"}
+# The in-force DeepSeek Harness pin, defined ONCE here and cross-checked
+# against config/role-preset-mapping.yaml, all 15 agents/<id>/policy.yaml and
+# orchestrator/policy.yaml below. Verified against the running checkout's
+# package.json (0.2.0-rc.2) — a pin bump moves this constant and the 16
+# policy files together.
+VERSION_PIN = "deepseek-harness-0.2.0-rc.2"
 # Protected paths per ADR 0002 (any write targeting these by a non-writer DENY)
 PROTECTED_PATHS = ("state/registry/", "audit/")
 # Invariants every role policy must declare (security spec + ADR 0002)
@@ -361,16 +367,34 @@ def run_checks(root):
           orch_pol_deleg.get("delegation_orchestrator_only") is True,
           f"{orch_pol_deleg.get('delegation_orchestrator_only')!r}")
 
-    # --- ADR 0002 protected-path discipline ---------------------------------
-    # Any role's allow set must NOT grant a way to write protected paths unless
-    # that role is the registry writer (orchestrator). For roles with generic
-    # write tools (bash/edit/write), the execution-gate path check must be
-    # required; this is recorded in each policy's invariants and enforced at
-    # the reference level (tests/control_plane.py). Here we assert the config
-    # declares the invariant.
+    # --- per-role no_self_delegation declaration ----------------------------
+    # What this block actually verifies: every specialist policy DECLARES the
+    # no_self_delegation invariant (a role cannot expand its own scope or
+    # delegate to itself); the delegation layer enforces it
+    # (control/delegation.py). It is not a protected-path check — no role
+    # policy declares any protected-path invariant. ADR 0002's protected-path
+    # discipline is enforced in code, not declared in role policies:
+    # control/execution_gate.py (classify_target/authorize_write) DENYs any
+    # non-writer write targeting state/registry/, audit/, or state/projects/.
     for rid, pol in policies.items():
-        check(f"{rid} registry-protection invariant declared",
+        check(f"{rid} no_self_delegation invariant declared",
               pol.get("invariants", {}).get("no_self_delegation") is True)
+
+    # --- version pin cross-check --------------------------------------------
+    # One in-force pin everywhere: the mapping, all 15 role policies and the
+    # orchestrator policy. schemas/role-definition.schema.json only requires
+    # the `^deepseek-harness-` prefix, so without these equality checks any
+    # pin string would validate and the 16 policies could drift apart
+    # silently. (It happened: 15 policies + orchestrator carried
+    # 0.1.1-rc.2 while the mapping carried 0.2.0-rc.2.)
+    check("mapping version_pin", mapping.get("version_pin") == VERSION_PIN,
+          f"{mapping.get('version_pin')!r} != {VERSION_PIN!r}")
+    for rid, pol in policies.items():
+        check(f"{rid} version_pin", pol.get("version_pin") == VERSION_PIN,
+              f"{pol.get('version_pin')!r} != {VERSION_PIN!r}")
+    check("orchestrator version_pin",
+          orch_policy.get("version_pin") == VERSION_PIN,
+          f"{orch_policy.get('version_pin')!r} != {VERSION_PIN!r}")
 
     # --- Phase 1C draft artifacts (mounted 2026-09-07, Human-approved D4/D7) -
     draft = mapping.get("draft_artifacts", {})

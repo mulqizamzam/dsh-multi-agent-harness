@@ -51,9 +51,38 @@ class TestHonesty:
         The O3 acceptance suite requires no such mount — all tests
         run against a temp-root daemon in-process.  This assertion
         confirms the suite does not depend on live DSH."""
-        # The suite uses only the temp-root daemon fixture.
-        # No live DSH, no approval answerer needed.
-        assert True
+        # The claim above used to rest on a bare `assert True`, which no
+        # violation could falsify. Two concrete negatives instead:
+        # (a) the D4/D7 live-bridge marker (orchestrator/dsh/bridge.py
+        #     BRIDGE_MARKER_ENV) is UNSET, so no mounted DSH child can be
+        #     dispatched from this session — a live variant could not run
+        #     silently here.
+        assert os.environ.get("DSH_LIVE_BRIDGE_ACTIVE") is None, (
+            "DSH_LIVE_BRIDGE_ACTIVE is set — a live DSH child is dispatchable "
+            "in this session, so 'the suite never depends on live DSH' needs "
+            "re-proof against the live plan (G13), not this suite")
+        # (b) no module in this package imports or names the live backend
+        #     (tests/live_dsh/real_backend.py:RealDSHBackend). The suite runs
+        #     against the temp-root daemon fixture only.
+        suite_dir = os.path.dirname(os.path.abspath(__file__))
+        offenders = []
+        for fn in sorted(os.listdir(suite_dir)):
+            if not fn.endswith(".py") or fn == "__init__.py":
+                continue
+            # Skip this file itself: the scan logic contains the literals it
+            # searches for (same convention as test_hon_001 above).
+            if fn == os.path.basename(__file__):
+                continue
+            fp = os.path.join(suite_dir, fn)
+            with open(fp) as f:
+                raw = f.read()
+            for i, line in enumerate(raw.split("\n"), 1):
+                if "tests.live_dsh.real_backend" in line or \
+                        "RealDSHBackend" in line:
+                    offenders.append(f"{fn}:{i}: {line.strip()}")
+        assert not offenders, (
+            "this suite must never depend on live DSH — it references the "
+            f"live backend: {offenders}")
 
     def test_hon_004_no_real_state_touched(self, o3_tmp_root):
         """O3-HON-004: no test touches real state/registry/, audit/,

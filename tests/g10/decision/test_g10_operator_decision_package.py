@@ -346,7 +346,12 @@ def test_existing_g10_tests_still_pass():
     all_files = session_c_files + [f for f in extra_files
                                    if os.path.isfile(f)]
     proc = subprocess.run(
-        [python, "-m", "pytest", *all_files, "-q", "--tb=short"],
+        # pytest.ini's `addopts = -x` is inherited by this subprocess, so it
+        # would stop at the first failure and mask every failure after it.
+        # Ask explicitly for ALL failures plus no cache side effects so the
+        # verdict is a complete list, not a truncated one.
+        [python, "-m", "pytest", *all_files, "-q", "--tb=short",
+         "--maxfail=0", "-p", "no:cacheprovider"],
         capture_output=True, text=True, cwd=PROJECT_ROOT,
         timeout=300,
     )

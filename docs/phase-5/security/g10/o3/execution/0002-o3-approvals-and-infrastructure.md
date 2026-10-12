@@ -87,7 +87,7 @@ sudo useradd \
 - **Shell**: `/usr/sbin/nologin` (no login)
 - **Home**: `/var/lib/dsh-registry-writer` (the daemon root)
 - **Group**: `dsh-writer` (primary group, same name)
-- **Workspace access**: **NONE** — the `dsh-writer` user must have **no** write access to the session workspace (`/home/administrator/agent-workspace/multi-agent-harness/`). Read-only is acceptable; no access is preferred.
+- **Workspace access**: **NONE** — the `dsh-writer` user must have **no** write access to the session workspace (`/home/administrator/agent-workspace/dsh-custom/plugins/dsh-multi-agent-harness/`). Read-only is acceptable; no access is preferred.
 - **Network**: `PrivateNetwork=yes` enforced by systemd (P3), not by user creation.
 
 **Verification (operator):**
@@ -96,7 +96,7 @@ id dsh-writer
 # Expected: uid=NNN(dsh-writer) gid=NNN(dsh-writer) groups=NNN(dsh-writer)
 
 # Verify dsh-writer CANNOT write to the workspace
-sudo -u dsh-writer touch /home/administrator/agent-workspace/multi-agent-harness/test_probe 2>&1
+sudo -u dsh-writer touch /home/administrator/agent-workspace/dsh-custom/plugins/dsh-multi-agent-harness/test_probe 2>&1
 # Expected: permission denied (non-zero exit)
 ```
 
@@ -127,7 +127,7 @@ sudo chmod 0700 /var/lib/dsh-registry-writer/audit
 sudo chmod 0700 /var/lib/dsh-registry-writer/backup
 ```
 
-**Mandatory design constraint (FINAL 0001 §4.1):** the daemon root **must not** live inside `workspaceRoot` (`/home/administrator/agent-workspace/multi-agent-harness/`). An in-workspace layout is NOT O3 and permits no closure claim. The root must be on a filesystem that the DSH sandbox `writableRoots()` (which returns `[workspaceRoot, '/tmp', tmpdir()]`) does **not** include.
+**Mandatory design constraint (FINAL 0001 §4.1):** the daemon root **must not** live inside `workspaceRoot` (`/home/administrator/agent-workspace/dsh-custom/plugins/dsh-multi-agent-harness/`). An in-workspace layout is NOT O3 and permits no closure claim. The root must be on a filesystem that the DSH sandbox `writableRoots()` (which returns `[workspaceRoot, '/tmp', tmpdir()]`) does **not** include.
 
 **Verification (operator):**
 
@@ -139,7 +139,7 @@ stat -c '%U %G %a' /var/lib/dsh-registry-writer/
 # Verify the root is outside workspaceRoot
 python3 -c "
 import os
-ws = '/home/administrator/agent-workspace/multi-agent-harness'
+ws = '/home/administrator/agent-workspace/dsh-custom/plugins/dsh-multi-agent-harness'
 try:
     os.path.commonpath([ws, '/var/lib/dsh-registry-writer/'])
     print('ERROR: daemon root is inside workspaceRoot')
@@ -184,7 +184,7 @@ Before=dsh-session.service  # if such a unit exists; otherwise After=multi-user.
 Type=simple
 User=dsh-writer
 Group=dsh-writer
-ExecStart=/home/administrator/agent-workspace/multi-agent-harness/.venv-tests/bin/python -m registry_writer
+ExecStart=/home/administrator/agent-workspace/dsh-custom/plugins/dsh-multi-agent-harness/.venv-tests/bin/python -m registry_writer
 Restart=always
 RestartSec=2
 PrivateNetwork=yes

@@ -11,9 +11,12 @@
 # IMPORTANT:
 #  - PRD v0.2 expansion (2026-09-09, ADR 0003): eight new roles (vera,
 #    argus, atlas, tess, quill, scout, talon, ledger) are REGISTERED here
-#    (mapping_version 2). Their tool-subagent instances are NOT yet mounted
-#    in the live profile: mount is the separate Human per-case exception
-#    (ADR 0003 D8). Registration is not activation.
+#    (mapping_version 2) and MOUNTED in the live web profile composition
+#    since 2026-09-09 under the Human-approved per-case exception
+#    (ADR 0003 D8). Verification: the web profile package.json lists
+#    dsh-multi-agent-harness in dsh.profile.bundles; the plugin registers
+#    role-<id> + orchestrator directly from this repo. Registration and
+#    activation are both done.
 #  - Mounted 2026-09-07 (D4/D7 exception): per-role presets/instances are
 #    mounted — the presets by the dsh-multi-agent-harness plugin (repo-direct
 #    registration since 2026-10-10) and the instances as rows inside
@@ -260,7 +263,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: assurance verification role; project-local evidence reads only; verification result is never authorization; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: assurance verification role; project-local evidence reads only; verification result is never authorization; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: argus
     preset: role-argus
@@ -274,7 +277,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, subagent_vera, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: security engineering analysis role; scoped web research; findings inform decisions, never authority; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: security engineering analysis role; scoped web research; findings inform decisions, never authority; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: atlas
     preset: role-atlas
@@ -288,7 +291,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: architecture review role; scoped web research; does not replace CTO; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: architecture review role; scoped web research; does not replace CTO; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: tess
     preset: role-tess
@@ -302,7 +305,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: failure engineering analysis role; scoped web research; never owns final completion verification; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: failure engineering analysis role; scoped web research; never owns final completion verification; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: quill
     preset: role-quill
@@ -316,7 +319,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: policy/specification translation role; project-local reads only; translates approved policy, never creates authority; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: policy/specification translation role; project-local reads only; translates approved policy, never creates authority; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: scout
     preset: role-scout
@@ -330,7 +333,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: integration/compatibility analysis role; scoped web research; never owns another specialist's domain; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: integration/compatibility analysis role; scoped web research; never owns another specialist's domain; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: talon
     preset: role-talon
@@ -344,7 +347,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: reliability analysis role; scoped web research; never owns operations; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: reliability analysis role; scoped web research; never owns operations; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: ledger
     preset: role-ledger
@@ -358,7 +361,7 @@ roles:
     tool_filter:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
       deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-    notes: audit/provenance validation role; project-local reads only; audit is not authority; registered 2026-09-09, live mount pending Human per-case exception (ADR 0003 D8)
+    notes: audit/provenance validation role; project-local reads only; audit is not authority; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 # The orchestrator is the root session (ADR Decision 3 hybrid), not a
 # tool-subagent instance. Its own session toolFilter is a deployment concern
 # (L2 backstop); the control-plane contract (orchestrator/contract.md) is the
@@ -402,7 +405,7 @@ orchestrator:
 # Consistency guardrails (validated by Phase-1B tests):
 consistency_rules:
   allow_deny_disjoint: true
-  tool_names_verified: true        # against docs/tool-catalog.md (0.1.1-rc.2)
+  tool_names_verified: true        # against docs/tool-catalog.md (0.2.0-rc.2)
   matches_role_policy_yaml: true   # each role's allow/deny matches agents/<id>/policy.yaml
   delegation_orchestrator_only: true   # subdelegation DENY BY DEFAULT (V1)
   specialist_max_depth_1: true

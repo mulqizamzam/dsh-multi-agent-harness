@@ -93,7 +93,13 @@ def verify_signature(secret: bytes, expected_token: str, method: str,
                      params: dict) -> bool:
     """Constant-time comparison of a presented token against the recomputed one."""
     want = sign_request(secret, method, request_id, issued_at, nonce, params)
-    return hmac.compare_digest(want, (expected_token or "").lower())
+    tok = (expected_token or "").lower()
+    # compare_digest rejects non-ASCII str operands with TypeError; a token that
+    # is not a hex digest can never match, so return False (auth failure) instead
+    # of turning it into an INTERNAL_ERROR.
+    if not tok.isascii():
+        return False
+    return hmac.compare_digest(want, tok)
 
 
 def parse_iso_ts(value: str) -> datetime:

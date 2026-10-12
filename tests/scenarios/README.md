@@ -2,11 +2,14 @@
 
 This directory contains two layers:
 
-## 1. Phase-6 skeleton (`test_scenarios.py` — SKIPPED)
+## 1. Phase-6 whole-flow scenarios (`test_scenarios.py` — EXECUTABLE)
 
-The canonical PRD §17 scenario list (SCN-001..010). These are **structural skeletons**
-that remain `pytest.mark.skip` because they require the Phase-6 live execution engine
-for their full-fidelity flow (e.g. real DSH children, publish actions, novel editing).
+The canonical PRD §17 scenario list (SCN-001..010). These are **no longer
+skipped**: each drives the deterministic runtime end-to-end
+(`orchestrator.runtime.ExecutionFlow`) with in-process stub children, and
+`test_scenarios.py::test_no_module_level_skip_remains` asserts no blanket
+`pytest.mark.skip` marker survives. For the per-gate bounded promotions see §2
+below and `docs/phase-4/scenarios/README.md`.
 
 ## 2. Phase-4 executable promotion (`test_executable_scenarios.py` — RUNNING)
 

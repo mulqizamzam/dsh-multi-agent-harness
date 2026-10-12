@@ -7,9 +7,15 @@
 # daemon is down or unreachable, get_client() raises WriterUnavailable, and
 # the caller must BLOCK (fail-closed invariant, FINAL architecture §4.7).
 #
-# Config resolution order (last wins):
-#   1. env DSH_REGISTRY_WRITER_SOCKET, DSH_REGISTRY_WRITER_SECRET
+# Config resolution order (PRECEDENCE, highest first):
+#   1. env DSH_REGISTRY_WRITER_SOCKET, DSH_REGISTRY_WRITER_SECRET  — env WINS
 #   2. config/registry-writer.yaml (daemon.socket_path, auth.hmac_secret_path)
+#
+# The environment variables OVERRIDE the config file, they do not lose to it:
+# that is what lets a per-test daemon be pointed at a temp root while the
+# checked-in file still names the real /var/lib/... daemon. (An earlier
+# docstring here claimed "last wins" with the config file last, which
+# described the opposite of the implemented behaviour.)
 #
 # For tests, a fixture sets the env vars to point at a temp-root daemon
 # and calls reset_client() to clear the cached client.

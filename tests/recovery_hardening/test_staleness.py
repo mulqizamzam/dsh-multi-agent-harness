@@ -29,8 +29,17 @@ def test_state_rolled_back_refused():
 
 
 def test_untracked_versions_ok():
-    assert_recovery_current(0, 0, task_id="t")  # no raise
-    assert_recovery_current(0, 3, task_id="t")  # no raise
+    # F26b: version 0 is NOT an untracked skip — read_version returns 0 for a
+    # missing/corrupt state document, so a 0 on either side means the recovery
+    # cannot be proven current. Fail closed (raise) instead of silently
+    # validating against an absent state file. (Formerly asserted no-raise;
+    # repurposed to the corrected THREAT-022 fail-closed contract.)
+    with pytest.raises(StaleRecoveryError):
+        assert_recovery_current(0, 0, task_id="t")
+    with pytest.raises(StaleRecoveryError):
+        assert_recovery_current(0, 3, task_id="t")
+    with pytest.raises(StaleRecoveryError):
+        assert_recovery_current(3, 0, task_id="t")
 
 
 def test_check_record_drift():

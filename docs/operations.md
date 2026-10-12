@@ -88,4 +88,4 @@ Runbook details are Phase-5 hardening intent; see `docs/runbooks/` for the place
 
 ---
 
-*Version-pinned to DeepSeek Harness `0.1.1-rc.2`. No session policy is changed by this document; the development baseline is `workspace-write` + `ask`.*
+*Version-pinned to DeepSeek Harness `0.2.0-rc.2`. No session policy is changed by this document; the development baseline is `workspace-write` + `ask`.*

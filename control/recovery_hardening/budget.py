@@ -72,7 +72,10 @@ class RetryBudget:
             raise RecoveryBudgetError(
                 f"retry budget exhausted: {attempts} attempts >= "
                 f"max_attempts {self.max_attempts}")
-        self._cause_attempts[new_cause] = 1
+        # Accumulate per-cause attempts. A reset (=1) here would let alternating
+        # causes each restart their counter and defeat the per-cause cap (F11);
+        # incrementing keeps every cause's budget monotonically enforced.
+        self._cause_attempts[new_cause] = self._cause_attempts.get(new_cause, 0) + 1
         self._cause_attempts[self.diagnosed_cause] = attempts + 1
         self.diagnosed_cause = new_cause
         return self._cause_attempts[self.diagnosed_cause]

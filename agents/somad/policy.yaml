@@ -5,7 +5,7 @@
 role: somad
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 display_name: Somad
 domain: Social Media & Distribution
 summary: social strategy, content, campaigns, editorial calendar, audience analysis, distribution

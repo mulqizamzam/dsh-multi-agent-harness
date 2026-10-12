@@ -24,8 +24,20 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Iterable, Optional
+
+
+def _position_key(value) -> str:
+    """A stable, hashable key for an agent position.
+
+    Positions may be unhashable (dict/list), which would raise TypeError in a
+    set/dedup keyed on the raw value (F15). Serializing to canonical JSON with
+    a string fallback makes any position comparable for distinctness/dedup
+    without changing what is preserved on the conflict (the raw position is
+    still stored in Conflict.positions / minority_risks)."""
+    return json.dumps(value, sort_keys=True, default=str)
 
 # Security-relevant decision areas that make ANY conflict mandatory-escalate.
 SECURITY_RELEVANT_TOPICS = frozenset({
@@ -91,8 +103,7 @@ class ConflictGate:
         return f"conflict-{self._seq}"
 
     # -- detect --------------------------------------------------------------
-    def detect(self, outputs: Iterable[dict],
-               decision_points: Optional[Iterable[str]] = None) -> list:
+    def detect(self, outputs: Iterable[dict]) -> list:
         """Detect conflicts across outputs.
 
         output: {"agent": str, "decision": str, "position": str,
@@ -110,7 +121,7 @@ class ConflictGate:
 
         conflicts = []
         for key, group in grouped.items():
-            positions = {g.get("position") for g in group}
+            positions = {_position_key(g.get("position")) for g in group}
             if len(positions) > 1:
                 conflicts.append(Conflict(
                     id=self._next_id(),
@@ -128,9 +139,20 @@ class ConflictGate:
         """Mark conflicts material. A conflict is material when:
           - it concerns a HIGH-risk action (docs/security/0001 §8.1), OR
           - it is security-relevant (authority/scope/evidence sufficiency), OR
-          - either side holds credible evidence (evidence present on both
-            sides), OR
-          - it cannot be shown immaterial (fail-closed → material).
+          - credible evidence is present on both sides (each side backs its
+            position).
+
+        Evidence exception (documented immateriality, F14): a pure disagreement
+        on a non-security, LOW-risk decision where NEITHER side holds credible
+        evidence is shown immaterial — it is synthesized with every distinct
+        position and minority risk preserved (never dropped; never resolved by
+        counting), not escalated to Human. Fail-closed still governs everything
+        else: authority/scope/evidence-sufficiency, HIGH-risk actions and
+        evidence-backed disagreement ALL escalate. The no-evidence, low-stakes
+        dispute is the single case affirmatively shown immaterial, so the ORIGIN
+        of the "cannot be shown immaterial → material" rule is that an
+        EVALUATOR must be able to name WHY a conflict is immaterial (no evidence,
+        no security signal, low risk) rather than silently defaulting to pass.
         """
         topics = {t.lower() for t in (decision_topics or ())}
         risk = (risk or "LOW").upper()
@@ -211,9 +233,9 @@ class ConflictGate:
             distinct = []
             seen = set()
             for p in c.positions:
-                pos = p.get("position")
-                if pos not in seen:
-                    seen.add(pos)
+                key = _position_key(p.get("position"))
+                if key not in seen:
+                    seen.add(key)
                     distinct.append(p)
             out.append(Conflict(
                 id=c.id, decision_point=c.decision_point,
@@ -288,9 +310,8 @@ class ConflictGate:
 
 
 # Module-level convenience API.
-def detect_conflicts(outputs: Iterable[dict],
-                     decision_points: Optional[Iterable[str]] = None) -> list:
-    return ConflictGate().detect(outputs, decision_points=decision_points)
+def detect_conflicts(outputs: Iterable[dict]) -> list:
+    return ConflictGate().detect(outputs)
 
 
 def resolve_conflicts(outputs: Iterable[dict], *, risk: str = "LOW",

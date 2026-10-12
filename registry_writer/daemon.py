@@ -27,6 +27,8 @@ import socket
 import sys
 import threading
 import time
+from collections import OrderedDict
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -177,46 +179,59 @@ def _read_doc(guard: PathGuard, target: str) -> tuple[dict, int]:
 
 
 def _cas_write(guard: PathGuard, target: str, data: dict,
-               expected_version: int, max_doc_bytes: int) -> dict:
+               expected_version: int, max_doc_bytes: int,
+               lock: threading.RLock | None = None) -> dict:
     from state.helpers.atomic_write import atomic_write
-    path = guard.resolve(target)
-    _, current = _read_doc(guard, target)
-    if current != expected_version:
-        raise DaemonError(
-            "INVALID_REQUEST",
-            f"CAS stale: expected_version={expected_version}, current={current}")
-    new_version = expected_version + 1
-    data["version"] = new_version
-    blob = json.dumps(data, ensure_ascii=False, sort_keys=True)
-    if len(blob.encode("utf-8")) > max_doc_bytes:
-        raise DaemonError("INVALID_REQUEST", "document exceeds max_doc_bytes")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    atomic_write(path, data)
-    return {"version": new_version, "path": guard.rel(target)}
+    # Read-modify-write (read current version → compare → bump → write) is
+    # only correct under mutual exclusion: two concurrent registry_writes with
+    # the same expected_version both committed N+1 and silently lost one of
+    # them (THREAT-021).  The daemon lock is passed in so the whole critical
+    # section — including the caller's self-audit — is serialized.
+    with (lock if lock is not None else nullcontext()):
+        path = guard.resolve(target)
+        _, current = _read_doc(guard, target)
+        if current != expected_version:
+            raise DaemonError(
+                "INVALID_REQUEST",
+                f"CAS stale: expected_version={expected_version}, current={current}")
+        new_version = expected_version + 1
+        data["version"] = new_version
+        blob = json.dumps(data, ensure_ascii=False, sort_keys=True)
+        if len(blob.encode("utf-8")) > max_doc_bytes:
+            raise DaemonError("INVALID_REQUEST", "document exceeds max_doc_bytes")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        atomic_write(path, data)
+        return {"version": new_version, "path": guard.rel(target)}
 
 
 def _audit_append(guard: PathGuard, target: str, event: dict,
-                  max_doc_bytes: int) -> dict:
+                  max_doc_bytes: int,
+                  lock: threading.RLock | None = None) -> dict:
     from audit.helpers.integrity import append_chained_event
     from audit.helpers.append_log import read_events, AuditIntegrityError
-    path = guard.resolve(target)
-    eid = event.get("event_id")
-    if not (isinstance(eid, str) and eid.strip()):
-        raise DaemonError("INVALID_REQUEST", "audit event requires event_id")
-    # idempotency: existing event_id → success without a duplicate line
-    if os.path.exists(path):
-        existing = [e.get("event_id") for e in read_events(path)]
-        if eid in existing:
-            return {"event_id": eid, "idempotent": True}
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    try:
-        integrity = append_chained_event(path, event)
-    except AuditIntegrityError as e:
-        # Corruption detected in the ledger → fail closed with a typed error,
-        # never a partial append (FINAL architecture §4.7).
-        raise DaemonError("CORRUPTION_DETECTED", str(e)) from e
-    return {"event_id": eid, "idempotent": False,
-            "integrity": integrity}
+    # Same read-modify-write hazard as _cas_write: the idempotency check and
+    # the append+chain rewrite must be atomic, or two concurrent audit_appends
+    # with the same event_id both append (duplicate ledger entry, broken
+    # chain).
+    with (lock if lock is not None else nullcontext()):
+        path = guard.resolve(target)
+        eid = event.get("event_id")
+        if not (isinstance(eid, str) and eid.strip()):
+            raise DaemonError("INVALID_REQUEST", "audit event requires event_id")
+        # idempotency: existing event_id → success without a duplicate line
+        if os.path.exists(path):
+            existing = [e.get("event_id") for e in read_events(path)]
+            if eid in existing:
+                return {"event_id": eid, "idempotent": True}
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        try:
+            integrity = append_chained_event(path, event)
+        except AuditIntegrityError as e:
+            # Corruption detected in the ledger → fail closed with a typed
+            # error, never a partial append (FINAL architecture §4.7).
+            raise DaemonError("CORRUPTION_DETECTED", str(e)) from e
+        return {"event_id": eid, "idempotent": False,
+                "integrity": integrity}
 
 
 # ---------------------------------------------------------------------------
@@ -232,9 +247,18 @@ class RegistryWriterDaemon:
         self._threads: list[threading.Thread] = []
         self._running = False
         self._ready = False
+        # Deterministic readiness signal: set as soon as listen() has succeeded,
+        # i.e. once the kernel actually queues incoming connections. The socket
+        # FILE already exists after bind(), so a client that polls the path
+        # enters the bind→listen window and gets ECONNREFUSED. Only this event
+        # means "connect() will not be refused".
+        self._ready_event = threading.Event()
         self._recovery_roots: set[str] = set()
         self._started_at = time.time()
-        self._seen_nonces: set[tuple[str, str]] = set()
+        # Arrival-ordered so the bound can evict the OLDEST entries: a `set`
+        # slice drops arbitrary (fresh) nonces, which lets a just-presented
+        # nonce be replayed inside the ±30s replay window.
+        self._seen_nonces: "OrderedDict[tuple[str, str], None]" = OrderedDict()
         self._nonce_lock = threading.Lock()
         self._load_secret()
         self._validate_roots()
@@ -287,10 +311,19 @@ class RegistryWriterDaemon:
             key = (channel, nonce)
             if key in self._seen_nonces:
                 raise DaemonError("UNAUTHORIZED", "replayed nonce")
-            self._seen_nonces.add(key)
-            if len(self._seen_nonces) > 100_000:
-                # bound the set (replay window already bounds validity)
-                self._seen_nonces = set(list(self._seen_nonces)[-50_000:])
+            self._seen_nonces[key] = None
+            self._bound_nonces()
+
+    def _bound_nonces(self) -> None:
+        """Keep the replay set bounded by FIFO-evicting the OLDEST arrivals.
+
+        Evicting arbitrary entries (a set slice) could drop a *live* nonce and
+        let it be replayed inside the ±30s window, defeating the replay
+        protection entirely. Caller holds `_nonce_lock`.
+        """
+        if len(self._seen_nonces) > 100_000:
+            while len(self._seen_nonces) > 50_000:
+                self._seen_nonces.popitem(last=False)
 
     # -- dispatch ---------------------------------------------------------
     def handle(self, request: dict) -> dict:
@@ -301,9 +334,21 @@ class RegistryWriterDaemon:
             self._authenticate(request)
             method = request["method"]
             if self._recovery_roots and method in WRITE_METHODS:
-                raise DaemonError(
-                    "RECOVERY_REQUIRED",
-                    f"daemon in recovery for roots: {sorted(self._recovery_roots)}")
+                # A transient self-audit failure must not latch forever: the
+                # only thing that can clear the flag is a successful
+                # self-audit, and with a hard gate here no write could ever
+                # run to produce one. So re-probe once per blocked write —
+                # proceed when the audit channel is healthy again, refuse only
+                # while it is still failing (fail-closed).
+                self._self_audit(
+                    "recovery_probe",
+                    {"blocked_method": method,
+                     "roots": sorted(self._recovery_roots)})
+                if self._recovery_roots:
+                    raise DaemonError(
+                        "RECOVERY_REQUIRED",
+                        f"daemon in recovery for roots: "
+                        f"{sorted(self._recovery_roots)}")
             result = self._dispatch(method, request.get("params") or {})
             return make_success(request["id"], result)
         except DaemonError as e:
@@ -334,7 +379,7 @@ class RegistryWriterDaemon:
         if not isinstance(expected, int):
             raise DaemonError("INVALID_REQUEST", "expected_version must be int")
         result = _cas_write(self.guard, rel, data, expected,
-                            self.config.max_doc_bytes)
+                            self.config.max_doc_bytes, self._lock)
         self._self_audit("registry_write", {"target": rel,
                                             "version": result["version"]})
         return result
@@ -351,14 +396,28 @@ class RegistryWriterDaemon:
         event = params.get("event")
         if not isinstance(event, dict):
             raise DaemonError("INVALID_REQUEST", "event must be a JSON object")
-        return _audit_append(self.guard, rel, event, self.config.max_doc_bytes)
+        return _audit_append(self.guard, rel, event, self.config.max_doc_bytes,
+                             self._lock)
 
     def _m_audit_read(self, params: dict) -> dict:
         from audit.helpers.append_log import read_events
         rel = self.guard.match_root(self._target(params), SANCTIONED["audit_read"])
         events = read_events(os.path.join(self.config.root, rel))
         since = params.get("since_seq")
-        if isinstance(since, int) and since > 0:
+        # CONTRACT (0-based, end-exclusive): `since_seq` = N returns every
+        # event whose 0-based ledger position is >= N, i.e. it SKIPS the first
+        # N events. since_seq=0 (or absent) returns the whole ledger. "Return
+        # everything after seq N" is expressed as since_seq=N+1. Proved by
+        # tests/unit/test_daemon_hardening_proofs.py.
+        if isinstance(since, bool):
+            # bool is an int subclass in Python: True would silently mean
+            # "skip the first event". Reject it rather than guess.
+            raise DaemonError("INVALID_REQUEST",
+                              "since_seq must be an int, not a bool")
+        if isinstance(since, int):
+            if since < 0:
+                raise DaemonError("INVALID_REQUEST",
+                                  "since_seq must be >= 0")
             events = events[since:]
         return {"events": events, "count": len(events)}
 
@@ -389,7 +448,7 @@ class RegistryWriterDaemon:
         if not isinstance(expected, int):
             raise DaemonError("INVALID_REQUEST", "expected_version must be int")
         result = _cas_write(self.guard, rel, data, expected,
-                            self.config.max_doc_bytes)
+                            self.config.max_doc_bytes, self._lock)
         self._self_audit("project_write", {"target": rel,
                                            "version": result["version"]})
         return result
@@ -415,9 +474,49 @@ class RegistryWriterDaemon:
             "ready": self._ready,
         }
 
+    # -- backup / restore -------------------------------------------------
+    def _backup_base(self) -> str:
+        """Canonical backup dir (may live outside the daemon root)."""
+        return os.path.realpath(os.path.abspath(self.config.backup_dir))
+
+    def _backup_label(self, raw) -> str:
+        """Validate a caller-supplied backup label.
+
+        The daemon NEVER trusts a caller-supplied path (module header
+        invariant).  The raw label is joined into the backup dir, so a value
+        like "../../etc/cron.d/x" or an absolute path would create directories
+        outside every sanctioned root and bypass PathGuard entirely.  The
+        label is therefore restricted to a single, traversal-free component.
+        """
+        if not isinstance(raw, str) or not raw.strip():
+            return now_iso().replace(":", "-")
+        label = raw.strip()
+        if label in (".", "..") or not re.fullmatch(r"[A-Za-z0-9._-]+", label):
+            raise DaemonError("INVALID_REQUEST",
+                              f"invalid backup label: {label!r}")
+        return label
+
+    def _resolve_backup_path(self, raw, *, what: str) -> str:
+        """Resolve a caller-supplied backup path, requiring it inside the
+        backup dir.  Without this check the manifest read is an arbitrary
+        file read (a hash oracle for any host file) and the copy target is
+        arbitrary — PathGuard's whole reason for existing."""
+        if not (isinstance(raw, str) and raw.strip()):
+            raise DaemonError("INVALID_REQUEST", f"missing {what}")
+        base = self._backup_base()
+        cand = os.path.realpath(os.path.abspath(raw.strip()))
+        try:
+            inside = os.path.commonpath([cand, base]) == base
+        except ValueError:
+            inside = False
+        if not inside:
+            raise DaemonError("FORBIDDEN",
+                              f"{what} escapes backup dir {base!r}: {raw!r}")
+        return cand
+
     def _m_backup(self, params: dict) -> dict:
-        label = params.get("label") or now_iso().replace(":", "-")
-        dest = os.path.join(self.config.backup_dir, label)
+        label = self._backup_label(params.get("label"))
+        dest = os.path.join(self._backup_base(), label)
         with self._lock:
             if os.path.exists(dest):
                 raise DaemonError("INVALID_REQUEST",
@@ -453,7 +552,9 @@ class RegistryWriterDaemon:
             raise DaemonError("INVALID_REQUEST", "missing backup_path")
         if not confirmed:
             raise DaemonError("INVALID_REQUEST", "restore requires confirmed=true")
-        dest = os.path.abspath(backup_path)
+        # Resolve the caller-supplied path against the backup dir: the daemon
+        # never trusts a caller path (module header invariant).
+        dest = self._resolve_backup_path(backup_path, what="backup_path")
         # verify manifest BEFORE applying anything (fail-closed)
         man_path = os.path.join(dest, "MANIFEST.sha256")
         if not os.path.exists(man_path):
@@ -474,12 +575,28 @@ class RegistryWriterDaemon:
                 raise DaemonError("CORRUPTION_DETECTED",
                                   f"backup manifest mismatch: {relp}")
         with self._lock:
-            for rel in ("state/registry", "state/projects", "audit"):
-                src = os.path.join(dest, rel)
-                dst = os.path.join(self.config.root, rel)
-                if os.path.exists(src):
+            # Copy FIRST, swap AFTER: the previous rmtree(dst)-then-copytree
+            # ordering destroyed live state the moment a copy failed, leaving
+            # the daemon with an empty registry/audit and no way back.
+            staging = os.path.join(
+                self.config.root,
+                f".restore-staging-{os.getpid()}-{now_iso().replace(':', '-')}")
+            shutil.rmtree(staging, ignore_errors=True)
+            try:
+                for rel in ("state/registry", "state/projects", "audit"):
+                    src = os.path.join(dest, rel)
+                    if not os.path.exists(src):
+                        continue
+                    shutil.copytree(src, os.path.join(staging, rel))
+                for rel in ("state/registry", "state/projects", "audit"):
+                    src = os.path.join(staging, rel)
+                    if not os.path.exists(src):
+                        continue
+                    dst = os.path.join(self.config.root, rel)
                     shutil.rmtree(dst, ignore_errors=True)
-                    shutil.copytree(src, dst)
+                    os.replace(src, dst)
+            finally:
+                shutil.rmtree(staging, ignore_errors=True)
         self._self_audit("restore", {"backup_path": dest})
         return {"restored": True, "backup_path": dest, "timestamp": now_iso()}
 
@@ -497,7 +614,13 @@ class RegistryWriterDaemon:
             }
             rel = self.guard.match_root("audit/_daemon/events.jsonl",
                                         SANCTIONED["audit_append"])
-            _audit_append(self.guard, rel, event, self.config.max_doc_bytes)
+            _audit_append(self.guard, rel, event, self.config.max_doc_bytes,
+                          self._lock)
+            # A successful audit clears the flag again — otherwise a single
+            # transient failure (ENOSPC, one bad clock read) latched forever:
+            # every later WRITE_METHOD was rejected RECOVERY_REQUIRED until
+            # process restart, contradicting this block's own comment.
+            self._recovery_roots.discard("audit/_daemon")
         except Exception:
             # Self-audit failure must NOT silently pass — but it must also
             # not break the original request.  The daemon surfaces it via
@@ -529,9 +652,20 @@ class RegistryWriterDaemon:
         self._server = sock
         self._running = True
         self._ready = True
-        pid_path = os.path.join(self.config.root, self.config.pid_file)
-        with open(pid_path, "w") as f:
-            f.write(str(os.getpid()))
+        # Publish readiness immediately after listen(): the listening socket is
+        # now accepting connections, so waiters may connect.
+        self._ready_event.set()
+        # The pid file is observability only — never a precondition for
+        # serving. A failure here (read-only root, full disk, quota) must not
+        # leave a listening socket with no accept loop behind it.
+        try:
+            pid_path = os.path.join(self.config.root, self.config.pid_file)
+            with open(pid_path, "w") as f:
+                f.write(str(os.getpid()))
+        except OSError:
+            # Log-and-continue: the daemon stays up and keeps serving.
+            print(f"registry_writer: cannot write pid file {pid_path!r}: "
+                  f"continuing without it", file=sys.stderr, flush=True)
         self._accept_loop()
 
     def _accept_loop(self):
@@ -539,11 +673,29 @@ class RegistryWriterDaemon:
             try:
                 conn, _addr = self._server.accept()
             except OSError:
-                break
+                # A transient accept() error (EMFILE, ECONNABORTED, EINTR)
+                # must NOT retire the daemon: breaking out left _running=True
+                # and _ready=True, so health reported ok while the daemon
+                # accepted nothing ever again. Only a closed server socket
+                # (shutdown()) is a reason to stop.
+                if not self._running:
+                    break
+                time.sleep(0.05)
+                continue
+            self._reap_threads()
             t = threading.Thread(target=self._handle_conn, args=(conn,),
                                  daemon=True)
             self._threads.append(t)
             t.start()
+
+    def _reap_threads(self):
+        """Drop finished connection threads.
+
+        Without reaping, one entry per connection accumulated for the process
+        lifetime, and shutdown() then joined thousands of dead threads.
+        """
+        if len(self._threads) >= 64:
+            self._threads = [t for t in self._threads if t.is_alive()]
 
     def _handle_conn(self, conn: socket.socket):
         try:
@@ -557,6 +709,17 @@ class RegistryWriterDaemon:
                 if not data:
                     break
                 buf += data
+                # The declared max_payload_bytes was never enforced: a client
+                # that never sends b"\n" grew `buf` unbounded until the 30s
+                # timeout — an unauthenticated DoS on the daemon's only
+                # network surface.
+                if len(buf) > self.config.max_payload_bytes:
+                    conn.sendall(json.dumps(make_error(
+                        "?", "INVALID_REQUEST",
+                        f"payload exceeds max_payload_bytes="
+                        f"{self.config.max_payload_bytes}"
+                    )).encode() + b"\n")
+                    break
                 while b"\n" in buf:
                     line, buf = buf.split(b"\n", 1)
                     line = line.strip()
@@ -582,6 +745,9 @@ class RegistryWriterDaemon:
     def shutdown(self):
         self._running = False
         self._ready = False
+        # No longer accepting connections: clear the readiness event so a
+        # second wait cannot observe a stale "ready" from the previous run.
+        self._ready_event.clear()
         if self._server is not None:
             try:
                 self._server.close()
@@ -592,8 +758,12 @@ class RegistryWriterDaemon:
                 os.unlink(self.config.socket_path)
             except OSError:
                 pass
+        self._reap_threads()
+        # Honour the configured graceful period instead of capping it at 2s,
+        # which made any value above 2 a no-op.
         for t in self._threads:
-            t.join(timeout=min(2, self.config.graceful_shutdown_seconds))
+            t.join(timeout=self.config.graceful_shutdown_seconds)
+        self._threads = []
 
 
 def run_daemon(config: DaemonConfig):

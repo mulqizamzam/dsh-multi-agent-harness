@@ -1,8 +1,8 @@
 # Role preset: Quill (Policy & Specification)
-# PRD v0.2 expansion (ADR 0003); NOT yet mounted — per-case Human exception
-# required (ADR 0003 D8). Registration is not activation: this draft becomes
-# part of the live web profile composition only if the operator approves the
-# 8-row insert in $DSH_HOME/profiles/web/cordis.patch.yml.
+# PRD v0.2 expansion (ADR 0003); mounted since 2026-09-09 in the live web
+# profile composition under the Human-approved per-case exception (ADR 0003 D8).
+# Registered directly from this repo by the dsh-multi-agent-harness plugin (the
+# web profile bundle lists dsh-multi-agent-harness; the plugin registers role-<id>).
 # Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
 # Source: agents/quill/AGENT.md + config/role-preset-mapping.yaml
 

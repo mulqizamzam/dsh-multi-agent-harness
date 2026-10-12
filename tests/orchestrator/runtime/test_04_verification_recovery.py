@@ -86,6 +86,9 @@ class TestRecoveryPath:
         result = flow.recover(cause="cosmetic only", failure_class="logic",
                               re_execute=False)
         assert result.outcome == COMPLETE
+        # A COMPLETE outcome must end in a TERMINAL state, not a parked
+        # DELEGATED (F3). The reverted code left final_state == "DELEGATED".
+        assert result.final_state == "COMPLETE"
 
 
 class TestStaleState:
@@ -194,3 +197,49 @@ class TestNoBlindRetry:
         import pytest
         with pytest.raises(RecoveryRefusedByRuntime):
             flow.recover(cause="new cause", failure_class="logic")
+
+class TestRecoveryPrivilegeBaseline:
+    """REC-004/THREAT-017 caller-side wiring: the privilege-bound baseline
+    handed to recheck_authority must be the DELEGATION's authorized scope,
+    not the recovery attempt's own plan. A baseline copied from the attempt
+    made assert_privilege_bounded's comparison tautological."""
+
+    def test_recovery_baseline_derives_from_delegation_not_attempt(
+            self, ws, subtask_runner, monkeypatch):
+        import control.recovery as recovery_mod
+        real = recovery_mod.RecoveryController.recheck_authority
+        captured = {}
+
+        def spy(inner_self, *a, **kw):
+            captured.update(kw)
+            return real(inner_self, *a, **kw)
+
+        monkeypatch.setattr(recovery_mod.RecoveryController,
+                            "recheck_authority", spy)
+        provider = MemoryDelegationProvider(make_delegation())
+        executor = StubActionExecutor(observed={"exit_code": 1,
+                                                "target": "agents/cto/x.txt"})
+        flow = ExecutionFlow(base=ws, provider=provider,
+                             subtask_runner=subtask_runner,
+                             executor=executor, flow_id="test-f12caller")
+        subtask_runner.add("cto", make_subtask_result(
+            "task-1:cto", "cto", recommendation="write module",
+            evidence=("artifact:cto",)))
+        result = flow.run(
+            make_intake(objective="engineering"),
+            execute_plan=make_execute_plan(
+                target="agents/cto/x.txt",
+                expected_outcome={"exit_code": 0}))
+        assert result.outcome == RECOVERING, result.outcome
+        flow.recover(cause="fixed exit code", failure_class="logic")
+        baseline = captured.get("original_authority")
+        assert baseline is not None, "recheck_authority was never called"
+        plan_action = "write"  # make_execute_plan()'s default action
+        assert baseline["actions"] != [plan_action], (
+            f"baseline was copied from the attempt (tautological): {baseline}")
+        assert plan_action in baseline["actions"], (
+            f"delegation-authorized action missing from baseline: {baseline}")
+        assert "read" in baseline["actions"], (
+            f"baseline is not the delegation scope: {baseline}")
+        assert "agents/**" in baseline["targets"], (
+            f"target baseline is not the delegation scope: {baseline}")

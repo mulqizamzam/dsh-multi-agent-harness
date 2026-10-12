@@ -137,9 +137,19 @@ def _merge_json_and_cli(args: argparse.Namespace) -> dict:
     if args.scope is not None:
         data["scope"] = args.scope
 
-    # Normalize constraint → constraints
+    # Normalize constraint → constraints, MERGING both sources. The previous
+    # line (`data["constraints"] = data.pop("constraint")`) silently discarded a
+    # JSON-stdin `constraints` array whenever --constraint was also passed
+    # (the CLI list overwrote the JSON array) — F11. Preserve both, in order,
+    # and dedup exact repeats. A scalar constraint is wrapped so a string is
+    # not exploded per-character.
     if "constraint" in data:
-        data["constraints"] = data.pop("constraint")
+        existing = data.get("constraints") or []
+        extra = data.pop("constraint")
+        if isinstance(extra, str):
+            extra = [extra]
+        merged = list(existing) + list(extra or [])
+        data["constraints"] = list(dict.fromkeys(merged))
 
     return data
 

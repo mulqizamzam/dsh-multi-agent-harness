@@ -194,14 +194,21 @@ class TestVectorV5RequestSecrets:
         with open(os.path.join(PROJECT_ROOT, "config",
                                "role-preset-mapping.yaml")) as f:
             mapping = yaml.safe_load(f)
-        tools = set()
         for role in mapping["roles"]:
-            tools |= set(role["tool_filter"]["allow"])
-        assert "web_fetch" not in tools
-        secretish = {t for t in tools
-                     if any(s in t.lower() for s in
-                            ("secret", "credential", "token", "api_key"))}
-        assert not secretish, f"unexpected secret-return tool: {secretish}"
+            allow = set(role["tool_filter"]["allow"])
+            # web_fetch is hard out-of-scope for G13 (0003 §8). The allow set
+            # is read from the live config and asserted PER ROLE, so a
+            # violation names the role that would enable it (the same shape
+            # tests/g13/test_dsh_native_unknown.py:88 uses).
+            assert "web_fetch" not in allow, (
+                f"role {role['id']} would enable web_fetch — prohibited by "
+                "G13 hard constraints")
+            secretish = {t for t in allow
+                         if any(s in t.lower() for s in
+                                ("secret", "credential", "token", "api_key"))}
+            assert not secretish, (
+                f"role {role['id']} exposes secret-return tool(s): "
+                f"{secretish}")
         # No authority effect from a secret request.
         with pytest.raises(AuthorityDenied):
             production_authorize("kai", "write", "multi-agent-harness/x", None)

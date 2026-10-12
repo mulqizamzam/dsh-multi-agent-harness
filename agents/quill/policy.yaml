@@ -5,7 +5,7 @@
 role: quill
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 display_name: Quill
 domain: Policy & Specification
 summary: policy decomposition, invariant definition, rule definition, schema implications, executable-test mapping, contract consistency checks

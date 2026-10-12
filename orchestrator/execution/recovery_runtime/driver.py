@@ -280,13 +280,25 @@ def run_recovery_cycle(
             return False
 
     try:
+        # REC-004/THREAT-017 baseline: derive from the DELEGATION the recovery
+        # runs under (the scope the authority gate itself checks), never from
+        # the attempt's own action/target — a baseline copied from the attempt
+        # makes the privilege comparison tautological.
+        _del_actions = list(getattr(delegation, "scope_operations", ()) or ())
+        _del_action = getattr(delegation, "action", "")
+        if _del_action and _del_action not in _del_actions:
+            _del_actions.append(_del_action)
+        _del_targets = list(getattr(delegation, "scope_resources", ()) or ())
+        _del_target = getattr(delegation, "target", "")
+        if _del_target and _del_target not in _del_targets:
+            _del_targets.append(_del_target)
         ctrl.recheck_authority(
             _gate_fn,
             attempt_action=action, attempt_target=target,
             attempt_grants=(),
             original_authority=original_authority or {
-                "actions": [action],
-                "targets": [target],
+                "actions": _del_actions,
+                "targets": _del_targets,
                 "grants": [],
             },
             current_version=current_version,

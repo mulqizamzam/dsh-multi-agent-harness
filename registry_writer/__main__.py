@@ -98,20 +98,26 @@ def main(argv=None) -> int:
             return 1
 
     from registry_writer.daemon import run_daemon
-    daemon = run_daemon(config)
+
+    # run_daemon() blocks inside the accept loop, so the stop handler MUST be
+    # registered before it runs: previously the signal.signal() calls and the
+    # keep-alive wait below sat *after* run_daemon() and were unreachable dead
+    # code, so a SIGTERM killed the process with no graceful shutdown, no
+    # thread join and no socket unlink.
+    _daemon: dict = {}
 
     def _stop(_sig, _frame):
-        daemon.shutdown()
+        daemon = _daemon.get("daemon")
+        if daemon is not None:
+            daemon.shutdown()  # joins handlers, unlinks the socket
         sys.exit(0)
 
     signal.signal(signal.SIGTERM, _stop)
     signal.signal(signal.SIGINT, _stop)
-    # run_daemon() blocks in the accept loop; keep alive.
-    try:
-        threading_evt = __import__("threading").Event()
-        threading_evt.wait()
-    except KeyboardInterrupt:
-        daemon.shutdown()
+
+    # Blocks until shutdown() is called (normally from _stop above).
+    daemon = run_daemon(config)
+    _daemon["daemon"] = daemon
     return 0
 
 

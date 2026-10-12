@@ -1,6 +1,6 @@
 # Testing Documentation — Multi-Agent Control Plane
 
-All documentation is **version-pinned** to DeepSeek Harness `0.1.1-rc.2`.
+All documentation is **version-pinned** to DeepSeek Harness `0.2.0-rc.2`.
 
 ## Test layers
 
@@ -33,4 +33,4 @@ cd multi-agent-harness
 
 ---
 
-*All tests assume DeepSeek Harness `0.1.1-rc.2`. Integration tests wire existing foundation/reference/helper modules; live-DSH variants require Phase-2C.*
+*All tests assume DeepSeek Harness `0.2.0-rc.2`. Integration tests wire existing foundation/reference/helper modules; live-DSH variants require Phase-2C.*

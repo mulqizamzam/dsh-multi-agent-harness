@@ -3,7 +3,7 @@
 - **Role id**: `orchestrator`
 - **Kind**: coordination (NOT an eighth specialist)
 - **Status**: finalized (Phase 1A)
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **This is a role definition (authority/capability contract), not a production agent prompt.** The deployed preset persona and instructions are authored in a later phase.
 
 ---

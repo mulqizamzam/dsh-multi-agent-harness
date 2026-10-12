@@ -170,7 +170,17 @@ class TestStaticNoBypass:
         src = _source(_ENTRY_SRC)
         assert "approval_reference=" not in src.replace(
             "required_authority_context=", "")
-        assert "declared_risk=" not in src.replace("declared_risk", "")
+        # Same invariant for the risk-override field, asserted on the RAW
+        # source. `approval_reference=` above survives its replace because
+        # `required_authority_context=` cannot contain it; `declared_risk` has
+        # no such prefix collision, so there is nothing safe to strip — and the
+        # previous form (`... not in src.replace("declared_risk", "")`) deleted
+        # the needle's own prefix before searching, so it could never fail.
+        # Nothing is mutated here, so nothing can neutralise the check.
+        assert "declared_risk" not in src, (
+            "entry.py must not name declared_risk: the front door accepts no "
+            "risk override from the caller (risk is classified "
+            "deterministically by control.risk)")
 
     def test_statuses_are_terminal_only(self):
         """The front door only emits terminal statuses, no new stops."""

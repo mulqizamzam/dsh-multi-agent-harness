@@ -5,7 +5,7 @@
 role: cfo
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 display_name: CFO
 domain: Finance, Pricing & Economics
 summary: pricing, unit economics, cost, margin, budget, ROI, financial scenario analysis

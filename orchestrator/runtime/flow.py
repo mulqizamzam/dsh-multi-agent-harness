@@ -96,9 +96,14 @@ class ExecutionFailure(RuntimeFlowError):
     disposition (failure propagation -> recovery handoff). Carries the
     classified failure_class and cause for the RecoveryRecord."""
 
-    def __init__(self, failure_class: str = "unknown", cause: str = ""):
+    def __init__(self, failure_class: str = "unknown", cause: str = "",
+                 phase: str = ""):
         self.failure_class = failure_class
         self.cause = cause
+        # The runtime phase the flow was actually in when the failure occurred
+        # (e.g. "execute_subtasks"). Recorded at raise time so recovery reporting
+        # cannot misreport the stopping phase from prose (F7).
+        self.phase = phase
         super().__init__(
             f"execution failure ({failure_class}): {cause}")
 
@@ -361,8 +366,11 @@ class ExecutionFlow:
             if e.failure_class == "unknown":
                 self._stop(e, escalated=True)
             else:
+                # Record the REAL stopping phase (result.phase was set at the
+                # phase that raised) so recovery reporting preserves it (F7).
                 self._route_recovery(
-                    ExecutionFailure(e.failure_class, str(e)))
+                    ExecutionFailure(e.failure_class, str(e),
+                                     phase=result.phase))
         except GateEscalated as e:
             self._stop(e, escalated=True)
         except GateDenied as e:
@@ -749,7 +757,14 @@ class ExecutionFlow:
         # parallel_batches and metrics expect per-batch records; wave-level
         # provenance is the natural extension.  When no waves run, waves=[].
         wave_records: list[dict] = []
-        all_payloads: list = []
+        # Payloads are produced in WAVE order (topological; each wave sorted by
+        # task_id), which diverges from the ORIGINAL `subtasks` order whenever
+        # there is >1 wave. _collect positional-zips payloads against `subtasks`
+        # (collection.collect_all), so a wave-order payload list would pair the
+        # wrong subtask to each result (role identity mismatch / wrong task).
+        # Key each payload by its owning subtask id and re-sort back to the
+        # original order before returning (F8).
+        payloads_by_task_id: dict = {}
         for idx, wave_plans in enumerate(waves):
             wave_tasks = tuple(p.task for p in wave_plans)
             held = self._get_lifecycle().version
@@ -782,9 +797,15 @@ class ExecutionFlow:
             except StaleStateDetected:
                 self._finalize_wave_parallel(wave_records, len(waves))
                 raise
-            all_payloads.extend(payloads)
+            # _dispatch_subtasks returns exactly one payload per plan, in plans
+            # order (the parallel executor returns batch order; the sequential
+            # path iterates wave_tasks in order). Pair each with its plan's id.
+            for plan, payload in zip(wave_plans, payloads):
+                payloads_by_task_id[plan.task_id] = payload
         self._finalize_wave_parallel(wave_records, len(waves))
-        return all_payloads
+        # Re-sort to the ORIGINAL subtask order so _collect pairs payload[i]
+        # with subtasks[i] correctly regardless of how many waves ran (F8).
+        return [payloads_by_task_id[st.task_id] for st in subtasks]
 
     def _finalize_wave_parallel(self, wave_records: list[dict], wave_count: int) -> None:
         """Write the aggregated wave-aware parallel record to FlowResult.parallel.
@@ -1216,7 +1237,14 @@ class ExecutionFlow:
         RecoveryRecord (STOP -> PRESERVE), preserving the state version."""
         r = self._result
         r.add_error(str(error))
-        r.phase = "execute" if "verification" not in (error.cause or "") else "verify"
+        # Preserve the REAL stopping phase recorded at raise time. The previous
+        # code recomputed "execute"/"verify" from the cause prose and could
+        # misreport (e.g. a subtask failure that stopped at "execute_subtasks"
+        # was reported as "execute"); a cause string that merely contains
+        # "verification" was misread as the "verify" phase.
+        phase = getattr(error, "phase", "") or r.phase
+        if phase:
+            r.phase = phase
         try:
             ctrl = self.begin_recovery(
                 task_id=r.task_id,
@@ -1329,13 +1357,24 @@ class ExecutionFlow:
             return dec.decision == "ALLOW"
 
         current_version = self._get_store().current_version()
+        # REC-004/THREAT-017 baseline: what the CURRENT DELEGATION authorizes
+        # (the operative scope the authority gate itself checks —
+        # control/authority.py:197), NOT the recovery attempt's own plan.
+        # Building the baseline from `plan` made the comparison tautological:
+        # the attempt could never exceed a baseline copied from itself.
+        _orig_actions = list(delegation_now.scope_operations or ())
+        if delegation_now.action and delegation_now.action not in _orig_actions:
+            _orig_actions.append(delegation_now.action)
+        _orig_targets = list(delegation_now.scope_resources or ())
+        if delegation_now.target and delegation_now.target not in _orig_targets:
+            _orig_targets.append(delegation_now.target)
         try:
             ctrl.recheck_authority(
                 _gate_fn,
                 attempt_action=plan.action, attempt_target=plan.target,
                 attempt_grants=(), original_authority={
-                    "actions": [plan.action],
-                    "targets": [plan.target],
+                    "actions": _orig_actions,
+                    "targets": _orig_targets,
                     "grants": [],
                 },
                 current_version=current_version,
@@ -1388,10 +1427,19 @@ class ExecutionFlow:
                 audit.emit("recovery", action="recover:failed", target=task_id,
                            task_id=task_id, result="failed", error=str(e))
         else:
+            # A COMPLETE outcome must land in a TERMINAL state. Run the same
+            # transition chain as the re-execute branch (DELEGATED ->
+            # EXECUTING -> COLLECTED -> SYNTHESIZING -> COMPLETE) with the
+            # authority-checked first hop, instead of leaving the state machine
+            # parked at DELEGATED with a COMPLETE outcome.
+            lc.transition(task_id, "EXECUTING", authority=delegation_now)
+            lc.transition(task_id, "COLLECTED")
+            lc.transition(task_id, "SYNTHESIZING")
+            lc.transition(task_id, "COMPLETE")
             ctrl.complete()
             r.outcome = COMPLETE
             r.recovery = ctrl.to_dict()
-            r.final_state = lc.state(task_id)
+            r.final_state = "COMPLETE"
             audit.emit("recovery", action="recover:complete", target=task_id,
                        task_id=task_id, result="completed",
                        extra={"recovery_state": ctrl.record.state})

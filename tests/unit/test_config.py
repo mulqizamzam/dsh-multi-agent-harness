@@ -5,7 +5,10 @@ import subprocess
 import sys
 import pytest
 
-# Import the module form of validate-config.py
+# Import the module form of validate-config.py. The check NAMES asserted below
+# are not literals owned by this file: they are the names
+# `validate_config.run_checks()` emits (the `check(...)` calls in
+# tests/validate_config.py). Rename one there and update the lookups here.
 from validate_config import all_failures, project_root, run_checks
 
 

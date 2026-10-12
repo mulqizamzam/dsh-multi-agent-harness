@@ -39,10 +39,14 @@ Three assertions:
   3. registry   — the registry id set == the agents/ + orchestrator source set,
                  and the plugin's `role-<id>` mapping is exactly derivable
 
-No environment dependency, no fixture skip: the sources live in the repo, so
-this gate runs anywhere the repo runs.
+Assertions 1-3 have no environment dependency: the sources live in the repo,
+so they run anywhere the repo runs. The profile-wiring check inside assertion
+3 additionally reads the LIVE profile (`$DSH_HOME/profiles/web/package.json`)
+and SKIPS — naming that reason — when no profile is present (off-box), rather
+than passing vacuously.
 """
 
+import json
 import os
 
 import pytest
@@ -58,6 +62,10 @@ METADATA_FILE = "preset.yml"
 # dialect assertion together — that pairing is the point of the gate.
 RUNNING_PERSONA_KEY = "prefix"
 RETIRED_PERSONA_KEY = "text"
+# Live-profile wiring (the profile this plugin is actually bundled into).
+DEFAULT_DSH_HOME = "/home/administrator/agent-workspace/.dsh"
+LIVE_PROFILE = "web"
+PLUGIN_PACKAGE = "dsh-multi-agent-harness"
 
 
 class JsSafeLoader(yaml.SafeLoader):
@@ -253,17 +261,66 @@ def test_registry_id_set_equals_the_repo_source_set(project_root):
 
 
 def test_plugin_registered_ids_match_the_profile_wiring(project_root):
-    """The plugin's id mapping (role-<id>, orchestrator) is exactly derivable.
+    """The plugin's id mapping (role-<id>, orchestrator) is exactly derivable
+    AND the live profile actually mounts this plugin.
 
-    The live web profile hardcodes these ids: 15 subagent tool rows carry
-    `persona: role-<id>` and the agentPresets config carries
-    `selectedDefault: orchestrator` (`$DSH_HOME/profiles/web/cordis.patch.yml`).
-    A rename in this repo that changes the mapping breaks every one of those
-    rows at once — the child spawn then fails on an unknown preset.
+    What used to stand here was tautological: the same derivation written on
+    both sides of the `==`, so it could not see drift between the repo mapping
+    and the live profile. Two real checks replace it:
+
+    1. disk-derived — the id set is derived from the `agents/` DIRECTORY
+       LISTING (what the plugin's `index.js` really registers: `role-<dirname>`
+       per directory, plus the bare `orchestrator`) and compared against the
+       registry-derived ids. A rename on either side is visible.
+    2. profile wiring — the live web profile's `package.json`
+       (`$DSH_HOME/profiles/web`, default when DSH_HOME is unset) names this
+       plugin in `dsh.profile.bundles` and links it to THIS repo, so the 15
+       `persona: role-<id>` rows and `selectedDefault: orchestrator` in
+       `cordis.patch.yml` resolve to presets this checkout defines. When no
+       live profile is present the test SKIPS with that reason — it never
+       passes vacuously.
     """
-    expected = {registered_id(preset_id) for preset_id in registry_ids(project_root)}
-    assert expected == {f"role-{preset_id}" for preset_id in registry_ids(project_root) if preset_id != ORCHESTRATOR_ID} | {ORCHESTRATOR_ID}, (
-        "the registered-id mapping deviates from role-<id> + orchestrator; the live "
-        "profile's `persona:` rows and selectedDefault name those ids exactly"
+    # (1) derived from disk, not from the registry comprehension again.
+    on_disk = sorted(
+        entry for entry in os.listdir(os.path.join(project_root, AGENTS_DIR))
+        if os.path.isdir(os.path.join(project_root, AGENTS_DIR, entry))
     )
-    assert len(expected) == 16, f"expected 16 registered ids, derived {len(expected)}: {sorted(expected)}"
+    derived = {f"role-{dirname}" for dirname in on_disk} | {ORCHESTRATOR_ID}
+    mapped = {registered_id(preset_id)
+              for preset_id in registry_ids(project_root)}
+    assert mapped == derived, (
+        "the registry's registered-id mapping deviates from the plugin's "
+        "role-<dirname> + orchestrator scheme (index.js): in the registry only "
+        f"{sorted(mapped - derived)}, on disk only {sorted(derived - mapped)} "
+        "— the live profile's `persona:` rows and selectedDefault name the "
+        "registered ids exactly, so a rename breaks every row at once"
+    )
+    assert len(mapped) == 16, (
+        f"expected 16 registered ids, derived {len(mapped)}: {sorted(mapped)}")
+
+    # (2) the live profile bundles and links this plugin.
+    profile_dir = os.path.join(
+        os.environ.get("DSH_HOME") or DEFAULT_DSH_HOME,
+        "profiles", LIVE_PROFILE)
+    pkg_path = os.path.join(profile_dir, "package.json")
+    if not os.path.exists(pkg_path):
+        pytest.skip(
+            f"live profile not present at {profile_dir} — the profile-wiring "
+            "half of this gate cannot run off-box (point DSH_HOME at the live "
+            "profile root to enable it)")
+    with open(pkg_path, encoding="utf-8") as fh:
+        profile = json.load(fh)
+    bundles = profile.get("dsh", {}).get("profile", {}).get("bundles", [])
+    assert PLUGIN_PACKAGE in bundles, (
+        f"the live profile at {profile_dir} does not bundle "
+        f"{PLUGIN_PACKAGE!r} — the role-<id>/orchestrator presets this repo "
+        "registers are not mounted by the running profile")
+    dep = profile.get("dependencies", {}).get(PLUGIN_PACKAGE, "")
+    assert dep.startswith("link:"), (
+        f"{PLUGIN_PACKAGE} must be a link: dependency (got {dep!r}) — a "
+        "versioned dependency would not register this repo's sources")
+    linked = dep[len("link:"):]
+    assert os.path.realpath(linked) == os.path.realpath(project_root), (
+        f"the profile links {PLUGIN_PACKAGE} at {linked!r}, not this repo "
+        f"({project_root}) — the persona rows then name presets this checkout "
+        "no longer defines")

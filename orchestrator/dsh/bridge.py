@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import enum
+import json
 import os
 import sys
 import uuid
@@ -37,6 +38,8 @@ _PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
+
+from orchestrator.foundation.contracts import SPECIALIST_ROLES
 
 from .backend import (
     DelegationBackend,
@@ -164,29 +167,55 @@ class DSHInvocation:
         }
 
 
-# The TaskResult JSON Schema the child must satisfy (shape of
-# schemas/task-result.schema.json) when no schema is carried in the prompt.
-DEFAULT_TASK_RESULT_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["task_id", "assigned_role", "status",
-                 "confidence", "reported_at"],
-    "properties": {
-        "task_id": {"type": "string", "minLength": 1},
-        "assigned_role": {"enum": [
-            "zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"]},
-        "status": {"enum": ["SUCCEEDED", "FAILED", "BLOCKED"]},
-        "findings": {"type": "array", "items": {"type": "string"}},
-        "evidence": {"type": "array", "items": {"type": "string"}},
-        "assumptions": {"type": "array", "items": {"type": "string"}},
-        "risks": {"type": "array", "items": {"type": "string"}},
-        "recommendation": {"type": "string"},
-        "confidence": {"enum": ["LOW", "MEDIUM", "HIGH"]},
-        "unresolved_items": {"type": "array", "items": {"type": "string"}},
-        "actions_taken": {"type": "array", "items": {"type": "string"}},
-        "reported_at": {"type": "string", "format": "date-time"},
-    },
-}
+# The TaskResult JSON Schema the child must satisfy when no schema is carried
+# in the prompt. This CANNOT be a hand-maintained copy: it is loaded verbatim
+# from the canonical schemas/task-result.schema.json, so the schema handed to
+# every live child is exactly the schema the collector (orchestrator.dsh.result)
+# validates against and the TaskResult contract accepts. The previous value was
+# a stale Phase-3 snapshot (7 roles / 3 statuses) that contradicted the file its
+# own comment claimed to mirror; loading the file makes that drift impossible.
+#
+# NOTE: a top-level `from orchestrator.runtime.collection import
+# FAILING_STATUSES` here would be a circular import (this module is
+# orchestrator.dsh; runtime.__init__ imports flow, which imports
+# `from orchestrator.dsh import RealDSHBackend` — still being defined). The role
+# list therefore comes from the authoritative contracts.SPECIALIST_ROLES and the
+# six statuses are the documented PRD v0.2 §13 vocabulary, used only if the
+# canonical file is somehow unreadable.
+_TASK_RESULT_SCHEMA_PATH = os.path.join(
+    _PROJECT_ROOT, "schemas", "task-result.schema.json")
+_FALLBACK_TASK_RESULT_STATUSES = (
+    "SUCCEEDED", "FAILED", "BLOCKED", "CANCELLED", "TIMEOUT", "INCOMPLETE")
+
+
+def _load_task_result_schema() -> dict:
+    try:
+        with open(_TASK_RESULT_SCHEMA_PATH, "r", encoding="utf-8") as _f:
+            return json.load(_f)
+    except (OSError, ValueError):  # pragma: no cover - canonical file is shipped
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["task_id", "assigned_role", "status",
+                         "confidence", "reported_at"],
+            "properties": {
+                "task_id": {"type": "string", "minLength": 1},
+                "assigned_role": {"enum": list(SPECIALIST_ROLES)},
+                "status": {"enum": list(_FALLBACK_TASK_RESULT_STATUSES)},
+                "findings": {"type": "array", "items": {"type": "string"}},
+                "evidence": {"type": "array", "items": {"type": "string"}},
+                "assumptions": {"type": "array", "items": {"type": "string"}},
+                "risks": {"type": "array", "items": {"type": "string"}},
+                "recommendation": {"type": "string"},
+                "confidence": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+                "unresolved_items": {"type": "array", "items": {"type": "string"}},
+                "actions_taken": {"type": "array", "items": {"type": "string"}},
+                "reported_at": {"type": "string", "format": "date-time"},
+            },
+        }
+
+
+DEFAULT_TASK_RESULT_SCHEMA = _load_task_result_schema()
 
 
 class DSHBridgeDispatch:
@@ -271,8 +300,12 @@ class RealDSHBackend(DelegationBackend):
         # must be the authorized context the runtime produced (THREAT-020).
         description = (prompt or {}).get("description") or f"{role}: delegated subtask"
         task_prompt = (prompt or {}).get("prompt") or (prompt or {}).get("task", "")
-        output_schema = (prompt or {}).get("output_schema") \
-            or DEFAULT_TASK_RESULT_SCHEMA
+        # Only a dict output_schema is honoured: the organization path can put
+        # a free-text STRING here (MissionTask.output_schema is str; handoff.py
+        # copies it verbatim), and a string is not a JSON Schema. Anything that
+        # is not a mapping falls back to the canonical DEFAULT_TASK_RESULT_SCHEMA.
+        schema = (prompt or {}).get("output_schema")
+        output_schema = schema if isinstance(schema, dict) else DEFAULT_TASK_RESULT_SCHEMA
         invocation = DSHInvocation(
             description=description,
             prompt=task_prompt,

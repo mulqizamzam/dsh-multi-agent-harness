@@ -323,6 +323,57 @@ class TestRunner:
         # Badsector rework prevents clean completion — ZEKO blocked by badsector chain
         assert v.outcome != "COMPLETE" or any(h.task_id == "bad" for h in r.handoffs.values())
 
+    def test_somad_verified_without_evidence_not_accepted(self, tmp_path):
+        """F6: a somad VERIFIED verdict with NO evidence must not be accepted
+        (worker claims alone are not evidence). Pre-fix it was accepted."""
+        base = str(tmp_path)
+        tasks = (
+            MissionTask(task_id="kai", mission_id="m", owner="kai", role="kai",
+                        objective="impl", required_evidence=("test",)),
+            MissionTask(task_id="som", mission_id="m", owner="somad", role="somad",
+                        objective="verify", depends_on=("kai",),
+                        required_evidence=("artifact",)),
+        )
+        m = MissionPacket(mission_id="m", objective="o", tasks=tasks)
+        stub = {
+            "kai": TaskResult(task_id="kai", assigned_role="kai", status="SUCCEEDED",
+                              findings=("impl done",), evidence=("test:log",)),
+            # VERIFIED but WITHOUT the required artifact evidence
+            "som": TaskResult(task_id="som", assigned_role="somad", status="SUCCEEDED",
+                              recommendation="VERIFIED"),
+        }
+        r, v = self._run(m, stub, base)
+        som_reviews = [rec for rec in r.reviews
+                       if rec.get("reviewer") == "somad"]
+        assert som_reviews, "somad never reviewed"
+        assert som_reviews[0]["action"] != "accept", (
+            f"VERIFIED with no evidence was accepted: {som_reviews[0]}")
+
+    def test_somad_verified_with_evidence_accepted(self, tmp_path):
+        """F6 companion: the same verdict WITH the required evidence is still
+        accepted — the fix must not over-block legitimate reviews."""
+        base = str(tmp_path)
+        tasks = (
+            MissionTask(task_id="kai", mission_id="m", owner="kai", role="kai",
+                        objective="impl", required_evidence=("test",)),
+            MissionTask(task_id="som", mission_id="m", owner="somad", role="somad",
+                        objective="verify", depends_on=("kai",),
+                        required_evidence=("artifact",)),
+        )
+        m = MissionPacket(mission_id="m", objective="o", tasks=tasks)
+        stub = {
+            "kai": TaskResult(task_id="kai", assigned_role="kai", status="SUCCEEDED",
+                              findings=("impl done",), evidence=("test:log",)),
+            "som": TaskResult(task_id="som", assigned_role="somad", status="SUCCEEDED",
+                              recommendation="VERIFIED",
+                              evidence=("artifact:verify.md",)),
+        }
+        r, v = self._run(m, stub, base)
+        som_reviews = [rec for rec in r.reviews
+                       if rec.get("reviewer") == "somad"]
+        assert som_reviews and som_reviews[0]["action"] == "accept", (
+            f"VERIFIED WITH evidence was not accepted: {som_reviews[0]}")
+
 
 class TestRootCompleteness:
     def test_complete_only_when_reviews_accepted(self):
@@ -341,3 +392,52 @@ class TestRootCompleteness:
                            reviews=[{"reviewer": "badsector", "target_task_id": "kai", "action": "accept"}],
                            escalations=(), blockers=(), waves_executed=1, evidence_events=1)
         assert v2.outcome == "COMPLETE"
+
+
+class TestMissionDelegationRevocation:
+    """AUTH-INV-05/06 (F13): a mid-mission revocation must block further
+    dispatch — the __init__ delegation snapshot alone never observes it."""
+
+    def test_revoked_delegation_blocks_later_dispatch(self, tmp_path):
+        base = str(tmp_path)
+        tasks = (
+            MissionTask(task_id="nova", mission_id="m", owner="nova",
+                        role="nova", objective="research"),
+            MissionTask(task_id="kai", mission_id="m", owner="kai", role="kai",
+                        objective="impl", depends_on=("nova",),
+                        required_evidence=("test",)),
+        )
+        m = MissionPacket(mission_id="m", objective="o", tasks=tasks)
+
+        class RevokingProvider:
+            """Live for the first dispatch, revoked afterwards — the shape a
+            real registry takes when revoke() issues a new REVOKED copy."""
+
+            def __init__(self, delegation):
+                self.delegation = delegation
+                self.calls = 0
+
+            def current(self):
+                self.calls += 1
+                if self.calls == 1:
+                    return self.delegation, ()
+                return None, (self.delegation.id,)
+
+        d = _active_delegation(base)
+        provider = RevokingProvider(d)
+        dispatched = []
+
+        def runner(task, delegation, ctx):
+            dispatched.append(task.task_id)
+            return TaskResult(task_id=task.task_id, assigned_role="kai",
+                              status="SUCCEEDED", findings=("ok",),
+                              evidence=("test:log",))
+
+        r = MissionRunner(delegation=d, base=base, runner=runner,
+                          provider=provider)
+        v = r.run(m)
+        assert "kai" not in dispatched, (
+            "a task was dispatched after the delegation was revoked")
+        assert any("no longer ACTIVE" in b for b in r.blockers), (
+            f"revocation invisible at dispatch: {r.blockers}")
+        assert v.outcome != "COMPLETE", v.reason

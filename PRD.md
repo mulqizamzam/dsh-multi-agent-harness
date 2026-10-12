@@ -1,10 +1,13 @@
 # Product Requirements Document — Multi-Agent Harness
 
-The canonical PRD is at:
+The canonical PRD is the in-repo **`PRD-v0.2.md`**. Its Phase-1 baseline was
+`PRD.md`'s original intent; **v0.2 supersedes that baseline** (the on-demand
+specialist-pool expansion).
 
-**`/home/administrator/agent-workspace/baca/PRD_Multi_Agent_DeepSeek_Harness_v1.0.md`**
-
-This file is a pointer — the PRD is the authoritative source for the system's requirements, scope, and design intent.
+This file is a pointer/index, not the PRD itself. The external v1.0 source it
+formerly pointed at (`PRD_Multi_Agent_DeepSeek_Harness_v1.0.md`) is **no longer
+present on this machine**, so **`PRD-v0.2.md` together with the `docs/` tree are
+the authoritative source** for the system's requirements, scope, and design intent.
 
 > **PRD v0.2** (2026-09-09): the on-demand specialist pool expansion — see
 > `PRD-v0.2.md` (this repo), `docs/adr/0003-specialist-pool-expansion.md`,

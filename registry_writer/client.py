@@ -87,6 +87,13 @@ class RegistryWriterClient:
                                  request_id) from e
         except socket.timeout as e:
             raise WriterUnavailable(f"daemon timeout on {method}") from e
+        except OSError as e:
+            # Mid-request connection breakage (ConnectionResetError,
+            # BrokenPipeError, ...) is a DEAD daemon, and the fail-closed
+            # contract says callers must see WriterUnavailable — not a raw
+            # OSError leaking out of the transport layer.
+            raise WriterUnavailable(
+                f"daemon connection failed on {method}: {e}") from e
         finally:
             try:
                 conn.close()

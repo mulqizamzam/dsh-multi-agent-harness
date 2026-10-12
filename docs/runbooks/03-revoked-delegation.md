@@ -3,7 +3,7 @@
 - **Status**: Phase 2 / Session F runbook (operational guidance against the current architecture; no new behavior introduced)
 - **Date**: 2026-08-30
 - **Companion to**: `docs/runbooks/01-authority-denial.md` · `docs/runbooks/02-expired-delegation.md` · `docs/security/0001-control-assurance-spec.md` §2 (INV-13), §3.3, §5 · `docs/security/0002-threat-model-and-control-architecture.md` §3 (THREAT-009), §6.2 · `docs/design/0001-control-design-and-test-plan.md` §6 · `tests/control_plane.py::authorize` (revocation_list parameter) · `tests/authorization/test_authority.py::test_auth_004_revoked_delegation`
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Scope**: response to a denial where the root cause is **delegation revocation** (AUTH-INV-06, THREAT-009). Builds on Runbook 01's general denial flow and Runbook 02's expiry handling.
 
 ---
@@ -24,7 +24,7 @@ A revocation may have occurred **between planning and execution** (THREAT-009), 
 |---|---|
 | `Deny("delegation revoked (AUTH-INV-06)")` from `tests/control_plane.py::authorize` with `revocation_list` containing the supplied delegation id | control-plane gate |
 | `audit/` event with `event_class == "execution_denial"`, `result == "denied"`, error matches `revoked` | `audit/helpers/append_log.py` |
-| `state/registry/revocations.yaml` (or co-located revocation list) contains the delegation id, AND that id was the `authority_source` of the attempted action | `state/helpers/atomic_write.py::safe_read` (fail-closed: missing/corrupt → treat as no revocations on disk; in-memory revocation list is the gate's source of truth) |
+| `state/registry/revocations.json` (or co-located revocation list) contains the delegation id, AND that id was the `authority_source` of the attempted action | `state/helpers/atomic_write.py::safe_read` (fail-closed: missing/corrupt → treat as no revocations on disk; in-memory revocation list is the gate's source of truth) |
 | A `revocation_event` was recorded prior to the attempt (event_class contains `revocation` per the audit schema enum) | `audit/helpers/append_log.py::read_events_by_class("revocation")` |
 
 **Detection discipline:** the gate's in-memory `revocation_list` parameter is the **authoritative source at evaluation time** (the registry read at planning may be stale). Confirm by reading both: the on-disk revocation list (via `safe_read`) and the in-memory snapshot (via the gate's call site). They must agree; a mismatch is a registry/version drift (Runbook 09).
@@ -44,7 +44,7 @@ Same as Runbook 01 and Runbook 02:
 
 ## PRESERVE
 
-1. **Read the revoked delegation** from `state/registry/delegations.yaml` using `state/helpers/atomic_write.py::safe_read`. Confirm `status == "REVOKED"`, `revoked_at` is set, and the registry `version` is current. (If the record is missing, treat as `no delegation` — the gate's revocation check still applies via the revocation list.)
+1. **Read the revoked delegation** from `state/registry/delegations.json` using `state/helpers/atomic_write.py::safe_read`. Confirm `status == "REVOKED"`, `revoked_at` is set, and the registry `version` is current. (If the record is missing, treat as `no delegation` — the gate's revocation check still applies via the revocation list.)
 2. **Read the revocation record** that withdrew this id — its source, the Human session id (or process id) that issued it, and its `revoked_at` timestamp. This is required to detect a forged revocation (Runbook 10).
 3. **Capture `before` hashes** of `state/registry/`, `audit/`, and any file the action would have touched. Same procedure as Runbook 01 §PRESERVE.
 4. **Snapshot the revocation list** as it stood at detection time (file hash + parsed ids). The orchestrator's session must not have written to this list (ADR 0002 protected path). If the on-disk revocation list and the gate's in-memory list disagree, **escalate immediately** (`reason = "revocation_list_drift"`) before doing anything else.
@@ -88,7 +88,7 @@ The orchestrator **does not un-revoke and does not resurrect the revoked id**. T
 1. **On-disk state hash unchanged** for files the action would have touched.
 2. **Audit chain integrity** holds (`audit/helpers/integrity.py::verify_chain` clean). In particular, verify that the revocation event itself is present in the chain and that its `actor` is `human` and its `actor_type` is `human`. A revocation event authored by an `actor_type == agent` is the **forged-revocation** case and must trigger Runbook 10.
 3. **Registry integrity**: the revoked delegation record is still on disk with `status == "REVOKED"` and `revoked_at` populated. The registry `version` was not advanced by the orchestrator's session.
-4. **Revocation list integrity**: `state/registry/revocations.yaml` (or co-located) was not mutated by the orchestrator. Same on-disk vs in-memory consistency check.
+4. **Revocation list integrity**: `state/registry/revocations.json` (or co-located) was not mutated by the orchestrator. Same on-disk vs in-memory consistency check.
 5. **No partial execution**: if a successor delegation was used, verify the side-effect carries the successor's `authority_source` in audit.
 
 ---

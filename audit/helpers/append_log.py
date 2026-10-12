@@ -47,7 +47,10 @@ def append_event(log_path, event, encoder=None):
     if not (event.get("event_id") or "").strip():
         raise ValueError("audit event requires a non-empty event_id")
 
-    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    # A bare relative filename ("events.jsonl") has no directory component;
+    # os.makedirs("") raises FileNotFoundError, so fall back to ".".
+    d = os.path.dirname(log_path)
+    os.makedirs(d or ".", exist_ok=True)
     with open(log_path, "a") as f:
         line = json.dumps(event, cls=encoder, ensure_ascii=False, sort_keys=True) + "\n"
         f.write(line)
@@ -178,11 +181,16 @@ def verify_append_only(log_path, expected_event_ids=None, expected_count=None):
         if isinstance(ts, str) and ts:
             norm = ts.replace("Z", "+00:00")
             try:
-                from datetime import datetime
+                from datetime import datetime, timezone
                 parsed = datetime.fromisoformat(norm)
             except ValueError:
                 problems.append(f"event {eid}: non-ISO timestamp {ts!r}")
                 continue
+            # Timestamps may mix naive and aware forms (a "Z"-suffixed event
+            # followed by a bare one). Normalize naive values to UTC so the
+            # monotonicity comparison cannot raise TypeError.
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
             if prev_ts is not None and parsed < prev_ts:
                 problems.append(f"event {eid}: timestamp {ts} out of order")
             else:

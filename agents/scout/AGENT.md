@@ -5,7 +5,7 @@
 - **Domain**: Integration & Compatibility
 - **Canonical registry**: `config/agents.yaml`
 - **Status**: finalized (PRD v0.2 expansion; ADR 0003)
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **This is a role definition (authority/capability contract), not a production agent prompt.** The deployed preset persona and instructions are authored in the preset draft (`agent.cordis.yml`).
 
 ---

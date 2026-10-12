@@ -436,8 +436,14 @@ def run_from_chat(
 
     Example
     -------
+    The objective MUST contain a routable domain keyword from ``DOMAIN_ROLE``
+    (``orchestrator/foundation/routing.py`` — e.g. ``engineering``, ``research``,
+    ``finance``). An objective with no domain keyword is refused, never guessed:
+    the front door returns ``BLOCKED`` with ``cannot route objective ...``
+    (verified: ``"produce a design document"`` matches no key; every natural
+    objective that names its domain routes).
     >>> result = run_from_chat(
-    ...     objective="produce a design document",
+    ...     objective="engineering: produce a design document",
     ...     scope=("docs/design/x.md",),
     ...     delegation_id="delegation-prod-001",
     ... )

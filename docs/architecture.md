@@ -2,7 +2,7 @@
 
 - **Status**: final (Phase 1A)
 - **Date**: 2026-08-29
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2` (verified locally)
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2` (verified locally)
 - **Companion**: `docs/adr/0001-multi-agent-control-plane-boundary.md` (revision 2) · `docs/security/0001-control-assurance-spec.md` · `docs/security/0002-threat-model-and-control-architecture.md` · `docs/design/0001-control-design-and-test-plan.md` · `docs/tool-catalog.md` · `docs/authority.md`
 - **Scope**: `multi-agent-harness/`. Documentation only.
 
@@ -104,4 +104,4 @@ Every transition is an audit event. Any gate denial stops the action (fail-close
 
 ---
 
-*Version-pinned to DeepSeek Harness `0.1.1-rc.2`. Documentation only; no architecture code, presets, or workflows are authored by this document.*
+*Version-pinned to DeepSeek Harness `0.2.0-rc.2`. Documentation only; no architecture code, presets, or workflows are authored by this document.*

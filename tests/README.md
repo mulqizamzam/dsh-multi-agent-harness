@@ -74,19 +74,27 @@ for Phase-1E hardening coverage. The consolidation preserved:
 - `test_append_and_read`, `test_append_is_append_only`, `test_read_events_missing`, `test_read_events_by_class` — base append-log tests
 
 ## Running
-#
-# The system Python is externally managed (PEP 668) and has no pip, so a
-# project-local venv is provided:
-#
-#     cd multi-agent-harness
-#     python3 -m venv .venv-tests                 # if not already present
-#     .venv-tests/bin/python3 -m pip install pytest jsonschema pyyaml
-#     .venv-tests/bin/python3 -m pytest tests/ -v
-#     .venv-tests/bin/python3 tests/validate-config.py
-#
-# (`.venv-tests/` is git-ignored; see `.gitignore`.)
-#
-# ## Version pin
-#
-# All tests assume DeepSeek Harness 0.1.1-rc.2. The trusted tool-name set
-# in validate_config.py must be updated if the DSH version changes.
+
+The project-local venv (`.venv-tests/`, git-ignored; see `.gitignore`) already
+exists and ships `pytest`, `jsonschema`, and `pyyaml` — no `venv`/`pip` setup is
+needed. Run the interpreter directly:
+
+```bash
+# Full-suite regression — fail-fast disabled so complete pass/fail counts print:
+.venv-tests/bin/python -m pytest tests/ -q --maxfail=0
+
+# Verbose, per-test output:
+.venv-tests/bin/python -m pytest tests/ -v
+
+# Standalone config/schema validation (entry point referenced by the config files):
+.venv-tests/bin/python tests/validate-config.py
+```
+
+pytest is **fail-fast by default** (`addopts = -x` in `pytest.ini`), so a run
+stops at the first failure. Override with `--maxfail=0` to obtain complete
+pass/fail counts across the whole suite.
+
+## Version pin
+
+All tests assume DeepSeek Harness `0.2.0-rc.2`. The trusted tool-name set in
+`validate_config.py` must be updated if the DSH version changes.

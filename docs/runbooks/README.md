@@ -1,8 +1,8 @@
 # Runbooks — Index
 
 - **Status**: Phase 2 / Session F authored (10 runbooks); pre-existing Phase-5 placeholders preserved below for forward compatibility
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
-- **Purpose**: operational runbooks that document the response to the ten documented failure classes against the **current architecture** (Phase 1B/1E control plane, DSH `0.1.1-rc.2` primitives). See `docs/phase-2/README.md` for the Phase 2 governance and the binding DETECT → STOP → PRESERVE → DIAGNOSE → RECOVER/ESCALATE → VERIFY → REPORT convention.
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
+- **Purpose**: operational runbooks that document the response to the ten documented failure classes against the **current architecture** (Phase 1B/1E control plane, DSH `0.2.0-rc.2` primitives). See `docs/phase-2/README.md` for the Phase 2 governance and the binding DETECT → STOP → PRESERVE → DIAGNOSE → RECOVER/ESCALATE → VERIFY → REPORT convention.
 
 ## Authored runbooks (Phase 2 / Session F)
 
@@ -39,7 +39,7 @@ The entries below remain as **intent-only placeholders** for Phase 5 hardening. 
 ## Status
 
 - **Phase 2 (Session F)**: ten operational runbooks authored against the current architecture. No code, schema, config, role file, preset, profile, or session policy change.
-- **Phase 5**: author the eight placeholder runbooks above against the implemented control plane and the verified DSH `0.1.1-rc.2` primitives.
+- **Phase 5**: author the eight placeholder runbooks above against the implemented control plane and the verified DSH `0.2.0-rc.2` primitives.
 
 ---
 

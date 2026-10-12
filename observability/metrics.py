@@ -47,6 +47,7 @@ def compute_metrics(index: RunIndex) -> dict:
     child_failures = 0
     parallel_batches = 0
     max_parallel_size = 0
+    total_parallel_size = 0
     exec_latency_total = 0
     exec_latency_count = 0
     ver_latency_total = 0
@@ -75,6 +76,7 @@ def compute_metrics(index: RunIndex) -> dict:
         for b in run.parallel_batches:
             size = len(b.get("task_ids") or [])
             max_parallel_size = max(max_parallel_size, size)
+            total_parallel_size += size
 
         ex_ms = run.latency.get("execution_ms")
         if ex_ms is not None:
@@ -117,8 +119,10 @@ def compute_metrics(index: RunIndex) -> dict:
         "parallelism": {
             "parallel_batches": parallel_batches,
             "max_parallel_batch_size": max_parallel_size,
+            # Mean batch width: total tasks across all batches / batch count
+            # (NOT max_parallel_size / parallel_batches).
             "avg_parallel_batch_size": round(
-                max_parallel_size / parallel_batches, 1) if parallel_batches else 0,
+                total_parallel_size / parallel_batches, 1) if parallel_batches else 0,
         },
         "latency": {
             "execution_ms_avg": _avg(exec_latency_total, exec_latency_count),

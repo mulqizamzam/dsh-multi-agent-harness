@@ -2,7 +2,7 @@
 
 - **Status**: finalized (Phase 1A)
 - **Date**: 2026-08-29
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Companion**: ADR 0001 Decision 3 (hybrid orchestrator) · `docs/security/0002-threat-model-and-control-architecture.md` §9-10 · `docs/security/0001-control-assurance-spec.md` §3 · `docs/design/0001-control-design-and-test-plan.md` §14-16 · `docs/authority.md`
 - **Scope**: `multi-agent-harness/`. This is the **contract** (documented protocol). The workflow *skeleton* (JS fan-out/collect with gate placeholders) and state/audit write helpers are Phase-1B work.
 
@@ -67,7 +67,10 @@ Failure states (Human-visible): `BLOCKED`, `FAILED`, `ESCALATED`, `RECOVERING`. 
 ## 6. Routing policy
 
 - Select the **minimum** relevant specialist set for the task — **no blanket fan-out** (PRD §4).
-- Route by domain fit: Zeko (ops), CTO (engineering), CFO (finance), Kai (research), Somad (social), BadSector (review), Nova (writing).
+- Route by domain fit across all 15 specialists (canonical registry `config/agents.yaml`; mapping `config/role-preset-mapping.yaml`):
+  - **Baseline 7**: Zeko (ops), CTO (engineering), CFO (finance), Kai (research), Somad (social), BadSector (review), Nova (writing).
+  - **Assurance pool** (read-only, no web — L-group): Vera (verification/evidence), Quill (policy/spec), Ledger (audit/provenance).
+  - **Technical assurance pool** (read-only, scoped web — W-group): Argus (security engineering), Atlas (architecture), Tess (failure engineering), Scout (integration/compatibility), Talon (reliability engineering).
 - Parallel work only where tasks are independent; parallel workers read/write state via versioned CAS (orchestrator is single writer — specialists return results, never write state directly).
 - Consequential cross-agent work flows through the orchestrator's control plane (THREAT-005).
 
@@ -121,16 +124,27 @@ INTAKE → UNDERSTAND → CLASSIFY → RISK_GATE → DECOMPOSE → SELECT → DE
 → AUTHORITY_GATE → EXECUTE_GATE → VERIFY_GATE
 ```
 
-The deterministic script-local steps are:
+The deterministic script-local `phase()` emissions are the 15-phase chain defined in `orchestrator/workflows/skeleton.js` (`PHASE_CHAIN`, emitted in order — skipping a phase is a transition violation, THREAT-015):
 
 ```text
-phase("decompose")     → structured task list
-phase("select")        → minimum specialist set
-phase("delegate")      → per-role agent() calls with outputSchema (DRY_RUN: placeholder intents)
-phase("collect")       → gather structured results
-phase("gate")          → placeholder boundaries (no enforcement in script)
-phase("synthesize")    → consolidated result returned to the orchestrator
+phase("intake")         → record Human objective in project state
+phase("understand")     → parse scope / constraints
+phase("classify")       → risk class + evidence plan
+phase("risk_gate")      → orchestrator risk boundary (placeholder)
+phase("decompose")      → structured task list
+phase("select")         → minimum relevant specialist set (no blanket fan-out)
+phase("delegate")       → per-role agent() calls with outputSchema (DRY_RUN: placeholder intents)
+phase("collect")        → gather structured results
+phase("evidence_gate")  → orchestrator evidence boundary (placeholder)
+phase("synthesize")     → consolidate specialist results
+phase("conflict_gate")  → orchestrator conflict boundary (placeholder)
+phase("review_gate")    → BadSector review boundary (placeholder; mandatory for HIGH)
+phase("authority_gate") → authority re-validate boundary (placeholder)
+phase("execute_gate")   → execution checklist + authority re-check boundary (placeholder)
+phase("verify_gate")    → verification-evidence boundary (placeholder)
 ```
+
+The seven gate placeholders — `authority`, `risk`, `evidence`, `conflict`, `review`, `execution`, `verification` — are returned by the `phase("gate")` boundary and re-validated by the orchestrator after collection; a placeholder can only STOP, never auto-authorize.
 
 - **Implemented**: `orchestrator/workflows/skeleton.js` (DRY_RUN default true — no subagent spawned, no execution) + `orchestrator/workflows/README.md` + `orchestrator/workflows/skeleton.schema.json`. The 15-phase chain and all seven gate placeholders (risk/evidence/conflict/review/authority/execution/verification) are reported by the script.
 - **Rules**: the script performs **no enforcement** (gates are placeholders); the orchestrator re-validates everything the script returns; the script has no FS/network access (VERIFIED); a gate placeholder that is unresolved must **stop** the script, never auto-authorize (enforced by `WorkflowRun.check_gate` in `orchestrator/foundation/workflow.py` — non-ALLOW → STOP).

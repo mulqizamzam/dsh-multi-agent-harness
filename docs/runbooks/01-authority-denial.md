@@ -3,7 +3,7 @@
 - **Status**: Phase 2 / Session F runbook (operational guidance against the current architecture; no new behavior introduced)
 - **Date**: 2026-08-30
 - **Companion to**: `docs/adr/0001-multi-agent-control-plane-boundary.md` · `docs/adr/0002-registry-protection-mechanism.md` · `docs/security/0001-control-assurance-spec.md` §3 · `docs/security/0002-threat-model-and-control-architecture.md` §6, §18 · `docs/design/0001-control-design-and-test-plan.md` §7, §14
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2`
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2`
 - **Scope**: response to an **authority denial** at the project authority gate. All references are to artifacts that already exist (`tests/control_plane.py::authorize`, `state/helpers/recovery.py`, `audit/helpers/append_log.py`, `audit/helpers/integrity.py`). No new code, no new primitives.
 
 ---
@@ -43,7 +43,7 @@ This runbook is invoked **at the moment of denial**. It does not cover later act
 
 1. The most recent `audit/<project>/events.jsonl` entry with `event_class == "execution_denial"` (use `read_events_by_class` from `audit/helpers/append_log.py`).
 2. The denial `reason` string from the gate — it names the invariant or rule that fired.
-3. The current delegation registry (`state/registry/delegations.yaml`) — read with `state/helpers/atomic_write.py::safe_read` (fail-closed: returns `None` on missing/corrupt).
+3. The current delegation registry (`state/registry/delegations.json`) — read with `state/helpers/atomic_write.py::safe_read` (fail-closed: returns `None` on missing/corrupt).
 4. The current revocation list (co-located in the registry).
 5. If the action targeted a protected path, the `control/execution_gate.py::authorize_write` decision (ADR 0002).
 
@@ -103,7 +103,7 @@ Classify the denial into one of the failure classes the recovery state machine r
 **Authority denials almost always escalate to the Human.** The orchestrator must not retry on its own — there is no new diagnosed cause. The decision tree:
 
 1. **If `failure_class == authorization`** (most cases): **escalate to Human**.
-   - The Human can: (a) grant a new delegation (creates a new `state/registry/delegations.yaml` record), (b) revoke a conflicting delegation, (c) override the gate as a Human override (must be recorded explicitly — `event_class == "human_override"` per the audit schema, with `authority_source` set to the override record id, AUTH-INV-04 carries the rule that model judgment cannot bypass but Human can).
+   - The Human can: (a) grant a new delegation (creates a new `state/registry/delegations.json` record), (b) revoke a conflicting delegation, (c) override the gate as a Human override (must be recorded explicitly — `event_class == "human_override"` per the audit schema, with `authority_source` set to the override record id, AUTH-INV-04 carries the rule that model judgment cannot bypass but Human can).
    - The orchestrator must NOT auto-grant, auto-widen, or auto-extend a delegation. No self-escalation (AUTH-INV-02/03, THREAT-002/003).
 2. **If `failure_class == logic`** (e.g. the orchestrator forgot to pass a delegation id): **fix the inputs and re-plan**, but only after a `RecoveryRecord` exists with a non-empty `diagnosed_cause` (`recovery.py::replan()` requires it; no blind retry).
 3. **If `failure_class == unknown`**: **HALT and escalate**. Do not attempt recovery without diagnosis.
@@ -122,7 +122,7 @@ After the denial has been recorded and (optionally) escalated, **verify that no 
 
 1. **On-disk state hash**: for every file the action would have touched, `before.sha256 == after.sha256`. Compute via `audit/helpers/integrity.py::detect_truncation` (which also detects overwrites via cumulative-hash comparison at equal line counts) or any sha256 tool that does not itself write to `state/`.
 2. **Audit chain integrity**: `audit/helpers/integrity.py::verify_chain(events_path)` must return cleanly. A missing side-car is permitted (first-time verification baseline), but any mismatch raises `AuditIntegrityError` — that is a separate runbook (Runbook 10 — Audit Integrity Failure).
-3. **Delegation registry unchanged**: `state/registry/delegations.yaml` (or whatever the registry filename is) was not mutated. The protected-path execution gate (`control/execution_gate.py`) prevents the orchestrator from writing it; this verification step confirms it did not happen.
+3. **Delegation registry unchanged**: `state/registry/delegations.json` was not mutated. The protected-path execution gate (`control/execution_gate.py`) prevents the orchestrator from writing it; this verification step confirms it did not happen.
 4. **RecoveryRecord state** (if a recovery was attempted): `recovery.py::RecoveryRecord.state` must be one of `STOPPED` (no recovery attempted), `FAILED` (recovery itself failed — Runbook 08), or `COMPLETED` (a successful recovery for `failure_class == logic`). Anything else is an inconsistent state.
 
 If verification fails, halt and escalate (`event_class == "escalation"`, `reason = "post_denial_verification_failed"`).

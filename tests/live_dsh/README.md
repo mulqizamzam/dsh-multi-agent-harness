@@ -20,7 +20,7 @@ instances **after a Human-approved composition is active**.
 
 | Module | Purpose |
 |---|---|
-| `contract.py` | DSH tool-subagent invocation + stop-reason contract (verified against DSH 0.1.1-rc.2). |
+| `contract.py` | DSH tool-subagent invocation + stop-reason contract (verified against DSH 0.2.0-rc.2). |
 | `discovery.py` | Static role→instance resolution + mount probe (never assumes live). |
 | `backend_kind.py` | `BackendKind` enum: FAKE / REAL / UNAVAILABLE + fail-closed gate. |
 | `real_backend.py` | `RealDSHBackend` (DelegationBackend over the real `subagent_<id>` surface) + `BridgeNotAvailable`. |

@@ -59,13 +59,55 @@ class TestDshNativeBoundary:
 
     def test_no_live_dsh_child_dispatched(self):
         """This suite is deterministic-only: no live subagent_<id> child is
-        dispatched anywhere in tests/g13/. The evidence is that every test
-        here imports and exercises control-plane modules in-process; there is
-        no dispatch call in this package."""
-        import tests.g13  # noqa: F401
-        # The package contains no live-dispatch code path (no subagent tool,
-        # no web_fetch, no DSH session bootstrap).
-        assert True
+        dispatched anywhere in tests/g13/. The evidence is an exhaustive scan
+        of every .py file in this package: no live-backend construction, no
+        live-dispatch keyword, no bridge-marker assignment. (Importing the
+        package — the previous "evidence" — only executes its empty
+        __init__.py, so it proves nothing.)"""
+        import ast
+        import glob
+
+        banned_calls = ("RealDSHBackend",)
+        banned_keywords = ("live_dispatch",)
+        banned_assignments = ("BRIDGE_MARKER_ENV",)
+
+        violations = []
+        here = os.path.dirname(os.path.abspath(__file__))
+        paths = sorted(glob.glob(os.path.join(here, "**", "*.py"),
+                                 recursive=True))
+        assert paths, f"scan found no .py files under {here}"
+        for path in paths:
+            rel = os.path.relpath(path, here)
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    tree = ast.parse(fh.read())
+            except (OSError, SyntaxError) as exc:
+                violations.append(f"{rel}: unreadable/unparseable ({exc})")
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    fn = node.func
+                    name = (fn.id if isinstance(fn, ast.Name)
+                            else getattr(fn, "attr", None))
+                    if name in banned_calls:
+                        violations.append(
+                            f"{rel}:{node.lineno}: constructs {name}(...) — "
+                            "a live DSH child")
+                    for kw in node.keywords:
+                        if kw.arg in banned_keywords:
+                            violations.append(
+                                f"{rel}:{node.lineno}: passes {kw.arg}= — "
+                                "a live dispatch request")
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and \
+                                target.id in banned_assignments:
+                            violations.append(
+                                f"{rel}:{node.lineno}: assigns "
+                                f"{target.id} — bridge-marker manipulation")
+        assert not violations, (
+            "tests/g13 must dispatch no live DSH child; live-dispatch "
+            f"construct(s) found in this package: {violations}")
 
     def test_live_bridge_prerequisite_not_satisfied_this_session(self):
         """Detection (read-only): the D4/D7 mount marker is unset in this

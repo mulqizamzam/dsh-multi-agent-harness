@@ -6,7 +6,10 @@
 # (PRD §8 + PRD v0.2 §12). It answers: what may this agent technically do
 # in the system?
 #
-# It does NOT grant project/action authority. That is `authority.yaml`.
+# It does NOT grant project/action authority. Authority today is carried by
+# Human delegation records (state/registry/) and the control-plane code
+# (`control/authority.py`, `control/risk.py`); a dedicated `authority.yaml` /
+# risk-policy layer is PLANNED (see docs/phase-1/0001), not yet authored.
 # Capability ≠ Permission ≠ Authority (PRD §6).
 #
 # Vocabulary (normalized from PRD §8):

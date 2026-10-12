@@ -3,7 +3,7 @@
 - **Status**: proposal
 - **Date**: 2026-08-29
 - **Companion to**: `docs/adr/0001-multi-agent-control-plane-boundary.md` (rev 2) · `docs/phase-1/0001-phase-1-implementation-spec.md` · `PRD_Multi_Agent_DeepSeek_Harness_v1.0.md` · Phase-0 investigation report
-- **Version pin**: DeepSeek Harness `0.1.1-rc.2` (verified locally)
+- **Version pin**: DeepSeek Harness `0.2.0-rc.2` (verified locally)
 - **Scope**: `multi-agent-harness/`. Does **not** modify DSH core, does **not** change the active DSH session policy, does **not** create production agent prompts or workflows.
 - **Purpose**: define what must be **technically enforced**, what is **only policy/model-driven**, and **how each control is tested** — hardening the project against the failure modes identified in the architecture review.
 

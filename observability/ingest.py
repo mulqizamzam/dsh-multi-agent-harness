@@ -155,8 +155,7 @@ def read_ledger_events(base: str | None = None, project: str = "multi-agent-harn
 # Fail-closed correlation validation
 # ---------------------------------------------------------------------------
 
-def validate_event_correlation(event: dict, *, known_runs: dict,
-                               run_id: str = "") -> CorrelationProblem | None:
+def validate_event_correlation(event: dict, *, run_id: str = "") -> CorrelationProblem | None:
     """Fail-closed check on one event's correlation data.
 
     Returns None when the event is acceptable; otherwise a CorrelationProblem
@@ -456,7 +455,7 @@ class RunCorrelator:
                 self._last_ts = ts
 
             # Correlation validation (fail-closed for consequential events).
-            problem = validate_event_correlation(event, known_runs={})
+            problem = validate_event_correlation(event, run_id="")
             if problem is not None:
                 if problem.rejected:
                     self.index.rejected.append(problem)
@@ -636,8 +635,14 @@ def build_index_from_ledger(base: str | None = None,
     index = build_index(events, project=project, run_id_hints=run_id_hints,
                         now=now)
     index.ledger_integrity = integrity
-    index.built_at = _iso(now()) if callable(now) else (
-        now or _iso(datetime.now(timezone.utc)))
+    if callable(now):
+        built_at = now()
+    elif isinstance(now, datetime):
+        built_at = now
+    else:
+        built_at = now or datetime.now(timezone.utc)
+    # RunIndex.built_at is a STRING: normalize a datetime instance too.
+    index.built_at = built_at if isinstance(built_at, str) else _iso(built_at)
     return index
 
 

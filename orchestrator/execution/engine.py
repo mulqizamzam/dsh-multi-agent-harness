@@ -261,13 +261,16 @@ class ExecutionEngine:
                 "current state and re-validate (THREAT-022)")
         if exp is None or exp <= 0:
             return True  # plan carries no version to compare (untracked)
+        # Test the rollback case FIRST: `cur != exp` (below) subsumes it, so an
+        # ordered `cur < exp` after `cur != exp` would be unreachable and the
+        # distinct "rolled back" diagnostic lost (F5).
+        if cur < exp:
+            raise ExecutionRefused(
+                f"state rolled back below the plan version {exp} (THREAT-022)")
         if cur != exp:
             raise ExecutionRefused(
                 f"stale plan refused: request built against state version {exp}, "
                 f"current is {cur} (THREAT-022 / REC-005)")
-        if cur < exp:
-            raise ExecutionRefused(
-                f"state rolled back below the plan version {exp} (THREAT-022)")
         return True
 
     # -- phase 3: execution-time authority re-check (AUTH-INV-05/06/11/18) ---

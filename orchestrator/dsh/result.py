@@ -81,10 +81,21 @@ class TaskResultCollector:
             raise MalformedResult("structured result: missing/invalid task_id")
         if not isinstance(assigned_role, str) or not assigned_role:
             raise MalformedResult("structured result: missing/invalid assigned_role")
-        if status not in ("SUCCEEDED", "FAILED", "BLOCKED"):
+        # PRD v0.2 §13 vocabulary: SUCCEEDED plus every failing status. The
+        # accepted set is DERIVED from the canonical collection.FAILING_STATUSES
+        # (which equals the schema enum minus SUCCEEDED) so this whitelist cannot
+        # drift from schemas/task-result.schema.json or the TaskResult contract,
+        # both of which accept all six. Imported LAZILY: a top-level
+        # `orchestrator.runtime.collection` import here is a circular import
+        # (orchestrator.dsh -> orchestrator.runtime.__init__ -> flow ->
+        # `from orchestrator.dsh import RealDSHBackend`, which is still bound
+        # AFTER this module in dsh/__init__.py).
+        from orchestrator.runtime.collection import FAILING_STATUSES
+        _accepted_statuses = ("SUCCEEDED",) + tuple(FAILING_STATUSES)
+        if status != "SUCCEEDED" and status not in FAILING_STATUSES:
             raise MalformedResult(
                 f"structured result: invalid status {status!r} "
-                "(SUCCEEDED/FAILED/BLOCKED)")
+                f"({'/'.join(_accepted_statuses)})")
         if confidence not in ("LOW", "MEDIUM", "HIGH"):
             raise MalformedResult(
                 f"structured result: invalid confidence {confidence!r}")

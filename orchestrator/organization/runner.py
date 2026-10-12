@@ -95,6 +95,7 @@ class MissionRunner:
         runner=None,
         now=None,
         max_workers: int = DEFAULT_MAX_WORKERS,
+        provider=None,
     ):
         if delegation is None or not hasattr(delegation, "is_active"):
             raise MissionError("MissionRunner requires a structured Delegation")
@@ -106,6 +107,10 @@ class MissionRunner:
             raise MissionError(
                 f"delegation {getattr(delegation, 'id', '?')} is not ACTIVE")
         self.delegation = delegation
+        # Optional live delegation provider (AUTH-INV-05/06): when wired, the
+        # revocation registry is re-read at every dispatch — a mid-mission
+        # revocation must not be invisible to a snapshot taken in __init__.
+        self.provider = provider
         self.project = project
         self.base = base
         self.now = now
@@ -219,6 +224,25 @@ class MissionRunner:
         upstream: dict,
         extra: dict | None = None,
     ):
+        # AUTH-INV-05/06 execution-time re-check: re-read the revocation
+        # registry per dispatch when a provider is wired. control.delegation
+        # .revoke() returns a NEW REVOKED copy, so a revocation that lands
+        # mid-mission leaves the __init__ snapshot ACTIVE — without this
+        # re-read this path never observed it (F13).
+        if self.provider is not None:
+            try:
+                current, revocations = self.provider.current()
+            except Exception:
+                raise MissionError(
+                    "delegation provider unreadable at dispatch "
+                    "(AUTH-INV-05/06): fail-closed")
+            revoked = self.delegation.id in tuple(revocations or ())
+            if current is None or revoked or not current.is_active():
+                raise MissionError(
+                    f"delegation {getattr(self.delegation, 'id', '?')} is no "
+                    f"longer ACTIVE at dispatch (revoked={revoked}, "
+                    f"current={'none' if current is None else current.status})"
+                    " — AUTH-INV-05/06")
         context = build_task_context(mission_task, upstream, extra=extra)
         # timeout honoured at the mission seam (fail-closed -> blocked)
         timeout = mission_task.timeout
@@ -408,8 +432,16 @@ class MissionRunner:
         else:
             # SOMAD — ACCEPT_VERDICTS contains VERIFIED only (rework handled via evidence+verdict)
             if verdict == "VERIFIED":
-                # Worker claims alone are not evidence — somad's evidence must be present
-                action = "accept"
+                # Worker claims alone are not evidence — somad's evidence must
+                # be present. The badsector branch above consults self.evidence;
+                # this branch previously accepted a VERIFIED verdict with an
+                # EMPTY evidence tuple, exactly what this comment claimed was
+                # impossible (F6).
+                if self.evidence.missing(critic, tuple(result.evidence or ())):
+                    action = verdict_action(
+                        "REWORK", self.rework.cycles_used(target))
+                else:
+                    action = "accept"
             else:
                 action = verdict_action(verdict, self.rework.cycles_used(target))
         if action == "escalate" and verdict not in ("EXHAUSTED",):

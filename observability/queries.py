@@ -125,8 +125,15 @@ def health_report(index: RunIndex) -> dict:
     for p in index.rejected:
         problems.append(p.to_dict())
 
-    healthy = (not problems) and bool(index.ledger_integrity.get("strict_ok",
-                                                                 True))
+    # `healthy` must honour every ledger-integrity signal read_ledger_events
+    # already computes: a tampered/truncated ledger whose strict read still
+    # parses is NOT healthy even when it yields no correlation problems.
+    healthy = (
+        (not problems)
+        and bool(index.ledger_integrity.get("strict_ok", True))
+        and index.ledger_integrity.get("append_only_ok", True)
+        and index.ledger_integrity.get("chain_ok", True)
+    )
     return {
         "healthy": healthy,
         "total_runs": len(index.run_order),

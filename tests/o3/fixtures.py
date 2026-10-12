@@ -35,6 +35,50 @@ from registry_writer.client import RegistryWriterClient  # noqa: E402
 from registry_writer.provider import reset_client  # noqa: E402
 
 
+def _wait_until_accepting(daemon, *, timeout: float = 5.0) -> None:
+    """Start `daemon` in a background thread and block until it ACCEPTS.
+
+    The socket FILE exists as soon as bind() runs, but the kernel only queues
+    connections after listen(); polling `os.path.exists(socket_path)` returns
+    inside that window and the first client connect is refused
+    (ECONNREFUSED → WriterUnavailable). The daemon's readiness event is set
+    immediately after listen() succeeds, which is the only signal that means
+    "connect() will not be refused".
+
+    A startup thread that dies before readiness (bind failure, unwritable
+    root, ...) has its exception re-raised here, instead of a misleading
+    "did not start in 5s" timeout.
+    """
+    errors: list[BaseException] = []
+
+    def _run():
+        try:
+            daemon.start()
+        except BaseException as exc:  # noqa: BLE001 — captured for re-raise
+            errors.append(exc)
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    deadline = time.monotonic() + timeout
+    while True:
+        if daemon._ready_event.wait(0.005):
+            return
+        if not thread.is_alive():
+            break
+        if time.monotonic() >= deadline:
+            break
+    err = errors[0] if errors else None
+    try:
+        daemon.shutdown()
+    except Exception:  # noqa: BLE001 — cleanup must not mask the real error
+        pass
+    if err is not None:
+        raise err
+    raise RuntimeError(
+        f"O3 daemon did not start at {daemon.config.socket_path} "
+        f"in {timeout:.0f}s")
+
+
 @pytest.fixture()
 def o3_daemon_ws(tmp_path, request):
     """A per-test workspace that IS the O3 daemon root.
@@ -69,19 +113,7 @@ def o3_daemon_ws(tmp_path, request):
     )
 
     daemon = RegistryWriterDaemon(config)
-    t = threading.Thread(target=daemon.start, daemon=True)
-    t.start()
-
-    # Wait for the daemon socket to be ready
-    deadline = time.monotonic() + 5.0
-    while time.monotonic() < deadline:
-        if os.path.exists(socket_path):
-            break
-        time.sleep(0.01)
-    else:
-        daemon.shutdown()
-        raise RuntimeError(
-            f"O3 daemon did not start at {socket_path} in 5s")
+    _wait_until_accepting(daemon)
 
     # Set env vars for the control-plane provider
     os.environ["DSH_REGISTRY_WRITER_SOCKET"] = socket_path

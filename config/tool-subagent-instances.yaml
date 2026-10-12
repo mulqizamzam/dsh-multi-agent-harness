@@ -9,7 +9,7 @@
 # Originally authored as the Phase 1C DRAFT (see
 # docs/phase-1/0002-role-isolation-draft.md); written in cordis patch style.
 #
-# Config keys VERIFIED against the DSH 0.1.1-rc.2 tool-subagent source:
+# Config keys VERIFIED against the DSH 0.2.0-rc.2 tool-subagent source:
 #   provider, toolName, persona, toolFilter {allow, deny}, backgroundMode,
 #   maxDepth, enableRunInBackground (default true).
 #
@@ -313,4 +313,4 @@ consistency_rules:
   instance_matches_role_mapping: true   # each instance's allow/deny == role-preset-mapping entry
   matches_role_policy_yaml: true        # transitive via mapping == policy
   delegation_deny_by_default: true      # no delegation tool in any specialist allow
-  tool_names_verified: true             # against docs/tool-catalog.md (0.1.1-rc.2)
+  tool_names_verified: true             # against docs/tool-catalog.md (0.2.0-rc.2)

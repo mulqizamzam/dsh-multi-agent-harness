@@ -30,9 +30,24 @@ def assert_recovery_current(preserved_version: int,
                             current_version: int,
                             *, task_id: str = "") -> None:
     """THREAT-022: refuse a recovery whose preserved_version is behind the
-    current state version (state advanced while recovery was prepared)."""
-    if preserved_version <= 0 or current_version <= 0:
-        return  # untracked versions — rely on the caller's re-validation
+    current state version (state advanced while recovery was prepared).
+
+    Version 0 is a fail-closed condition, not a skip: read_version returns 0
+    when the state document is missing or corrupt, so an untracked/0 version
+    cannot prove the recovery is current. Failing closed here (F26b) prevents a
+    recovery from running against an absent/unreadable state file unvalidated."""
+    if preserved_version <= 0:
+        raise StaleRecoveryError(
+            f"recovery cannot be proven current: task {task_id!r} preserved "
+            f"version {preserved_version} is missing/corrupt (version 0 = "
+            f"absent state document); re-read current state and re-validate "
+            f"before recovery (THREAT-022)")
+    if current_version <= 0:
+        raise StaleRecoveryError(
+            f"recovery cannot be proven current: task {task_id!r} current "
+            f"version {current_version} is missing/corrupt (version 0 = "
+            f"absent state document); re-read current state and re-validate "
+            f"before recovery (THREAT-022)")
     if current_version > preserved_version:
         raise StaleRecoveryError(
             f"stale recovery (THREAT-022): task {task_id!r} preserved version "

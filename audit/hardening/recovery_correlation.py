@@ -8,12 +8,30 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 
 from audit.helpers.append_log import read_events_strict
 
 
 class RecoveryCorrelationError(ValueError):
     """A recovery/audit correlation violation."""
+
+
+def _parse_ts(ts):
+    """Parse an ISO-8601 timestamp (with optional Z) to a datetime.
+
+    Returns None when the value is absent or not ISO. Naive values are
+    normalized to UTC so mixed naive/aware timestamps stay comparable.
+    """
+    if not isinstance(ts, str) or not ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 def correlate_recovery(log_path: str, task_id: str = "") -> dict:
@@ -41,10 +59,14 @@ def correlate_recovery(log_path: str, task_id: str = "") -> dict:
             f"recovery events for task {task_id or '(any)'!r} have no "
             f"preceding execution event (correlation gap)")
     # Ordering: the first recovery event must come after an execution event.
+    # Timestamps are PARSED (not compared as strings) — lexicographic ordering
+    # is wrong across offsets, zero-padding, and mixed naive/aware forms.
     if recovery and execution:
-        first_rec = min(e.get("timestamp", "") for e in recovery)
-        first_exec = min(e.get("timestamp", "") for e in execution)
-        if first_rec < first_exec:
+        rec_ts = [t for t in (_parse_ts(e.get("timestamp")) for e in recovery)
+                  if t is not None]
+        exec_ts = [t for t in (_parse_ts(e.get("timestamp")) for e in execution)
+                   if t is not None]
+        if rec_ts and exec_ts and min(rec_ts) < min(exec_ts):
             problems.append(
                 "recovery began before any execution event (ordering anomaly)")
     return {"ok": not problems, "problems": problems,

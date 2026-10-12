@@ -29,6 +29,9 @@ def test_every_specialist_has_bounded_role_files(project_root):
 
 
 def test_validator_covers_new_roles(project_root):
+    # The check names asserted below are the canonical names emitted by
+    # `validate_config.run_checks()` (see tests/validate_config.py); this file
+    # only looks them up, it does not define them.
     names = {n: ok for n, ok, _ in run_checks(project_root)}
     for rid in NEW:
         assert names.get(f"perm {rid} defaults read-only") is True

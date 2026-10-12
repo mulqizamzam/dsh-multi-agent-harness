@@ -5,7 +5,7 @@
 role: ledger
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.1.1-rc.2
+version_pin: deepseek-harness-0.2.0-rc.2
 display_name: Ledger
 domain: Audit & Provenance
 summary: audit-event validation, provenance analysis, decision lineage, evidence-source linkage, state-transition traceability, audit completeness
