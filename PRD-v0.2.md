@@ -1,7 +1,7 @@
 # PRD — On-Demand Specialist Pool Expansion
 
 **Project:** Multi-Agent Harness
-**Parent System:** DeepSeek Harness `0.1.1-rc.2`
+**Parent System:** DeepSeek Harness `0.1.1-rc.2` — *superseded: the repo pin was re-verified and moved to `0.2.0-rc.2` on 2026-10-09 (README.md §Version pin)*
 **PRD Version:** `0.2`
 **Status:** Implementation Baseline
 **Scope:** Incremental expansion of the on-demand specialist capability pool
@@ -84,7 +84,7 @@ The system must not require every specialist to participate in every workflow.
 6. Preserve Human ultimate authority.
 7. Preserve delegated-authority boundaries for the Orchestrator.
 8. Preserve separation between implementation, verification, adversarial review, and authorization.
-9. Preserve DSH version pin `0.1.1-rc.2`.
+9. Preserve DSH version pin `0.2.0-rc.2` *(superseded 2026-10-09: was `0.1.1-rc.2` at v0.2 authoring; re-verified and moved — README.md §Version pin)*.
 10. Add lifecycle controls for child execution, failure, cancellation, timeout, and incomplete execution.
 11. Require evidence-backed verification before a workflow may claim completion.
 
@@ -113,7 +113,7 @@ This PRD does not:
 10. treat project state as authority;
 11. treat model-generated text as authority;
 12. modify DSH core;
-13. upgrade DSH beyond `0.1.1-rc.2`;
+13. upgrade DSH beyond the pinned version without re-verification *(pinned `0.2.0-rc.2` since the 2026-10-09 re-verification; was `0.1.1-rc.2`)*;
 14. introduce blind automatic retries;
 15. permit silent scope expansion.
 
@@ -548,7 +548,7 @@ The project control plane remains responsible for:
 DSH version remains pinned to:
 
 ```text
-0.1.1-rc.2
+0.2.0-rc.2  (re-verified 2026-10-09; was 0.1.1-rc.2 at v0.2 authoring)
 ```
 
 Any later release requires explicit re-verification before adoption.
@@ -1064,7 +1064,7 @@ The expansion is accepted only when all required criteria pass.
 ## 25.4 DSH
 
 * Each specialist maps to a valid DSH preset/toolFilter configuration.
-* DSH remains pinned to `0.1.1-rc.2`.
+* DSH remains pinned to `0.2.0-rc.2` *(re-verified 2026-10-09; was `0.1.1-rc.2` at v0.2 authoring — README.md §Version pin)*.
 * No DSH core modification is required.
 * ToolFilter is not treated as the sole authorization/security boundary.
 
