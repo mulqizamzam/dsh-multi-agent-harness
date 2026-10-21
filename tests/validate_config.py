@@ -121,6 +121,21 @@ def _composition_rows(path):
     return rows
 
 
+# The per-tool switches of the two multi-tool plugins this roster uses, with
+# the defaults the plugins document (0.2.1-rc.2: every one of them defaults
+# to true, so a row that omits a switch leaves the tool enabled).
+FS_TOOL_DEFAULTS = {"read": True, "readImage": True, "write": True, "edit": True}
+WEB_TOOL_DEFAULTS = {"search": True, "fetch": True}
+
+
+def _row_config(path, plugin_name):
+    """One plugin row's config in a composition file, or None when absent."""
+    for row in _composition_rows(path):
+        if row.get("name") == plugin_name:
+            return dict(row.get("config") or {})
+    return None
+
+
 def preset_tool_surface(path):
     """The tools one Agent Preset composition exposes to the agent it composes.
 
@@ -513,6 +528,20 @@ def run_checks(root):
         check(f"preset {pid} deny matches mapping",
               set(dec_ts.get("deny", [])) == set(map_ts.get("deny", [])),
               f"{set(dec_ts.get('deny', [])) ^ set(map_ts.get('deny', []))}")
+        # The per-tool config the record states must be the one the preset
+        # composition actually carries, or the record misstates the boundary.
+        for plugin_key, plugin_name, defaults in (
+                ("tool_fs_config", "@deepseek-ai/dsh-tool-fs", FS_TOOL_DEFAULTS),
+                ("tool_web_config", "@deepseek-ai/dsh-tool-web", WEB_TOOL_DEFAULTS)):
+            stated = dec.get(plugin_key)
+            if stated is None:
+                continue
+            actual = _row_config(os.path.join(root, dec.get("source", "")), plugin_name)
+            effective = dict(defaults)
+            effective.update(actual or {})
+            check(f"preset {pid} {plugin_key} matches the composition",
+                  actual is not None and all(effective.get(k) == v for k, v in stated.items()),
+                  f"stated={stated} composition={effective}")
 
     # --- the preset composition IS the tool surface -------------------------
     # The host narrowed a preset by COMPOSITION (the tool plugins it mounts),
