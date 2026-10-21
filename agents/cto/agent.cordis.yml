@@ -2,7 +2,7 @@
 # Mounted 2026-09-07 in the live web profile composition under the
 # Human-approved D4/D7 composition exception; originally authored as the
 # Phase 1C DRAFT (see docs/phase-1/0002-role-isolation-draft.md).
-# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
+# Version pin: DeepSeek Harness 0.2.1-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin; the per-tool `tool-fs` config replaced the removed per-instance `toolFilter` on 2026-10-21)
 # Source: agents/cto/AGENT.md + config/role-preset-mapping.yaml
 # 2026-09-07: persona text aligned to the canonical registry domain
 # ("Coding & System Architecture"); the game-client-specific wording was
@@ -38,6 +38,12 @@
   disabled: !!js process.platform === 'win32'
 
 # ── filesystem ─────────────────────────────────────────────────────────────
+# `tool-fs` registers `read`, `read_image`, `write` and `edit` as one suite.
+# Since DSH 0.2.1-rc.2 the row takes a per-tool config, so this preset can hold
+# the role's old allow list EXACTLY: the host's per-instance `toolFilter` was
+# removed in that release, and the preset's own rows are now the boundary.
+# This role is the only one with capabilities.code_write: yes, so the whole
+# suite stays enabled.
 - id: tool-fs
   name: '@deepseek-ai/dsh-tool-fs'
 

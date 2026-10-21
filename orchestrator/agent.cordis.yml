@@ -16,11 +16,11 @@
 #   |-----------------------------|-----------------------------------------|------------------------------------------------------------------------|
 #   | `persona`                   | REPLACE `text:` with the orchestrator   | identity — this role's mission and hard boundaries from                |
 #   |                             | persona                                 | `orchestrator/AGENT.md`                                                |
-#   | `tool-ralph`                | DELETE the row                          | `orchestrator.tool_filter.deny` names `ralph` — "ralph is a fresh-agent |
+#   | `tool-ralph`                | DELETE the row                          | `orchestrator.tool_surface.deny` names `ralph` — "ralph is a fresh-agent|
 #   |                             |                                         | loop, not orchestration"                                               |
-#   | `tool-pwsh`                 | DELETE the row                          | `orchestrator.tool_filter.deny` names `pwsh`                           |
-#   | `tool-subagent-codex`       | DELETE the row                          | not in `orchestrator.tool_filter.allow`                                |
-#   | `tool-subagent-claude-code` | DELETE the row                          | not in `orchestrator.tool_filter.allow`                                |
+#   | `tool-pwsh`                 | DELETE the row                          | `orchestrator.tool_surface.deny` names `pwsh`                          |
+#   | `tool-subagent-codex`       | DELETE the row                          | not in `orchestrator.tool_surface.allow`                               |
+#   | `tool-subagent-claude-code` | DELETE the row                          | not in `orchestrator.tool_surface.allow`                               |
 #
 # Every other `standard` row is unchanged, including its explanatory comments:
 # the `delegation` group (with its `workflowEngine` isolate realm), `tool-goal`,
@@ -32,7 +32,7 @@
 # root session stays on `standard` (`draft_artifacts.orchestrator_preset`) until
 # a Human selects this one, and the shipped composition is read-only here.
 #
-# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
+# Version pin: DeepSeek Harness 0.2.1-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin; the per-role `tool-subagent` rows were replaced by one `agent_preset`-selecting delegation tool on 2026-10-21)
 # Sources: orchestrator/AGENT.md + config/role-preset-mapping.yaml (top-level
 # `orchestrator:` key) +
 # /home/administrator/deepseek-harness/apps/cli/config/agent-presets/standard/agent.cordis.yml
@@ -110,7 +110,7 @@
 # Only the model-facing controls. The task REGISTRY stays on the host plane:
 # its producers sit outside any realm this file could put it in — `tool-bash`
 # above resolves it with `ctx.get`, and an entry-local realm here is invisible
-# to every sibling row, so `run_in_background` would answer "background jobs
+# to every sibling row, so a backgrounded command would answer "background jobs
 # unavailable" while these controls sat in the catalog. The registry is keyed by
 # owning agent anyway, so one host instance serves every session. What a preset
 # chooses is whether its agent can collect and stop background work at all.
@@ -218,11 +218,10 @@
 # that reaches it shares one entry-local realm here, and a consumer left
 # outside would resolve a host registry this preset does not populate.
 #
-# `tool-subagent-report` is host-plane for the same reason as the registry,
-# not because a preset may not want it: it registers a CONTINUABLE SETUP on
-# that singleton rather than a tool this agent calls, and the setup list is
-# not scope-aware — one copy per mounted preset means every child gets
-# `report` registered once per live session, which throws on the second.
+# The continuable child channel needs no row here. DSH 0.2.1-rc.2 removed the
+# `backgroundMode` config key; continuability is now a PROVIDER capability
+# (`prepareContinuable` on the spawn provider), and the `subagent` tool
+# describes the `send_message` reply channel itself.
 - id: delegation
   name: cordis:group
   group: true
@@ -235,19 +234,53 @@
     - id: tool-subagent-list-agents
       name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
 
+    # THE delegation surface for every specialist. One row, one tool:
+    # `allowedAgentPresets` lists the fifteen Agent Presets this tool may
+    # select, and the model picks one through the `agent_preset` argument
+    # (DSH 0.2.1-rc.2: the per-instance `persona` / `toolFilter` config keys
+    # were REMOVED — tool-subagent now THROWS on them, and the persona and the
+    # tool surface of a child are its Agent Preset's own plugin rows).
+    #
+    # `maxDepth: 1` is the recursion budget: the orchestrator is depth 0, its
+    # specialist child is depth 1, and a second hop is rejected at start. That
+    # is the subdelegation DENY BY DEFAULT rule, enforced by the provider
+    # rather than by a deny list (the fourteen sibling `subagent_<id>` tools
+    # this composition used to declare no longer exist as separate tools).
+    #
+    # The presets themselves are NOT declared here: this plugin registers
+    # `role-<id>` from agents/<id>/agent.cordis.yml and `orchestrator` from
+    # this directory, so the ids below are the registry's own ids.
     - id: tool-subagent
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
         provider: spawn
         toolName: subagent
-        backgroundMode: continuable
+        maxDepth: 1
+        allowedAgentPresets:
+          - role-zeko
+          - role-cto
+          - role-cfo
+          - role-kai
+          - role-somad
+          - role-badsector
+          - role-nova
+          - role-vera
+          - role-argus
+          - role-atlas
+          - role-tess
+          - role-quill
+          - role-scout
+          - role-talon
+          - role-ledger
 
+    # The fork provider inherits the parent's conversation and declares
+    # `agentPreset: false`, so it takes no preset allowlist: a forked child
+    # joins the parent's own composition.
     - id: tool-subagent-fork
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
         provider: fork
         toolName: subagent_fork
-        backgroundMode: continuable
 
     # Production dsh does not install these optional providers. Install the
     # matching Bundle in this Profile and restart the Host, then copy this
@@ -298,594 +331,34 @@
   name: '@deepseek-ai/dsh-plugin-manager/tools'
   disabled: true
 
-# ── per-role delegation instances (moved here 2026-10-11) ───────────────────
-# The fifteen `tool-subagent-<id>` rows below previously lived as global-layer
-# rows in the live profile patch ($DSH_HOME/profiles/web/cordis.patch.yml).
-# They are the orchestrator’s ONLY delegation surface (role-preset-mapping.yaml
-# §orchestrator: "Roles are exposed to the orchestrator via per-role
-# tool-subagent instances"), and orchestrator/policy.yaml’s tool_filter.allow
-# names all fifteen — so they belong to this composition, not the global layer.
-# Effect of the move: only orchestrator-bound sessions gain `subagent_<id>`;
-# specialist sessions no longer see the sibling instances at all (subdelegation
-# DENY BY DEFAULT gains a structural guard on top of the per-row deny lists).
-- id: tool-subagent-zeko
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-zeko
-    provider: spawn
-    toolFilter:
-      allow:
-        - bash
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-    toolName: subagent_zeko
-- id: tool-subagent-cto
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-cto
-    provider: spawn
-    toolFilter:
-      allow:
-        - bash
-        - read
-        - read_image
-        - edit
-        - write
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_cto
-- id: tool-subagent-cfo
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-cfo
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_cfo
-- id: tool-subagent-kai
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-kai
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_kai
-- id: tool-subagent-somad
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-somad
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_somad
-- id: tool-subagent-badsector
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-badsector
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - web_search
-        - subagent_argus
-        - subagent_atlas
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_badsector
-- id: tool-subagent-nova
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-nova
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_nova
-- id: tool-subagent-vera
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-vera
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - web_search
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_zeko
-    toolName: subagent_vera
-- id: tool-subagent-argus
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-argus
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_argus
-- id: tool-subagent-atlas
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-atlas
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_atlas
-- id: tool-subagent-tess
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-tess
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_tess
-- id: tool-subagent-quill
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-quill
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - web_search
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_quill
-- id: tool-subagent-scout
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-scout
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_scout
-- id: tool-subagent-talon
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-talon
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - web_search
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_ledger
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_talon
-- id: tool-subagent-ledger
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    backgroundMode: continuable
-    maxDepth: 1
-    persona: role-ledger
-    provider: spawn
-    toolFilter:
-      allow:
-        - read
-        - read_image
-        - glob
-        - grep
-        - job_kill
-        - job_list
-        - job_output
-        - skill
-        - exit_plan_mode
-        - todo_write
-      deny:
-        - bash
-        - edit
-        - write
-        - web_search
-        - subagent_argus
-        - subagent_atlas
-        - subagent_badsector
-        - subagent_cfo
-        - subagent_cto
-        - subagent_kai
-        - subagent_nova
-        - subagent_quill
-        - subagent_scout
-        - subagent_somad
-        - subagent_talon
-        - subagent_tess
-        - subagent_vera
-        - subagent_zeko
-    toolName: subagent_ledger
+# ── per-role delegation surface (rewritten 2026-10-21, DSH 0.2.1-rc.2) ───────
+# The fifteen `tool-subagent-<id>` rows that used to live here are GONE.
+#
+# Each of them declared `persona: role-<id>` and a `toolFilter` allow/deny
+# list. DSH 0.2.1-rc.2 removed both config keys from `@deepseek-ai/dsh-tool-subagent`
+# (it now throws `persona is no longer supported; configure persona and tool
+# plugins in an Agent Preset and select it with agentPreset`), and it removed
+# `backgroundMode` as well. Fifteen model-facing tools became one.
+#
+# What replaced them:
+#   - The `tool-subagent` row in the `delegation` group above. It names the
+#     fifteen `role-<id>` presets in `allowedAgentPresets`, and the model
+#     selects one with the `agent_preset` argument.
+#   - The persona text moved into each role's own Agent Preset, where it
+#     already was: agents/<id>/agent.cordis.yml mounts a
+#     `@deepseek-ai/dsh-persona` row whose `config.prefix` carries the same
+#     role prose. This plugin registers those files with the preset registry
+#     as `role-<id>`, so the ids in `allowedAgentPresets` resolve.
+#   - The tool surface moved into the same presets. The old `toolFilter.allow`
+#     list became the set of tool PLUGINS each preset mounts, with
+#     `@deepseek-ai/dsh-tool-fs` narrowing itself per tool
+#     (`read` / `readImage` / `write` / `edit`) and `@deepseek-ai/dsh-tool-web`
+#     narrowing itself with `fetch: false`. Every role keeps exactly the
+#     tool set its allow list named.
+#   - The sibling `subagent_<id>` DENY lists are obsolete by construction:
+#     there is no longer a per-sibling tool to deny. A specialist's preset
+#     mounts no delegation plugin at all, and `maxDepth: 1` on the one
+#     delegation tool rejects a second hop.
+#
+# The per-role mapping, the allow lists and the preset sources are recorded in
+# config/role-preset-mapping.yaml and config/tool-subagent-instances.yaml.

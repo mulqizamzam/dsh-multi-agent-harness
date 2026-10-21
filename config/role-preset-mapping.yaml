@@ -1,76 +1,88 @@
 # ============================================================================
-# ROLE → PRESET / TOOLFILTER MAPPING — multi-agent-harness
+# ROLE → AGENT PRESET / TOOL SURFACE MAPPING — multi-agent-harness
 # Phase 1A (finalized). Control-plane input — NOT native DSH authorization.
 #
-# This file declares, for each role, the intended DSH Agent Preset and the
-# per-role `tool-subagent` instance configuration (toolName, toolFilter,
-# persona, backgroundMode, maxDepth) that the control plane will mount in a
-# later phase. It is the bridge between the project role definitions
-# (agents/<id>/AGENT.md + policy.yaml) and DSH Agent Presets.
+# This file declares, for each role, the DSH Agent Preset that carries it and
+# the tool surface that preset is composed of. It is the bridge between the
+# project role definitions (agents/<id>/AGENT.md + policy.yaml) and DSH Agent
+# Presets.
+#
+# MODEL (DSH 0.2.1-rc.2 — rewritten 2026-10-21):
+#   A role is reached by SELECTING AN AGENT PRESET on the one delegation tool.
+#   The host removed the per-instance `persona` and `toolFilter` config keys
+#   from `@deepseek-ai/dsh-tool-subagent` — it now throws on them — and it
+#   removed `backgroundMode`. Fifteen model-facing `subagent_<id>` tools
+#   became one `subagent` tool whose `agent_preset` argument names the role.
+#
+#   A role's tool surface is therefore the set of TOOL PLUGINS its preset
+#   mounts, not a list of tool names in a runtime filter:
+#     bash                            -> @deepseek-ai/dsh-tool-bash
+#     read, read_image                -> @deepseek-ai/dsh-tool-fs
+#     write, edit                     -> @deepseek-ai/dsh-tool-fs
+#     glob, grep                      -> @deepseek-ai/dsh-tool-fs-search
+#     job_kill, job_list, job_output  -> @deepseek-ai/dsh-tool-jobs
+#     skill                           -> @deepseek-ai/dsh-tool-skill
+#     exit_plan_mode                  -> @deepseek-ai/dsh-plan-mode
+#     web_search, web_fetch           -> @deepseek-ai/dsh-tool-web
+#     todo_write                      -> @deepseek-ai/dsh-tool-todo
+#   `@deepseek-ai/dsh-tool-fs` narrows itself per tool (`read` / `readImage` /
+#   `write` / `edit`) and `@deepseek-ai/dsh-tool-web` narrows itself with
+#   `search` / `fetch`, so a preset reproduces the exact tool list its role
+#   had — the granularity loss of the removed `toolFilter` does not apply to
+#   any tool this roster uses.
 #
 # IMPORTANT:
 #  - PRD v0.2 expansion (2026-09-09, ADR 0003): eight new roles (vera,
 #    argus, atlas, tess, quill, scout, talon, ledger) are REGISTERED here
-#    (mapping_version 2) and MOUNTED in the live web profile composition
-#    since 2026-09-09 under the Human-approved per-case exception
-#    (ADR 0003 D8). Verification: the web profile package.json lists
-#    dsh-multi-agent-harness in dsh.profile.bundles; the plugin registers
-#    role-<id> + orchestrator directly from this repo. Registration and
-#    activation are both done.
-#  - Mounted 2026-09-07 (D4/D7 exception): per-role presets/instances are
-#    mounted — the presets by the dsh-multi-agent-harness plugin (repo-direct
-#    registration since 2026-10-10) and the instances as rows inside
-#    orchestrator/agent.cordis.yml since 2026-10-11 (moved there from
-#    global-layer rows in the live profile patch; see the section comment in
-#    that composition). Composition changes remain a controlled, reversible
-#    exception per case.
-#  - Tool names are verified against the DSH 0.2.0-rc.2 tool catalog
-#    (docs/tool-catalog.md) plus the fifteen per-role instance tools
-#    (subagent_<id>, rows in the orchestrator preset composition). Unknown
-#    names fail loudly at child spawn: tools.restrict() throws on any
-#    allow/deny name outside the child's inherited tool surface (parent scope
-#    chain).
-#  - DENY CONTRACT (canonical; reconciled with the deployed live profile):
-#    every deny list names exactly the fourteen sibling subagent_<id> instances
-#    (the real delegation surface — restriction matching is exact-name, so
-#    denying the generic "subagent" never blocked subagent_<id>) plus the
-#    role-specific bash/edit/write/web_search prohibitions below. Generic
-#    workflow-realm tools (subagent, subagent_fork, send_message,
-#    interrupt_agent, list_agents, workflow, ralph) are NOT valid deny
-#    entries: they register in the standard preset's workflow isolate realm,
-#    outside a specialist child's inherited chain, and restrict() rejects
-#    them. Every other catalog tool is withheld by the closed allow list —
-#    allow is the primary boundary; deny is the exact-name hard block.
-#  - toolFilter is a CAPABILITY boundary, not complete security isolation;
-#    sandbox/approval remain session-level.
-#  - Phase-1B validation tests must assert: allow ∩ deny = ∅, every name in
-#    the verified catalog, and consistency with agents/<id>/policy.yaml.
+#    (mapping_version 3) and their presets are mounted by the
+#    dsh-multi-agent-harness plugin, which registers `role-<id>` directly from
+#    this repo since 2026-10-10. The delegation tool that selects them is the
+#    single `subagent` row in orchestrator/agent.cordis.yml.
+#  - Tool names are verified against the DSH 0.2.1-rc.2 tool catalog. The
+#    fifteen `subagent_<id>` names are GONE: there is one delegation tool per
+#    provider, so there is no per-sibling tool to name.
+#  - SUBDelegation DENY BY DEFAULT is now STRUCTURAL, not a deny list: a
+#    specialist's preset mounts no delegation plugin at all, so the child has
+#    no delegation tool in its catalog, and the delegation tool's
+#    `maxDepth: 1` rejects a second hop at start. The old deny lists that
+#    named the fourteen sibling instances are therefore obsolete and removed.
+#  - The `tool_surface` block below is the role's model-facing tool surface,
+#    realised by the rows of its preset composition. It is a CAPABILITY
+#    boundary, not complete security isolation; sandbox/approval remain
+#    session-level.
+#  - Validation (tests/validate_config.py) asserts: allow ∩ deny = ∅, every
+#    name in the verified catalog, consistency with agents/<id>/policy.yaml,
+#    and that each role's allow list matches the tool plugins its preset
+#    actually mounts.
 # ============================================================================
 
-mapping_version: 2
+mapping_version: 3
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 documentation_ref: docs/tool-catalog.md
-preset_naming_convention: 'role-<id>'          # Agent Preset directory id for the 15 specialists
+preset_naming_convention: 'role-<id>'          # Agent Preset id for the 15 specialists
                                                # (authored + mounted; see draft_artifacts.status).
                                                # Does NOT cover the orchestrator — see
                                                # draft_artifacts.orchestrator_preset (ADR 0004).
-instance_naming_convention: 'subagent_<id>'   # per-role tool-subagent toolName
+instance_naming_convention: 'subagent'         # the ONE delegation tool the orchestrator holds;
+                                               # a role is selected by the model-facing
+                                               # `agent_preset` argument, which carries the
+                                               # `role-<id>` preset id.
 
-# Roles are exposed to the orchestrator via per-role tool-subagent instances.
-# All specialists: provider spawn, continuable (report channel available),
-# max_depth 1 (no further delegation — subdelegation DENY BY DEFAULT, V1).
+# Roles are exposed to the orchestrator as AGENT PRESETS the single delegation
+# tool can select. All specialists: provider spawn, max_depth 1 (no further
+# delegation — subdelegation DENY BY DEFAULT, V1, enforced by the provider and
+# by the absence of any delegation plugin in a specialist's preset).
 roles:
   - id: zeko
     preset: role-zeko
     policy_ref: agents/zeko/policy.yaml
     tool_instance:
-      tool_name: subagent_zeko
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-zeko
-    tool_filter:
+      agent_preset: role-zeko
+    tool_surface:
       # 2026-09-07 (Human-approved discriminator): edit/write removed from
       # zeko — capabilities.code_write: no is now enforceable at the toolFilter
       # layer. Raw-write actor set narrows {zeko, cto} -> {cto}; G10 residual
@@ -78,171 +90,97 @@ roles:
       allow: [bash, read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [subagent_cto, subagent_cfo, subagent_kai,
-             subagent_somad, subagent_badsector, subagent_nova,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: []
     notes: ops role; bash scoped to diagnosis/delegation-bounded ops; no code architecture change; edit/write channel-routed (2026-09-07 discriminator)
 
   - id: cto
     preset: role-cto
     policy_ref: agents/cto/policy.yaml
     tool_instance:
-      tool_name: subagent_cto
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-cto
-    tool_filter:
+      agent_preset: role-cto
+    tool_surface:
       allow: [bash, read, read_image, edit, write, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [subagent_cfo, subagent_kai, subagent_somad,
-             subagent_badsector, subagent_nova, subagent_zeko,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: []
     notes: engineering role; lsp/str_replace_editor are unmounted_candidates (controlled exception required)
 
   - id: cfo
     preset: role-cfo
     policy_ref: agents/cfo/policy.yaml
     tool_instance:
-      tool_name: subagent_cfo
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-cfo
-    tool_filter:
+      agent_preset: role-cfo
+    tool_surface:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write,
-             subagent_cto, subagent_kai, subagent_somad,
-             subagent_badsector, subagent_nova, subagent_zeko,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: [bash, edit, write]
     notes: read-only analysis; no execution path; transactions always delegated + approved
 
   - id: kai
     preset: role-kai
     policy_ref: agents/kai/policy.yaml
     tool_instance:
-      tool_name: subagent_kai
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-kai
-    tool_filter:
+      agent_preset: role-kai
+    tool_surface:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write,
-             subagent_cto, subagent_cfo, subagent_somad,
-             subagent_badsector, subagent_nova, subagent_zeko,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: [bash, edit, write]
     notes: read-only research; web_fetch is unmounted_candidate (SSRF review required)
 
   - id: somad
     preset: role-somad
     policy_ref: agents/somad/policy.yaml
     tool_instance:
-      tool_name: subagent_somad
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-somad
-    tool_filter:
+      agent_preset: role-somad
+    tool_surface:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write,
-             subagent_cto, subagent_cfo, subagent_kai,
-             subagent_badsector, subagent_nova, subagent_zeko,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: [bash, edit, write]
     notes: drafting content is channel-routed (no raw write/edit); no bash (no infra, ISO-004); publishing is approval-gated via control plane
 
   - id: badsector
     preset: role-badsector
     policy_ref: agents/badsector/policy.yaml
     tool_instance:
-      tool_name: subagent_badsector
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-badsector
-    tool_filter:
+      agent_preset: role-badsector
+    tool_surface:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, web_search,
-             subagent_cto, subagent_cfo, subagent_kai,
-             subagent_somad, subagent_nova, subagent_zeko,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: [bash, edit, write, web_search]
     notes: strictly read-only reviewer; never executes; PASS never authorizes
 
   - id: nova
     preset: role-nova
     policy_ref: agents/nova/policy.yaml
     tool_instance:
-      tool_name: subagent_nova
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-nova
-    tool_filter:
+      agent_preset: role-nova
+    tool_surface:
       allow: [read, read_image, glob, grep,
               job_kill, job_list, job_output,
               skill, exit_plan_mode, todo_write]
-      deny: [edit, write,
-             subagent_cto, subagent_cfo, subagent_kai,
-             subagent_somad, subagent_badsector, subagent_zeko,
-             subagent_vera,
-             subagent_argus,
-             subagent_atlas,
-             subagent_tess,
-             subagent_quill,
-             subagent_scout,
-             subagent_talon,
-             subagent_ledger]
+      deny: [edit, write]
     notes: >
       Manuscript content is channel-routed (no raw write/edit); no bash, no web;
       project-local. Deny carries the O5 write/edit hard-block and the six
@@ -255,144 +193,129 @@ roles:
     preset: role-vera
     policy_ref: agents/vera/policy.yaml
     tool_instance:
-      tool_name: subagent_vera
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-vera
-    tool_filter:
+      agent_preset: role-vera
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write, web_search]
     notes: assurance verification role; project-local evidence reads only; verification result is never authorization; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: argus
     preset: role-argus
     policy_ref: agents/argus/policy.yaml
     tool_instance:
-      tool_name: subagent_argus
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-argus
-    tool_filter:
+      agent_preset: role-argus
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, subagent_vera, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write]
     notes: security engineering analysis role; scoped web research; findings inform decisions, never authority; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: atlas
     preset: role-atlas
     policy_ref: agents/atlas/policy.yaml
     tool_instance:
-      tool_name: subagent_atlas
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-atlas
-    tool_filter:
+      agent_preset: role-atlas
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write]
     notes: architecture review role; scoped web research; does not replace CTO; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: tess
     preset: role-tess
     policy_ref: agents/tess/policy.yaml
     tool_instance:
-      tool_name: subagent_tess
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-tess
-    tool_filter:
+      agent_preset: role-tess
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write]
     notes: failure engineering analysis role; scoped web research; never owns final completion verification; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: quill
     preset: role-quill
     policy_ref: agents/quill/policy.yaml
     tool_instance:
-      tool_name: subagent_quill
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-quill
-    tool_filter:
+      agent_preset: role-quill
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write, web_search]
     notes: policy/specification translation role; project-local reads only; translates approved policy, never creates authority; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: scout
     preset: role-scout
     policy_ref: agents/scout/policy.yaml
     tool_instance:
-      tool_name: subagent_scout
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-scout
-    tool_filter:
+      agent_preset: role-scout
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write]
     notes: integration/compatibility analysis role; scoped web research; never owns another specialist's domain; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: talon
     preset: role-talon
     policy_ref: agents/talon/policy.yaml
     tool_instance:
-      tool_name: subagent_talon
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-talon
-    tool_filter:
+      agent_preset: role-talon
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write]
     notes: reliability analysis role; scoped web research; never owns operations; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 
   - id: ledger
     preset: role-ledger
     policy_ref: agents/ledger/policy.yaml
     tool_instance:
-      tool_name: subagent_ledger
+      tool_name: subagent
       provider: spawn
-      background_mode: continuable
       max_depth: 1
-      persona: role-ledger
-    tool_filter:
+      agent_preset: role-ledger
+    tool_surface:
       allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-      deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+      deny: [bash, edit, write, web_search]
     notes: audit/provenance validation role; project-local reads only; audit is not authority; registered 2026-09-09 and mounted in the live web profile composition since 2026-09-09 under the Human-approved per-case exception (ADR 0003 D8)
 # The orchestrator is the root session (ADR Decision 3 hybrid), not a
-# tool-subagent instance. Its own session toolFilter is a deployment concern
+# delegation target. Its own session tool surface is a deployment concern
 # (L2 backstop); the control-plane contract (orchestrator/contract.md) is the
 # actual security boundary (THREAT-025). B-lite carve-out: read-only /
 # reversible internal actions within delegation, always through the execution
 # gate; never direct HIGH-risk execution.
+#
+# Its `allow` set names `subagent` — the ONE delegation tool — and no
+# `subagent_<id>` name: those fifteen model-facing tools no longer exist. A
+# role is reached through the `agent_preset` argument of `subagent`, whose
+# allowlist is the fifteen `role-<id>` presets (see the `tool-subagent` row in
+# orchestrator/agent.cordis.yml).
 orchestrator:
   id: orchestrator
   binding: root_session
   policy_ref: orchestrator/AGENT.md
   delegation_tools: [subagent, subagent_fork, send_message, interrupt_agent, list_agents, workflow]
-  tool_filter:
+  tool_surface:
     allow: [read, read_image, glob, grep, edit, write, bash,
             job_kill, job_list, job_output,
             subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-            subagent_zeko, subagent_cto, subagent_cfo, subagent_kai,
-            subagent_somad, subagent_badsector, subagent_nova,
-            subagent_vera, subagent_argus, subagent_atlas, subagent_tess,
-            subagent_quill, subagent_scout, subagent_talon, subagent_ledger,
             workflow, skill, ask_user_question, exit_plan_mode, present,
             create_goal, get_goal, update_goal, todo_write, web_search]
-    deny: [ralph, str_replace_editor, lsp, run_code, pwsh, web_fetch,
-           terminal_open, terminal_read, terminal_send, terminal_signal,
-           terminal_list, terminal_close,
-           schedule_create, schedule_delete, schedule_list,
-           session_event_read, session_event_search, session_event_trace,
-           session_search, session_trace,
-           cordis_define, cordis_inspect_list, cordis_inspect_query,
-           cordis_inspect_self, cordis_run, cordis_stop, cordis_undefine,
-           followup_task, spawn_teammate, team_task_create, team_task_get,
-           team_task_list, team_task_update, wait_agent]
+    deny: [ralph, str_replace_editor, lsp, run_code, pwsh, web_fetch, terminal_open, terminal_read, terminal_send, terminal_signal, terminal_list, terminal_close, schedule_create, schedule_delete, schedule_list, session_event_read, session_event_search, session_event_trace, session_search, session_trace, cordis_define, cordis_inspect_list, cordis_inspect_query, cordis_inspect_self, cordis_run, cordis_stop, cordis_undefine, followup_task, spawn_teammate, team_task_create, team_task_get, team_task_list, team_task_update, wait_agent]
     notes: >
       B-lite: edit/write/bash allowed ONLY for project state/audit maintenance
       and reversible internal actions within delegation, ALWAYS through the
@@ -402,13 +325,15 @@ orchestrator:
       agent-team tools are out of scope for the orchestrator (ralph is a
       fresh-agent loop, not orchestration; agent teams are BLOCKED/out of scope).
 
-# Consistency guardrails (validated by Phase-1B tests):
+# Consistency guardrails (validated by tests/validate_config.py):
 consistency_rules:
   allow_deny_disjoint: true
-  tool_names_verified: true        # against docs/tool-catalog.md (0.2.0-rc.2)
+  tool_names_verified: true        # against the DSH 0.2.1-rc.2 tool catalog
   matches_role_policy_yaml: true   # each role's allow/deny matches agents/<id>/policy.yaml
   delegation_orchestrator_only: true   # subdelegation DENY BY DEFAULT (V1)
   specialist_max_depth_1: true
+  matches_preset_composition: true # each role's allow list is the tool set its
+                                   # preset composition actually mounts
 
 # ── Phase 1C draft references ───────────────────────────────────────────────
 # The controlled DSH composition exception (ADR D4/D7) was Human-approved
@@ -419,7 +344,7 @@ consistency_rules:
 draft_artifacts:
   status: mounted                      # 2026-09-07: 7 baseline (D4/D7); 2026-09-09: + 8 expansion (ADR 0003 D8) — all 15 mounted
   preset_draft_path: 'agents/<id>/agent.cordis.yml'   # per-role preset composition
-  instances_draft_path: config/tool-subagent-instances.yaml  # per-role tool-subagent rows
+  instances_draft_path: config/tool-subagent-instances.yaml  # the delegation row + the 15 preset declarations
   orchestrator_preset: orchestrator   # ADR 0004 D1: the orchestrator composes its own preset
                                       # (derived from shipped `standard`; see docs/adr/0004),
                                       # registered by the dsh-multi-agent-harness plugin from

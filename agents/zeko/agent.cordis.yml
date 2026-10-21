@@ -4,7 +4,7 @@
 # runs/mount-verification-2026-09-07/. Originally authored as the Phase 1C DRAFT
 # (docs/phase-1/0002-role-isolation-draft.md).
 #
-# Version pin: DeepSeek Harness 0.2.0-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin)
+# Version pin: DeepSeek Harness 0.2.1-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin; the per-tool `tool-fs` config replaced the removed per-instance `toolFilter` on 2026-10-21)
 # Source: agents/zeko/AGENT.md + config/role-preset-mapping.yaml
 # Tool names verified against docs/tool-catalog.md (0.1.1-rc.2)
 
@@ -30,11 +30,17 @@
   disabled: !!js process.platform === 'win32'
 
 # ── filesystem ─────────────────────────────────────────────────────────────
-# tool-fs registers read/read_image/edit/write as a suite (VERIFIED: no per-tool
-# disable). The per-role instance toolFilter (subagent_zeko) applies the
-# role's allow/deny set.
+# `tool-fs` registers `read`, `read_image`, `write` and `edit` as one suite.
+# Since DSH 0.2.1-rc.2 the row takes a per-tool config, so this preset can hold
+# the role's old allow list EXACTLY: the host's per-instance `toolFilter` was
+# removed in that release, and the preset's own rows are now the boundary.
+# `read` and `read_image` only — `write` and `edit` are switched off below
+# (capabilities.code_write: no).
 - id: tool-fs
   name: '@deepseek-ai/dsh-tool-fs'
+  config:
+    write: false
+    edit: false
 
 - id: tool-fs-search
   name: '@deepseek-ai/dsh-tool-fs-search'
@@ -111,5 +117,6 @@
 
 # NOTE: NO delegation/workflow realm — subdelegation DENY BY DEFAULT (V1).
 # NO tool-goal, NO tool-ask-user — these are orchestrator-only.
-# The instance-level toolFilter (subagent_zeko) denies all delegation, goal,
-# and ask_user_question tools.
+# The preset mounts no delegation plugin at all, so a child that joins it cannot
+# delegate onward: the capability is absent from its tool catalog, not held
+# back by a deny list.
