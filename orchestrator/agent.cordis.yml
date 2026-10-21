@@ -279,9 +279,11 @@
           - role-talon
           - role-ledger
 
-    # The fork provider inherits the parent's conversation and declares
-    # `agentPreset: false`, so it takes no preset allowlist: a forked child
-    # joins the parent's own composition.
+    # The fork provider inherits the parent's conversation and its upstream
+    # capability record has no `agentPreset` support, so this row declares
+    # neither `agentPreset` nor `allowedAgentPresets`: a forked child joins the
+    # parent's own composition. (Upstream has no `false` sentinel — the preset
+    # keys are strings, and `configured` is true when either key is present.)
     - id: tool-subagent-fork
       name: '@deepseek-ai/dsh-tool-subagent'
       config:

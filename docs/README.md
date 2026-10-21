@@ -66,7 +66,7 @@ All documentation is **version-pinned** to DeepSeek Harness `0.2.0-rc.2`.
 
 | Document | Description |
 |---|---|
-| `design/0001-control-design-and-test-plan.md` | Implementation-grade design + test plan: sandbox, approval, toolFilter, role isolation, delegation, gates, recovery |
+| `design/0001-control-design-and-test-plan.md` | Implementation-grade design + test plan: sandbox, approval, tool surface, role isolation, delegation, gates, recovery |
 | `design/0002-l3-verification-specification.md` | L3 verification specification (design-side complement to the L3 plan) |
 
 ## Testing
@@ -88,9 +88,9 @@ All documentation is **version-pinned** to DeepSeek Harness `0.2.0-rc.2`.
 |---|---|
 | `../config/agents.yaml` | Agent registry (canonical, finalized) |
 | `../config/permissions.yaml` | Capability×agent matrix (control-plane input) |
-| `../config/role-preset-mapping.yaml` | Role→DSH preset/toolFilter mapping |
+| `../config/role-preset-mapping.yaml` | Role→DSH preset/tool-surface mapping |
 | `../config/registry-writer.yaml` | Single-writer delegation-registry daemon configuration |
-| `../config/tool-subagent-instances.yaml` | Per-role tool-subagent instance rows |
+| `../config/tool-subagent-instances.yaml` | The one delegation row + the fifteen role Agent Presets |
 
 ## Phase status
 

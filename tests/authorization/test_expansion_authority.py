@@ -72,6 +72,19 @@ def test_config_level_boundaries(project_root):
     import os
 
     import yaml
+
+    class JsSafeLoader(yaml.SafeLoader):
+        """`yaml.SafeLoader` that ACCEPTS the `!!js` dialect tag as opaque text.
+
+        The role compositions carry `disabled: !!js process.platform === 'win32'`,
+        which plain `safe_load` rejects. The tag is mapped to its source text
+        and never evaluated — the same approach as
+        tests/unit/test_preset_source_integrity.py."""
+
+    JsSafeLoader.add_constructor(
+        "tag:yaml.org,2002:js",
+        lambda loader, node: loader.construct_scalar(node))
+
     mapping = yaml.safe_load(open(
         os.path.join(project_root, "config", "role-preset-mapping.yaml")))
     all_inst = {f"subagent_{r}" for r in
@@ -82,8 +95,9 @@ def test_config_level_boundaries(project_root):
         assert not (allow & deny)
         assert not (allow & {"subagent", "subagent_fork", "send_message", "workflow"})
         assert not (deny & all_inst), sorted(deny & all_inst)
-        composition = yaml.safe_load(open(
-            os.path.join(project_root, "agents", rid, "agent.cordis.yml")))
+        with open(os.path.join(project_root, "agents", rid,
+                               "agent.cordis.yml")) as handle:
+            composition = yaml.load(handle.read(), Loader=JsSafeLoader)
         mounted = {row.get("name") for row in composition if isinstance(row, dict)}
         assert not {name for name in mounted if name and "tool-subagent" in name}, \
             f"{rid}: a role preset must mount no delegation plugin"
