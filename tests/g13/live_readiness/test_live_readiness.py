@@ -113,7 +113,7 @@ class TestLiveReadinessPlan:
 
     def test_runtime_entry_point_defined(self):
         ep = live_test_plan()["runtime_entry_point"]
-        assert "subagent_" in ep["surface"]
+        assert "agent_preset" in ep["surface"]
         assert "RealDSHBackend" in ep["driver"]
         assert "SubagentResult" in ep["result_contract"]
 
@@ -190,6 +190,6 @@ class TestLiveReadinessPurity:
         backend used by deterministic tests — the live test must observe a
         REAL child."""
         ep = ENTRY_POINT
-        assert ep["surface"].startswith("subagent_")
+        assert ep["surface"].startswith("the D4/D7 delegation tool")
         assert "RealDSHBackend" in ep["driver"]
         assert "FakeSubagentBackend" not in ep["driver"]

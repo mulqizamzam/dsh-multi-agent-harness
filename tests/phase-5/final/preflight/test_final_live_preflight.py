@@ -101,20 +101,21 @@ def test_g13_precondition_reported_and_unsatisfied():
     assert p["marker_set"] is False
     assert p["backend_kind"] != "real-dsh"
     assert all(mounted is False for mounted in p["instances_mounted"].values())
-    # Probe breadth = the full contract roster (PRD v0.2: 15): instance keys
-    # are `subagent_<id>`, derived from the canonical registry FILE (no
+    # Probe breadth = the full contract roster (PRD v0.2: 15): the keys are
+    # the role Agent Presets, derived from the canonical registry FILE (no
     # production imports in this package). All values unmounted:
     # registered ≠ active (ADR 0003 D8) — this session has no live bridge.
     import yaml
     with open(os.path.join(PROJECT_ROOT, "config", "agents.yaml")) as fh:
         roster = {a["id"] for a in yaml.safe_load(fh)["agents"]}
-    assert set(p["instances_mounted"]) == {f"subagent_{r}" for r in roster}
+    # 0.2.1-rc.2: the probe reports the role Agent Presets.
+    assert set(p["instances_mounted"]) == {f"role-{r}" for r in roster}
 
 
 def test_checklist_quotes_the_real_g13_precondition_definition():
     text = _checklist_text()
     assert "probe_backend_kind() == real-dsh" in text
-    assert "all 15 `subagent_<id>` instances" in text
+    assert "all 15 role Agent Presets" in text
     assert "DSH_LIVE_BRIDGE_ACTIVE" in text
 
 

@@ -112,8 +112,10 @@ class TestG13LiveExecutionGateAxes:
         p = precondition()
         assert p["all_instances_mounted"] is False
         from orchestrator.foundation.contracts import SPECIALIST_ROLES
+        # 0.2.1-rc.2: the probe reports the role Agent Presets, not the
+        # retired per-sibling `subagent_<id>` instance tools.
         assert set(p["instances_mounted"].keys()) == {
-            f"subagent_{r}" for r in SPECIALIST_ROLES
+            f"role-{r}" for r in SPECIALIST_ROLES
         }
 
     def test_axis_2_d4d7_composition_files_persistent(self):
@@ -122,8 +124,9 @@ class TestG13LiveExecutionGateAxes:
 
         2026-10-10/11 cutover: the 16 presets are registered DIRECTLY from
         this repo by the dsh-multi-agent-harness plugin (the
-        `$DSH_HOME/.agent-presets/` deployment copy is retired), and the 15
-        `tool-subagent-<id>` delegation rows are composed in
+        `$DSH_HOME/.agent-presets/` deployment copy is retired), and the ONE
+        `tool-subagent` delegation row — whose `allowedAgentPresets` names the
+        fifteen role Agent Presets — is composed in
         `orchestrator/agent.cordis.yml` (moved out of the live profile
         patch). "Files persist" is therefore a property of the repo sources
         the live profile links — checked here as source presence plus the
@@ -139,10 +142,15 @@ class TestG13LiveExecutionGateAxes:
         assert ok, f"missing composition sources: {missing}"
         assert len(ALL_PRESETS) == 16
         rows = orchestrator_subagent_rows()
-        expected = {f"subagent_{r}" for r in SPECIALIST_ROLES}
-        assert expected <= set(rows), (
-            f"rows not composed in orchestrator/agent.cordis.yml: "
-            f"{sorted(expected - set(rows))}")
+        # 0.2.1-rc.2: ONE delegation row, and the fifteen role presets are
+        # what it may select through the model-facing `agent_preset` argument.
+        assert set(rows) == {"subagent", "subagent_fork"}, (
+            f"expected the one delegation row, got {sorted(rows)}")
+        expected = {f"role-{r}" for r in SPECIALIST_ROLES}
+        allowed = set(rows["subagent"].get("allowedAgentPresets") or [])
+        assert expected == allowed, (
+            f"the delegation row does not select every role preset: "
+            f"{sorted(expected ^ allowed)}")
 
     # ---- Axis 3: DSH_LIVE_BRIDGE_ACTIVE ----
 

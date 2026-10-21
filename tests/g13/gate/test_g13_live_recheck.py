@@ -173,8 +173,9 @@ class TestG13RecheckAxes:
         assert all(v is False for v in mounted.values()), (
             f"some instances now mounted: {mounted}")
         from orchestrator.foundation.contracts import SPECIALIST_ROLES
+        # 0.2.1-rc.2: the probe reports the role Agent Presets.
         assert set(mounted.keys()) == {
-            f"subagent_{r}" for r in SPECIALIST_ROLES
+            f"role-{r}" for r in SPECIALIST_ROLES
         }
 
     def test_axis_2_composition_files_persistent(self):
@@ -182,8 +183,10 @@ class TestG13RecheckAxes:
 
         2026-10-10/11 cutover: presets are registered directly from the repo
         by the dsh-multi-agent-harness plugin (no `$DSH_HOME/.agent-presets/`
-        deployment copy), and the 15 `tool-subagent-<id>` rows are composed in
-        `orchestrator/agent.cordis.yml` (moved out of the live profile patch).
+        deployment copy), and the ONE `tool-subagent` row — whose
+        `allowedAgentPresets` names the fifteen role Agent Presets — is
+        composed in `orchestrator/agent.cordis.yml` (moved out of the live
+        profile patch).
         Persistence is therefore asserted against the repo sources the live
         profile links — source presence plus the composed row set.
         """
@@ -197,10 +200,14 @@ class TestG13RecheckAxes:
         assert ok, f"missing composition sources: {missing}"
         assert len(ALL_PRESETS) == 16
         rows = orchestrator_subagent_rows()
-        expected = {f"subagent_{r}" for r in SPECIALIST_ROLES}
-        assert expected <= set(rows), (
-            f"rows not composed in orchestrator/agent.cordis.yml: "
-            f"{sorted(expected - set(rows))}")
+        # 0.2.1-rc.2: ONE delegation row selecting the fifteen role presets.
+        assert set(rows) == {"subagent", "subagent_fork"}, (
+            f"expected the one delegation row, got {sorted(rows)}")
+        expected = {f"role-{r}" for r in SPECIALIST_ROLES}
+        allowed = set(rows["subagent"].get("allowedAgentPresets") or [])
+        assert expected == allowed, (
+            f"the delegation row does not select every role preset: "
+            f"{sorted(expected ^ allowed)}")
 
     # ---- Axis 3: REAL backend available ----
 

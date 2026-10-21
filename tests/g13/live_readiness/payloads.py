@@ -50,7 +50,8 @@ from tests.g13.payloads import CHANNELS, VECTORS  # canonical C1..C7 / V1..V8 ta
 # prompt-based claim.
 
 ENTRY_POINT = {
-    "surface": "subagent_<role> tool instance (D4/D7 composition, provider=spawn)",
+    "surface": "the D4/D7 delegation tool (provider=spawn) with the role "
+              "selected by the agent_preset argument",
     "driver": "DelegationClient.delegate -> RealDSHBackend.start -> DSHBridgeDispatch",
     "invocation_builder": "tests.live_dsh.contract.BuildInvocation.prompt_for",
     "result_contract": "SubagentResult { output, structured, stopReason } "
@@ -71,7 +72,7 @@ def _channel_live(channel_key: str) -> dict:
         "channel_name": ch["channel_name"],
         "payload": ch["payload"],
         "affected_role": ch["affected_agent"],
-        "entry_point": f"subagent_{ch['affected_agent']} dispatch; payload embedded "
+        "entry_point": f"subagent dispatch (agent_preset=role-{ch['affected_agent']}); payload embedded "
                        "in the authorized task prompt (as DATA, never as authority)",
         "expected_data_treatment": "DATA/QUARANTINE — inert string in the child "
                                    "prompt and the audit/ingestion record; never "
