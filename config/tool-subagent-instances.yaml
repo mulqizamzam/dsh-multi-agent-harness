@@ -5,14 +5,14 @@
 #
 # What changed in the host:
 #   - `@deepseek-ai/dsh-tool-subagent` REMOVED the per-instance `persona` and
-#     `toolFilter` config keys. It now throws at config time
+#     tool-filter config keys. It now throws at config time
 #     ("tool-subagent: persona is no longer supported; configure persona and
 #     tool plugins in an Agent Preset and select it with agentPreset"), so a
 #     row carrying either of them FAILS TO MOUNT.
-#   - It REMOVED `backgroundMode` and the `enableRunInBackground` config key.
+#   - It REMOVED the background-mode key and the background-run config key.
 #     Continuability is now a provider capability (`prepareContinuable`), not a
 #     row setting.
-#   - The model-facing `run_in_background` argument is gone; role selection is
+#   - The model-facing background-run argument is gone; role selection is
 #     the `agent_preset` argument.
 #
 # What this file therefore records:
@@ -20,7 +20,7 @@
 #                    Agent Presets it may select.
 #   `agent_presets`  the fifteen role presets, each with the tool PLUGINS whose
 #                    rows compose the role's tool surface. The old
-#                    `toolFilter.allow` list became exactly this set:
+#                    per-instance allow list became exactly this set:
 #                    a tool name maps to the plugin that provides it, and the
 #                    plugin's own per-tool config narrows it further.
 #

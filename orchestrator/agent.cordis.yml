@@ -219,7 +219,7 @@
 # outside would resolve a host registry this preset does not populate.
 #
 # The continuable child channel needs no row here. DSH 0.2.1-rc.2 removed the
-# `backgroundMode` config key; continuability is now a PROVIDER capability
+# background-mode config key; continuability is now a PROVIDER capability
 # (`prepareContinuable` on the spawn provider), and the `subagent` tool
 # describes the `send_message` reply channel itself.
 - id: delegation
@@ -237,7 +237,7 @@
     # THE delegation surface for every specialist. One row, one tool:
     # `allowedAgentPresets` lists the fifteen Agent Presets this tool may
     # select, and the model picks one through the `agent_preset` argument
-    # (DSH 0.2.1-rc.2: the per-instance `persona` / `toolFilter` config keys
+    # (DSH 0.2.1-rc.2: the per-instance persona / tool-filter config keys
     # were REMOVED — tool-subagent now THROWS on them, and the persona and the
     # tool surface of a child are its Agent Preset's own plugin rows).
     #
@@ -340,11 +340,11 @@
 # ── per-role delegation surface (rewritten 2026-10-21, DSH 0.2.1-rc.2) ───────
 # The fifteen `tool-subagent-<id>` rows that used to live here are GONE.
 #
-# Each of them declared `persona: role-<id>` and a `toolFilter` allow/deny
+# Each of them declared a persona (the `role-<id>` preset) and a tool-filter allow/deny
 # list. DSH 0.2.1-rc.2 removed both config keys from `@deepseek-ai/dsh-tool-subagent`
 # (it now throws `persona is no longer supported; configure persona and tool
 # plugins in an Agent Preset and select it with agentPreset`), and it removed
-# `backgroundMode` as well. Fifteen model-facing tools became one.
+# a background-mode key as well. Fifteen model-facing tools became one.
 #
 # What replaced them:
 #   - The `tool-subagent` row in the `delegation` group above. It names the
@@ -355,7 +355,7 @@
 #     `@deepseek-ai/dsh-persona` row whose `config.prefix` carries the same
 #     role prose. This plugin registers those files with the preset registry
 #     as `role-<id>`, so the ids in `allowedAgentPresets` resolve.
-#   - The tool surface moved into the same presets. The old `toolFilter.allow`
+#   - The tool surface moved into the same presets. The old per-instance allow
 #     list became the set of tool PLUGINS each preset mounts, with
 #     `@deepseek-ai/dsh-tool-fs` narrowing itself per tool
 #     (`read` / `readImage` / `write` / `edit`) and `@deepseek-ai/dsh-tool-web`

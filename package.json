@@ -1,7 +1,7 @@
 {
   "name": "dsh-multi-agent-harness",
   "version": "0.1.0",
-  "description": "DSH plugin that registers the 16 agent presets (15 role-* specialists + orchestrator) directly from this repo's agents/ + orchestrator/ files with the agent-preset registry. Replaces dsh-agent-preset-roster; no .agent-presets/ deployment copy. Since DSH 0.2.1-rc.2 the orchestrator reaches a role by selecting its preset through the delegation tool's agent_preset argument; the per-instance persona/toolFilter config keys no longer exist.",
+  "description": "DSH plugin that registers the 16 agent presets (15 role-* specialists + orchestrator) directly from this repo's agents/ + orchestrator/ files with the agent-preset registry. Replaces dsh-agent-preset-roster; no .agent-presets/ deployment copy. Since DSH 0.2.1-rc.2 the orchestrator reaches a role by selecting its preset through the delegation tool's agent_preset argument; the per-instance persona and tool-filter config keys no longer exist.",
   "type": "module",
   "main": "index.js",
   "files": [

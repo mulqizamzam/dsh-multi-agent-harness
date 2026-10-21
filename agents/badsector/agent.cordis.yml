@@ -3,7 +3,7 @@
 # controlled DSH composition exception (ADR Decision 4/7); verification:
 # runs/mount-verification-2026-09-07/. Originally authored as the Phase 1C DRAFT
 # (docs/phase-1/0002-role-isolation-draft.md).
-# Version pin: DeepSeek Harness 0.2.1-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin; the per-tool `tool-fs` config replaced the removed per-instance `toolFilter` on 2026-10-21)
+# Version pin: DeepSeek Harness 0.2.1-rc.2 (persona key migrated text:→prefix: on 2026-10-10; this repo is registered directly as DSH presets by the dsh-multi-agent-harness plugin; the per-tool `tool-fs` config replaced the removed per-instance tool filter on 2026-10-21)
 # Source: agents/badsector/AGENT.md + config/role-preset-mapping.yaml
 
 # ── identity ────────────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@
 # ── filesystem ─────────────────────────────────────────────────────────────
 # `tool-fs` registers `read`, `read_image`, `write` and `edit` as one suite.
 # Since DSH 0.2.1-rc.2 the row takes a per-tool config, so this preset can hold
-# the role's old allow list EXACTLY: the host's per-instance `toolFilter` was
+# the role's old allow list EXACTLY: the host's per-instance tool filter was
 # removed in that release, and the preset's own rows are now the boundary.
 # `read` and `read_image` only — `write` and `edit` are switched off below
 # (capabilities.code_write: no).

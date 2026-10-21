@@ -9,9 +9,9 @@
 #
 # MODEL (DSH 0.2.1-rc.2 — rewritten 2026-10-21):
 #   A role is reached by SELECTING AN AGENT PRESET on the one delegation tool.
-#   The host removed the per-instance `persona` and `toolFilter` config keys
+#   The host removed the per-instance persona and tool-filter config keys
 #   from `@deepseek-ai/dsh-tool-subagent` — it now throws on them — and it
-#   removed `backgroundMode`. Fifteen model-facing `subagent_<id>` tools
+#   removed the background-mode key. Fifteen model-facing `subagent_<id>` tools
 #   became one `subagent` tool whose `agent_preset` argument names the role.
 #
 #   A role's tool surface is therefore the set of TOOL PLUGINS its preset
@@ -28,7 +28,7 @@
 #   `@deepseek-ai/dsh-tool-fs` narrows itself per tool (`read` / `readImage` /
 #   `write` / `edit`) and `@deepseek-ai/dsh-tool-web` narrows itself with
 #   `search` / `fetch`, so a preset reproduces the exact tool list its role
-#   had — the granularity loss of the removed `toolFilter` does not apply to
+#   had — the granularity loss of the removed per-instance filter does not apply to
 #   any tool this roster uses.
 #
 # IMPORTANT:

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://multi-agent-harness.local/schemas/role-mapping.schema.json",
   "title": "Role → Agent Preset / tool surface mapping",
-  "description": "Declarative mapping from role definitions to DSH Agent Presets (config/role-preset-mapping.yaml). DSH 0.2.1-rc.2 removed the per-instance persona and toolFilter config keys from @deepseek-ai/dsh-tool-subagent, so a role is reached by SELECTING its Agent Preset through the model-facing agent_preset argument of the one delegation tool; the tool surface below is the set of tool PLUGINS the role's preset mounts. draft_artifacts.status records the mount lifecycle: 'draft' (pre-2026-09-07) or 'mounted' (Human-approved D4/D7 exception executed 2026-09-07). Tool names verified against the DSH 0.2.1-rc.2 catalog.",
+  "description": "Declarative mapping from role definitions to DSH Agent Presets (config/role-preset-mapping.yaml). DSH 0.2.1-rc.2 removed the per-instance persona and tool-filter config keys from @deepseek-ai/dsh-tool-subagent, so a role is reached by SELECTING its Agent Preset through the model-facing agent_preset argument of the one delegation tool; the tool surface below is the set of tool PLUGINS the role's preset mounts. draft_artifacts.status records the mount lifecycle: 'draft' (pre-2026-09-07) or 'mounted' (Human-approved D4/D7 exception executed 2026-09-07). Tool names verified against the DSH 0.2.1-rc.2 catalog.",
   "x-schema-version": 4,
   "type": "object",
   "additionalProperties": false,
