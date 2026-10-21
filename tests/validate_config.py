@@ -128,11 +128,17 @@ FS_TOOL_DEFAULTS = {"read": True, "readImage": True, "write": True, "edit": True
 WEB_TOOL_DEFAULTS = {"search": True, "fetch": True}
 
 
-def _row_config(path, plugin_name):
-    """One plugin row's config in a composition file, or None when absent."""
+def _row_config(path, plugin_name, match_id=None):
+    """One plugin row's config in a composition file, or None when absent.
+
+    @param match_id - when given, the row id that row must carry.
+    """
     for row in _composition_rows(path):
-        if row.get("name") == plugin_name:
-            return dict(row.get("config") or {})
+        if row.get("name") != plugin_name:
+            continue
+        if match_id is not None and row.get("id") != match_id:
+            continue
+        return dict(row.get("config") or {})
     return None
 
 
@@ -506,6 +512,22 @@ def run_checks(root):
               set(allowed) == expected_presets,
               f"missing {sorted(expected_presets - set(allowed))}")
         check("delegation row allowlist has no duplicates", len(allowed) == len(set(allowed)))
+        # The deployment default is what an OMITTED `agent_preset` resolves to.
+        # It must be one of the selectable presets (the host throws otherwise),
+        # and it must not be the orchestrator: the orchestrator is the root
+        # session, never a delegation target.
+        default = cfg.get("agentPreset")
+        check("delegation row default preset is selectable",
+              default is None or default in allowed, f"{default!r}")
+        check("delegation row default preset is a role preset",
+              default is None or default in expected_presets, f"{default!r}")
+        # The record in config/tool-subagent-instances.yaml must not drift from
+        # the composition the host actually mounts.
+        composed = _row_config(os.path.join(root, "orchestrator", "agent.cordis.yml"),
+                                "@deepseek-ai/dsh-tool-subagent", match_id="tool-subagent")
+        check("delegation record matches the composed row",
+              composed is not None and composed == cfg,
+              f"record={cfg} composition={composed}")
 
     # --- the fifteen Agent Preset declarations -------------------------------
     declared = {d.get("id"): d for d in instances.get("agent_presets", [])}
