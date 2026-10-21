@@ -84,9 +84,10 @@ roles:
       agent_preset: role-zeko
     tool_surface:
       # 2026-09-07 (Human-approved discriminator): edit/write removed from
-      # zeko — capabilities.code_write: no is now enforceable at the toolFilter
-      # layer. Raw-write actor set narrows {zeko, cto} -> {cto}; G10 residual
-      # now rests on cto alone.
+      # zeko — capabilities.code_write: no is now enforceable at the tool-surface
+      # layer (the role's preset mounts @deepseek-ai/dsh-tool-fs with
+      # write/edit switched off). Raw-write actor set narrows {zeko, cto} ->
+      # {cto}; G10 residual now rests on cto alone.
       allow: [bash, read, read_image, glob, grep,
               job_kill, job_list, job_output,
               web_search, skill, exit_plan_mode, todo_write]

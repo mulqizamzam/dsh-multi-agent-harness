@@ -14,7 +14,7 @@ These are the **baseline schemas** for the project control plane. They validate 
 | `project-state.schema.json` | A project state document (`state/`) | Phase-1 spec §7.2 |
 | `audit-event.schema.json` | A single project audit event (`audit/`) | Phase-1 spec §7.3 |
 | `role-definition.schema.json` | An agent role policy (`agents/<id>/policy.yaml`) | ADR Decision 4; role definitions |
-| `role-mapping.schema.json` | The role→preset/toolFilter mapping (`config/role-preset-mapping.yaml`) | Phase-1 spec §7.4 |
+| `role-mapping.schema.json` | The role→Agent Preset / tool-surface mapping (`config/role-preset-mapping.yaml`) | Phase-1 spec §7.4 |
 | `agent-registry.schema.json` | The agent registry (`config/agents.yaml`) | Phase-1 spec §2; registry |
 | `orchestrator-policy.schema.json` | The orchestrator role policy (`orchestrator/policy.yaml`) | ADR 0004; orchestrator artifacts |
 
@@ -22,7 +22,7 @@ These are the **baseline schemas** for the project control plane. They validate 
 
 - Each schema carries `x-schema-version` (integer, starts at 1).
 - A breaking change to a validated document's shape bumps the version **and** requires a corresponding migration note in this README.
-- All schemas are pinned to the DSH `0.2.0-rc.2` tool catalog via the tool names they permit (see `role-mapping.schema.json` `tool_filter` note). If the DSH version changes, re-verify tool names and bump affected schemas.
+- All schemas are pinned to the DSH `0.2.1-rc.2` tool catalog via the tool names they permit (see `role-mapping.schema.json` `tool_surface` note). If the DSH version changes, re-verify tool names and bump affected schemas.
 
 ## Validation approach
 
@@ -32,7 +32,7 @@ These are the **baseline schemas** for the project control plane. They validate 
 
 ## Drift guards
 
-- `role-mapping.schema.json` and `role-definition.schema.json` are kept consistent with each other (a role's `tool_filter` in the mapping must match its `policy.yaml`) — enforced by Phase-1B tests (`consistency_rules`). The same equality is now enforced for the orchestrator, between `role-mapping.schema.json` §`orchestrator` and the document `orchestrator-policy.schema.json` validates.
+- `role-mapping.schema.json` and `role-definition.schema.json` are kept consistent with each other (a role's `tool_surface` in the mapping must match its `policy.yaml`) — enforced by `tests/validate_config.py` (`consistency_rules`). The same equality is now enforced for the orchestrator, between `role-mapping.schema.json` §`orchestrator` and the document `orchestrator-policy.schema.json` validates.
 - `role-definition.schema.json` constrains `role` to the **fifteen** specialist ids, so a sixteenth specialist cannot be introduced silently. The orchestrator is deliberately **not** in that enum — it has its own schema.
 - **`role` is not one vocabulary across these schemas.** `agent-registry.schema.json` uses the same key for a different namespace: `$defs.agentEntry.role` is constrained to the fifteen **domain slugs** (`operations`, `engineering`, … — matching `config/agents.yaml` `agents[].role`), while `properties.orchestrator.role` is the free-form string `"Orchestrator"`. Do not assume a `role` value valid in one schema is valid in another.
 

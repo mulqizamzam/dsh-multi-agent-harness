@@ -396,7 +396,7 @@ capabilities:
 # approval never — they analyze, verify, and report; they never execute.
 
 # 2026-09-07 (Human-approved discriminator, task 3 of "laksanakan 1-4"),
-# extended 2026-09-09 (PRD v0.2): roles whose toolFilter allow sets are
+# extended 2026-09-09 (PRD v0.2): roles whose tool SURFACE allow sets are
 # intentionally identical must be declared here; any identical pair NOT
 # covered by a declared group fails validation (tests/validate_config.py).
 # Every declared group's members must actually share one allow set, so a

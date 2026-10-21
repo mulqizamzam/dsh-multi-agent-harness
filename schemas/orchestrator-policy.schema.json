@@ -2,11 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://multi-agent-harness.local/schemas/orchestrator-policy.schema.json",
   "title": "Orchestrator coordination policy (orchestrator/policy.yaml)",
-  "description": "Declarative policy for the coordination layer, bound to the root session (orchestrator/policy.yaml). Deliberately a SEPARATE schema from role-definition.schema.json: that one is the contract for the fifteen specialists and closes `role` to their ids with additionalProperties:false, so it can never accept the orchestrator, which is not a sixteenth specialist (PRD §4, ADR 0001 D3). Adds the coordination-only keys kind, binding, delegation and authority over the specialist template. Control-plane input; NOT native DSH authorization — orchestrator/contract.md remains the security boundary (THREAT-025) and the session toolFilter is an L2 backstop. Tool names verified against DSH 0.1.1-rc.2 catalog (docs/tool-catalog.md); tool_filter allow/deny must stay set-equal with config/role-preset-mapping.yaml §orchestrator (enforced by tests/validate_config.py).",
-  "x-schema-version": 1,
+  "description": "Declarative policy for the coordination layer, bound to the root session (orchestrator/policy.yaml). Deliberately a SEPARATE schema from role-definition.schema.json: that one is the contract for the fifteen specialists and closes `role` to their ids with additionalProperties:false, so it can never accept the orchestrator, which is not a sixteenth specialist (PRD §4, ADR 0001 D3). Adds the coordination-only keys kind, binding, delegation and authority over the specialist template. Control-plane input; NOT native DSH authorization — orchestrator/contract.md remains the security boundary (THREAT-025) and the session tool surface is an L2 backstop. Tool names verified against the DSH 0.2.1-rc.2 catalog (docs/tool-catalog.md); tool_surface allow/deny must stay set-equal with config/role-preset-mapping.yaml §orchestrator (enforced by tests/validate_config.py).",
+  "x-schema-version": 2,
   "type": "object",
   "additionalProperties": false,
-  "required": ["role", "id", "kind", "binding", "role_version", "status", "version_pin", "display_name", "domain", "summary", "capabilities", "sandbox_approval_intent", "delegation", "authority", "tool_filter", "prohibited_actions", "invariants", "review_trigger"],
+  "required": ["role", "id", "kind", "binding", "role_version", "status", "version_pin", "display_name", "domain", "summary", "capabilities", "sandbox_approval_intent", "delegation", "authority", "tool_surface", "prohibited_actions", "invariants", "review_trigger"],
   "properties": {
     "role": { "const": "orchestrator" },
     "id": { "const": "orchestrator", "$comment": "registry-parity alias of `role` (config/agents.yaml §orchestrator)" },
@@ -73,7 +73,7 @@
         "escalation_target": { "const": "human" }
       }
     },
-    "tool_filter": { "$ref": "#/$defs/toolFilter" },
+    "tool_surface": { "$ref": "#/$defs/toolSurface" },
     "prohibited_actions": {
       "type": "array",
       "minItems": 1,
@@ -106,7 +106,7 @@
     "review_trigger": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
   },
   "$defs": {
-    "toolFilter": {
+    "toolSurface": {
       "type": "object",
       "additionalProperties": false,
       "required": ["allow", "deny"],

@@ -1,13 +1,13 @@
 # ============================================================================
 # ORCHESTRATOR — Declarative Role Policy (coordination layer)
 #
-# Version pin: DeepSeek Harness 0.1.1-rc.2 (tool names verified against
+# Version pin: DeepSeek Harness 0.2.1-rc.2 (tool names verified against
 # docs/tool-catalog.md; same pin as every agents/<id>/policy.yaml).
 # Status: FINALIZED CONTENT, NEW ARTIFACT. Every statement below restates a
 # decision already recorded elsewhere; this file introduces no new boundary and
 # changes no tool name. It is control-plane input — NOT native DSH
 # authorization: orchestrator/contract.md remains the security boundary
-# (THREAT-025) and the session toolFilter remains an L2 backstop.
+# (THREAT-025) and the session tool surface remains an L2 backstop.
 #
 # Sources (all read; nothing here is inferred):
 #   - orchestrator/AGENT.md            mission, capability boundary, invariants
@@ -15,7 +15,7 @@
 #   - orchestrator/agent.cordis.yml    the preset composition ADR 0004 derives
 #                                      from this declared surface (D3 deletions)
 #   - config/role-preset-mapping.yaml  §orchestrator (binding, delegation_tools,
-#                                      tool_filter allow/deny/notes — copied)
+#                                      tool_surface allow/deny/notes — copied)
 #   - config/agents.yaml               §orchestrator (kind: coordination)
 #   - config/permissions.yaml          capability vocabulary + agent_defaults
 #   - docs/adr/0001 (Decision 3, hybrid) and docs/adr/0004 (role preset)
@@ -31,11 +31,11 @@
 # files name. The specialist-shared invariants (no_self_delegation,
 # subdelegation_deny_by_default, never_authorizes) are declared below and are
 # now actually checked, and the validator additionally asserts that this file's
-# tool_filter and delegation_tools stay set-equal with
+# tool_surface and delegation_tools stay set-equal with
 # config/role-preset-mapping.yaml §orchestrator. Keys below deliberately mirror
 # the specialist template
 # (role / role_version / status / version_pin / display_name / domain /
-# summary / capabilities / sandbox_approval_intent / tool_filter /
+# summary / capabilities / sandbox_approval_intent / tool_surface /
 # prohibited_actions / invariants / review_trigger); the coordination-only
 # additions are kind, binding, delegation, and authority — plus `id`, which is
 # a registry-parity alias of `role` (config/agents.yaml §orchestrator).
@@ -47,7 +47,7 @@ kind: coordination            # NOT a sixteenth specialist (PRD §4; ADR 0001 D3
 binding: root_session         # config/role-preset-mapping.yaml §orchestrator
 role_version: 1
 status: finalized             # content status inherited from orchestrator/AGENT.md
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: Orchestrator
 domain: Coordination & Delegation
 summary: >
@@ -113,16 +113,17 @@ authority:
   gate_enforcement: code_enforced       # model judgment and prose never bypass it
   escalation_target: human
 
-# Session toolFilter INTENT, copied verbatim from
-# config/role-preset-mapping.yaml §orchestrator.tool_filter.
-tool_filter:
+# Session tool surface INTENT, copied verbatim from
+# config/role-preset-mapping.yaml §orchestrator.tool_surface.
+#
+# The fifteen `subagent_<id>` names are GONE: DSH 0.2.1-rc.2 collapsed them
+# into the ONE delegation tool `subagent`, whose model-facing `agent_preset`
+# argument names the role preset the child is composed from. `subagent` is
+# therefore the whole delegation surface this role list has.
+tool_surface:
   allow: [read, read_image, glob, grep, edit, write, bash,
           job_kill, job_list, job_output,
           subagent, subagent_fork, send_message, interrupt_agent, list_agents,
-          subagent_zeko, subagent_cto, subagent_cfo, subagent_kai,
-          subagent_somad, subagent_badsector, subagent_nova,
-          subagent_vera, subagent_argus, subagent_atlas, subagent_tess,
-          subagent_quill, subagent_scout, subagent_talon, subagent_ledger,
           workflow, skill, ask_user_question, exit_plan_mode, present,
           create_goal, get_goal, update_goal, todo_write, web_search]
   deny: [ralph, str_replace_editor, lsp, run_code, pwsh, web_fetch,
@@ -141,9 +142,9 @@ tool_filter:
     and reversible internal actions within delegation, ALWAYS through the
     execution gate — which is why capabilities.code_write is "no" while the
     write tools stay on the surface. For specialists that pairing is enforced by
-    the toolFilter (2026-09-07 discriminator); for the root session it is
-    enforced by the execution gate and the control-plane contract (THREAT-025),
-    the session toolFilter being the L2 backstop. HIGH-risk actions
+    the role's preset composition (2026-09-07 discriminator); for the root
+    session it is enforced by the execution gate and the control-plane contract
+    (THREAT-025), the session tool surface being the L2 backstop. HIGH-risk actions
     (production/destructive/financial/credential/material publication) are
     never executed directly — they route to a specialist under authority +
     approval (ORC-002). ralph and the agent-team tools are out of scope for the

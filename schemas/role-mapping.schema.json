@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://multi-agent-harness.local/schemas/role-mapping.schema.json",
-  "title": "Role → preset/toolFilter mapping",
-  "description": "Declarative mapping from role definitions to DSH Agent Presets + per-role tool-subagent instances (config/role-preset-mapping.yaml). draft_artifacts.status records the mount lifecycle: 'draft' (pre-2026-09-07) or 'mounted' (Human-approved D4/D7 exception executed 2026-09-07). Tool names verified against DSH 0.1.1-rc.2 catalog.",
-  "x-schema-version": 3,
+  "title": "Role → Agent Preset / tool surface mapping",
+  "description": "Declarative mapping from role definitions to DSH Agent Presets (config/role-preset-mapping.yaml). DSH 0.2.1-rc.2 removed the per-instance persona and toolFilter config keys from @deepseek-ai/dsh-tool-subagent, so a role is reached by SELECTING its Agent Preset through the model-facing agent_preset argument of the one delegation tool; the tool surface below is the set of tool PLUGINS the role's preset mounts. draft_artifacts.status records the mount lifecycle: 'draft' (pre-2026-09-07) or 'mounted' (Human-approved D4/D7 exception executed 2026-09-07). Tool names verified against the DSH 0.2.1-rc.2 catalog.",
+  "x-schema-version": 4,
   "type": "object",
   "additionalProperties": false,
   "required": ["mapping_version", "status", "version_pin", "documentation_ref", "preset_naming_convention", "instance_naming_convention", "roles", "orchestrator", "consistency_rules"],
@@ -42,7 +42,7 @@
     "roleEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "preset", "policy_ref", "tool_instance", "tool_filter"],
+      "required": ["id", "preset", "policy_ref", "tool_instance", "tool_surface"],
       "properties": {
         "id": { "enum": ["zeko", "cto", "cfo", "kai", "somad", "badsector", "nova", "vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger"] },
         "preset": { "type": "string", "pattern": "^role-[a-z]+$" },
@@ -50,16 +50,15 @@
         "tool_instance": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["tool_name", "provider", "background_mode", "max_depth", "persona"],
+          "required": ["tool_name", "provider", "max_depth", "agent_preset"],
           "properties": {
-            "tool_name": { "type": "string", "pattern": "^subagent_[a-z]+$" },
+            "tool_name": { "const": "subagent", "$comment": "the ONE delegation tool; the role is chosen by the model-facing agent_preset argument, not by a per-role tool name" },
             "provider": { "const": "spawn" },
-            "background_mode": { "enum": ["continuable", "one-shot"] },
             "max_depth": { "type": "integer", "minimum": 1 },
-            "persona": { "type": "string" }
+            "agent_preset": { "type": "string", "pattern": "^role-[a-z]+$" }
           }
         },
-        "tool_filter": {
+        "tool_surface": {
           "type": "object",
           "additionalProperties": false,
           "required": ["allow", "deny"],
@@ -74,7 +73,7 @@
     "orchestratorEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "binding", "policy_ref", "delegation_tools", "tool_filter"],
+      "required": ["id", "binding", "policy_ref", "delegation_tools", "tool_surface"],
       "properties": {
         "id": { "const": "orchestrator" },
         "binding": { "const": "root_session" },
@@ -83,7 +82,7 @@
           "type": "array",
           "items": { "enum": ["subagent", "subagent_fork", "send_message", "interrupt_agent", "list_agents", "workflow"] }
         },
-        "tool_filter": {
+        "tool_surface": {
           "type": "object",
           "additionalProperties": false,
           "required": ["allow", "deny"],
