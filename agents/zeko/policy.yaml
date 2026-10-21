@@ -51,11 +51,12 @@ tool_surface:
     bash is scoped to ops diagnosis and delegation-bounded operations; ops
     file changes are channel-routed through the execution gate (edit/write
     removed from this role's allow on 2026-09-07 so the tool surface matches
-    Deny contract: the hard prohibitions named above are realised by the
-    role's preset composition — a tool the role may not use is either not
-    mounted or switched off by its plugin's per-tool config. Subdelegation is
-    structural rather than a deny list: the preset mounts no delegation
-    plugin, so a child of this role has no delegation tool in its catalog.
+    capabilities.code_write: no). Deny contract: the hard prohibitions named
+    above are realised by the role's preset composition — a tool the role
+    may not use is either not mounted or switched off by its plugin's
+    per-tool config. Subdelegation is structural rather than a deny list:
+    the preset mounts no delegation plugin, so a child of this role has no
+    delegation tool in its catalog.
 
 prohibited_actions: [code_architecture_change, financial_transaction, credential_change]
 

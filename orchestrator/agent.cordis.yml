@@ -256,6 +256,12 @@
         provider: spawn
         toolName: subagent
         maxDepth: 1
+        # The fallback when the model omits `agent_preset`. Without a default
+        # an omitted selection INHERITS the parent's composition — the
+        # orchestrator persona, its whole tool set and the delegation tool
+        # itself — so the child would be an orchestrator copy rather than a
+        # specialist. zeko (operations) is the roster's first role.
+        agentPreset: role-zeko
         allowedAgentPresets:
           - role-zeko
           - role-cto

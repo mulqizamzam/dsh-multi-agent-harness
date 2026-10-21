@@ -41,14 +41,16 @@ tool_surface:
   deny: [bash, edit, write, web_search]
   unmounted_candidates: []
   notes: >
-    BadSector NEVER executes the reviewed plan. web_search is excluded from the
-    review surface: reviews inspect the proposal + evidence set (project-local
-    reads) rather than fetching new material. PASS from this role is advisory
-    Deny contract: the hard prohibitions named above are realised by the
-    role's preset composition — a tool the role may not use is either not
-    mounted or switched off by its plugin's per-tool config. Subdelegation is
-    structural rather than a deny list: the preset mounts no delegation
-    plugin, so a child of this role has no delegation tool in its catalog.
+    BadSector NEVER executes the reviewed plan. web_search is excluded from
+    the review surface: reviews inspect the proposal + evidence set
+    (project-local reads) rather than fetching new material. PASS from this
+    role is advisory only and never authorizes execution (INV-03,
+    AUTH-INV-09). Deny contract: the hard prohibitions named above are
+    realised by the role's preset composition — a tool the role may not use
+    is either not mounted or switched off by its plugin's per-tool config.
+    Subdelegation is structural rather than a deny list: the preset mounts
+    no delegation plugin, so a child of this role has no delegation tool in
+    its catalog.
 
 prohibited_actions: [any_mutation, any_execution, delegation_write]
 

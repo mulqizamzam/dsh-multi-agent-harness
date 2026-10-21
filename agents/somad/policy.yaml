@@ -40,13 +40,14 @@ tool_surface:
   deny: [bash, edit, write]
   unmounted_candidates: []
   notes: >
-    Publishing is NOT a tool in this role: social_publishing is scoped_approval
-    at the capability level and is performed only through the control plane with
-    explicit Human approval. This role drafts content via the project channel
-    (no raw write/edit); it never publishes on its own. No bash — no
-    Deny contract: the hard prohibitions named above are realised by the
-    role's preset composition — a tool the role may not use is either not
-    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    Publishing is NOT a tool in this role: social_publishing is
+    scoped_approval at the capability level and is performed only through
+    the control plane with explicit Human approval. This role drafts content
+    via the project channel (no raw write/edit); it never publishes on its
+    own. No bash — no infrastructure capability (ISO-004). Deny contract:
+    the hard prohibitions named above are realised by the role's preset
+    composition — a tool the role may not use is either not mounted or
+    switched off by its plugin's per-tool config. Subdelegation is
     structural rather than a deny list: the preset mounts no delegation
     plugin, so a child of this role has no delegation tool in its catalog.
 

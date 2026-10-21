@@ -1,4 +1,4 @@
-"""ADR 0004 regression: the orchestrator preset is `standard` minus 4 rows plus 15 named delegation instances.
+"""ADR 0004 regression: the orchestrator preset is `standard` minus 4 rows.
 
 `orchestrator/agent.cordis.yml` is a DSH preset composition derived by COPY from
 the shipped `standard` preset (read-only checkout), with exactly four rows
@@ -6,11 +6,14 @@ deleted: `tool-pwsh` (top-level) and `tool-subagent-codex`,
 `tool-subagent-claude-code`, `tool-ralph` (all three nested inside the
 `delegation` group).
 
-2026-10-11 addition: the preset also carries fifteen ADDED rows — the
-`tool-subagent-<id>` delegation instances moved here from the global layer of
-the live profile patch (see the section comment in the composition). They are
-the orchestrator's only delegation surface, they exist in no version of
-`standard`, so the set delta is now DELETE 4 + ADD 15 rather than delete-only.
+2026-10-11 addition (now reverted by the 2026-10-21 port): the preset
+carried fifteen ADDED rows — the `tool-subagent-<id>` delegation instances. DSH
+0.2.1-rc.2 removed the per-instance `persona` / `toolFilter` config keys, so
+those rows cannot exist: the delegation surface is ONE `tool-subagent` row
+whose model-facing `agent_preset` argument selects one of the fifteen role
+Agent Presets, and each role's own composition (`agents/<id>/agent.cordis.yml`)
+carries its tool surface. The set delta is DELETE 4 again, and the role
+presets are checked against their own sources, not against `standard`.
 The derivation's purpose is unchanged: upstream drift must still fail loudly.
 
 A preset is a copy, so an upstream change to `standard` never propagates into it
@@ -26,7 +29,7 @@ runs/orchestrator-preset-2026-09-12/verify_preset.py (fixed with the recursive
 `all_row_ids()` walker that `test_deleted_rows_are_nested_not_top_level` pins
 down). Any future verifier of this preset must count recursively too.
 
-Version pin: DeepSeek Harness 0.2.0-rc.2 — the 29/40 counts are counts *in that
+Version pin: DeepSeek Harness 0.2.1-rc.2 — the 32/28 counts are counts *in that
 composition*, not a universal constant.
 """
 
@@ -64,20 +67,15 @@ NESTED_DELETED_ROWS = DELETED_ROWS - {"tool-pwsh"}
 # NO LONGER drift — kept here as the record of the measurement that found them.
 RESOLVED_DRIFTED_ROWS = frozenset({"present", "tool-plugin-manager"})
 
-# 2026-10-11: the fifteen per-role delegation instances MOVED here from the
-# global layer of the live profile patch ($DSH_HOME/profiles/web/cordis.patch.yml).
-# They are the orchestrator's only delegation surface (role-preset-mapping.yaml
-# §orchestrator) and are named in orchestrator/policy.yaml's tool_surface.allow,
-# so the preset is no longer a pure derivation: standard - 4 + 15.
-ADDED_ROWS = frozenset(
-    {
-        "tool-subagent-zeko", "tool-subagent-cto", "tool-subagent-cfo",
-        "tool-subagent-kai", "tool-subagent-somad", "tool-subagent-badsector",
-        "tool-subagent-nova", "tool-subagent-vera", "tool-subagent-argus",
-        "tool-subagent-atlas", "tool-subagent-tess", "tool-subagent-quill",
-        "tool-subagent-scout", "tool-subagent-talon", "tool-subagent-ledger",
-    }
-)
+# 2026-10-21 (DSH 0.2.1-rc.2 port): the fifteen `tool-subagent-<id>` rows are
+# GONE. The host removed the per-instance `persona` / `toolFilter` config keys
+# from `@deepseek-ai/dsh-tool-subagent` (it now throws on them), so a role can
+# no longer be reached through its own model-facing tool. The delegation
+# surface is ONE `tool-subagent` row whose `allowedAgentPresets` names the
+# fifteen role Agent Presets, and the model picks one through the `agent_preset`
+# argument. The orchestrator preset is therefore `standard` minus the same
+# four rows again: no added rows.
+ADDED_ROWS = frozenset()
 
 STANDARD_ROW_COUNT = 32
 ORCHESTRATOR_ROW_COUNT = STANDARD_ROW_COUNT - len(DELETED_ROWS) + len(ADDED_ROWS)
@@ -87,8 +85,8 @@ ACTION = (
     "ACTION: re-derive orchestrator/agent.cordis.yml from the shipped `standard` "
     "preset (ADR 0004) — copy the current composition verbatim, delete only "
     f"{sorted(DELETED_ROWS)}, restore the orchestrator `persona` text, and keep "
-    f"the {len(ADDED_ROWS)} added delegation instances ({sorted(ADDED_ROWS)}) "
-    "moved here from the profile patch on 2026-10-11. The upstream drift found "
+    "the delegation surface is the single `tool-subagent` row whose "
+    "`allowedAgentPresets` names the fifteen role Agent Presets. The upstream drift found "
     f"the same day ({sorted(RESOLVED_DRIFTED_ROWS)}) was resolved by carrying both "
     "rows; if upstream drifts again, repeat that decision explicitly. ADR 0004 "
     "creates no automatic propagation, so this test is the only signal that the "
@@ -194,8 +192,8 @@ def orchestrator_rows(project_root):
     return load_rows(path)
 
 
-def test_recursive_row_counts_are_32_and_43(standard_rows, orchestrator_rows):
-    """Counts are recursive: 32 upstream, 43 here (28 derivation + 15 added)."""
+def test_recursive_row_counts_are_32_and_28(standard_rows, orchestrator_rows):
+    """Counts are recursive: 32 upstream, 28 here (the derivation alone)."""
     std, orc = ids_of(standard_rows), ids_of(orchestrator_rows)
     assert len(std) == STANDARD_ROW_COUNT, (
         f"the shipped `standard` preset now has {len(std)} recursive rows, not the "
@@ -208,12 +206,14 @@ def test_recursive_row_counts_are_32_and_43(standard_rows, orchestrator_rows):
     )
 
 
-def test_delta_is_exactly_four_deleted_and_fifteen_added(standard_rows, orchestrator_rows):
-    """Set delta vs standard: 4 documented deletions, 15 documented additions.
+def test_delta_is_exactly_four_deleted_and_none_added(standard_rows, orchestrator_rows):
+    """Set delta vs standard: 4 documented deletions, no additions.
 
     The 2026-10-11 upstream drift (present, tool-plugin-manager) was resolved by
     carrying both rows, so it is not part of the live delta; if either goes
-    missing again this test fails with them named as undocumented absences.
+    missing again this test fails with them named as undocumented absences. The
+    fifteen per-role delegation rows are gone (DSH 0.2.1-rc.2), so a row this
+    composition does not carry is an undocumented DELETION and fails here.
     """
     std, orc = set(ids_of(standard_rows)), set(ids_of(orchestrator_rows))
     removed, added = std - orc, orc - std

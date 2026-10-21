@@ -42,14 +42,15 @@ tool_surface:
   unmounted_candidates: [web_fetch]
   notes: >
     web_fetch is currently DISABLED in the standard preset (SSRF posture, no
-    fetch provider). If deep-document research requires fetch, enabling it is a
-    controlled DSH composition exception requiring SSRF review (ADR UNKNOWN #6).
-    Until then Kai uses web_search only. No project file write without an
-    Deny contract: the hard prohibitions named above are realised by the
-    role's preset composition — a tool the role may not use is either not
-    mounted or switched off by its plugin's per-tool config. Subdelegation is
-    structural rather than a deny list: the preset mounts no delegation
-    plugin, so a child of this role has no delegation tool in its catalog.
+    fetch provider). If deep-document research requires fetch, enabling it
+    is a controlled DSH composition exception requiring SSRF review (ADR
+    UNKNOWN #6). Until then Kai uses web_search only. No project file write
+    without an explicit grant (ISO-003). Deny contract: the hard
+    prohibitions named above are realised by the role's preset composition —
+    a tool the role may not use is either not mounted or switched off by its
+    plugin's per-tool config. Subdelegation is structural rather than a deny
+    list: the preset mounts no delegation plugin, so a child of this role
+    has no delegation tool in its catalog.
 
 prohibited_actions: [project_file_write_without_grant, credential_change]
 

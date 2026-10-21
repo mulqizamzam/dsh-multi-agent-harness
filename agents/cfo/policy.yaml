@@ -41,13 +41,14 @@ tool_surface:
   deny: [bash, edit, write]
   unmounted_candidates: []
   notes: >
-    CFO has NO execution path: read-only tools only. Any financial transaction
-    requires a fresh delegation + Human approval and is never performed by this
-    Deny contract: the hard prohibitions named above are realised by the
-    role's preset composition — a tool the role may not use is either not
-    mounted or switched off by its plugin's per-tool config. Subdelegation is
-    structural rather than a deny list: the preset mounts no delegation
-    plugin, so a child of this role has no delegation tool in its catalog.
+    CFO has NO execution path: read-only tools only. Any financial
+    transaction requires a fresh delegation + Human approval and is never
+    performed by this role directly (RISK-003). Deny contract: the hard
+    prohibitions named above are realised by the role's preset composition —
+    a tool the role may not use is either not mounted or switched off by its
+    plugin's per-tool config. Subdelegation is structural rather than a deny
+    list: the preset mounts no delegation plugin, so a child of this role
+    has no delegation tool in its catalog.
 
 prohibited_actions: [financial_transaction, code_write, credential_change, production_deploy]
 

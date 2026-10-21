@@ -38,7 +38,14 @@ def test_validator_covers_new_roles(project_root):
         assert names.get(f"perm {rid} defaults approval never") is True
         assert names.get(f"perm adversarial_review reserved (not {rid})") is True
         assert names.get(f"{rid} never_authorizes invariant declared") is True
-        assert names.get(f"{rid} deny covers sibling instances") is True
+        # DSH 0.2.1-rc.2: the per-role delegation instances and their sibling
+        # deny lists are gone. The checks that replaced them say the same
+        # thing about the role: its Agent Preset carries exactly its declared
+        # tool surface, and the role is reached through the one delegation
+        # tool's `agent_preset` argument.
+        assert names.get(f"{rid} allow == preset composition tool surface") is True
+        assert names.get(f"{rid} agent_preset names its own preset") is True
+        assert names.get(f"{rid} tool_name is the single delegation tool") is True
 
 
 def test_baseline_registry_untouched_except_declared(project_root):

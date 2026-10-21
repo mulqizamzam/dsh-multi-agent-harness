@@ -67,6 +67,10 @@ insert_draft:
       provider: spawn
       toolName: subagent
       maxDepth: 1
+      # Fallback when the model omits `agent_preset`: an omitted selection
+      # inherits the parent's composition, which would make the child an
+      # orchestrator copy. zeko (operations) is the roster's first role.
+      agentPreset: role-zeko
       allowedAgentPresets:
           - role-zeko
           - role-cto

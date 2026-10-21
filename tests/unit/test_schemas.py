@@ -149,8 +149,8 @@ class TestSchemas:
                     + NEW_IDS):
             roles.append({
                 "id": rid, "preset": f"role-{rid}", "policy_ref": f"agents/{rid}/policy.yaml",
-                "tool_instance": {"tool_name": f"subagent_{rid}", "provider": "spawn",
-                                  "background_mode": "continuable", "max_depth": 1, "persona": f"role-{rid}"},
+                "tool_instance": {"tool_name": "subagent", "provider": "spawn",
+                                  "max_depth": 1, "agent_preset": f"role-{rid}"},
                 "tool_surface": {"allow": ["read"], "deny": ["bash", "edit", "write"]},
             })
         doc = {
