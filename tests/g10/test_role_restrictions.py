@@ -120,18 +120,42 @@ def test_o5_somad_nova_deny_write_edit(role_filters):
         "somad must hard-deny bash (ISO-004)"
 
 
-def test_specialists_hard_deny_sibling_delegation_instances(role_filters):
-    """Subdelegation DENY BY DEFAULT at the REAL delegation surface: every
-    specialist's deny list hard-names all fourteen sibling subagent_<id>
-    instances (global-layer rows, restrictable from every child). The
-    generic "subagent" deny never blocked these — restriction matching is
-    exact-name. Roster derives from the contract (PRD v0.2; ADR 0003 D4)."""
+def test_specialists_mount_no_delegation_plugin(project_root, role_filters):
+    """Subdelegation DENY BY DEFAULT at the REAL delegation surface.
+
+    DSH 0.2.1-rc.2 removed the per-instance `persona` / `toolFilter` config
+    keys, so there is no per-sibling `subagent_<id>` tool left to name in a
+    deny list — the tools themselves are gone. The boundary is structural
+    instead: a specialist's Agent Preset mounts no delegation plugin at all,
+    so its child has no delegation tool in its catalog, and the one delegation
+    tool the orchestrator holds carries `maxDepth: 1`. Roster derives from the
+    contract (PRD v0.2; ADR 0003 D4)."""
+    import yaml
+
+    class JsSafeLoader(yaml.SafeLoader):
+        """`yaml.SafeLoader` that ACCEPTS the `!!js` dialect tag as opaque text.
+
+        The compositions carry `disabled: !!js process.platform === 'win32'`,
+        which plain `safe_load` rejects. The tag is mapped to its source text
+        and never evaluated — the same approach as
+        tests/unit/test_preset_source_integrity.py."""
+
+    JsSafeLoader.add_constructor(
+        "tag:yaml.org,2002:js",
+        lambda loader, node: loader.construct_scalar(node))
+
     instances = {f"subagent_{r}" for r in SPECIALIST_ROLES}
     for rid, f in role_filters.items():
-        siblings = instances - {f"subagent_{rid}"}
-        assert siblings <= f["deny"], (
-            f"{rid} must hard-deny sibling delegation instances: "
-            f"{sorted(siblings - f['deny'])}")
+        assert not (f["deny"] & instances), (
+            f"{rid} must not name the retired per-sibling delegation tools: "
+            f"{sorted(f['deny'] & instances)}")
+        with open(os.path.join(project_root, "agents", rid,
+                               "agent.cordis.yml")) as handle:
+            composition = yaml.load(handle.read(), Loader=JsSafeLoader)
+        mounted = {row.get("name") for row in composition if isinstance(row, dict)}
+        delegation = {name for name in mounted if name and "tool-subagent" in name}
+        assert not delegation, (
+            f"{rid} must mount no delegation plugin: {sorted(delegation)}")
 
 
 def test_allow_deny_disjoint(role_filters):

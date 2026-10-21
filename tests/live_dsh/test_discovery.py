@@ -19,23 +19,19 @@ class TestRoleResolution:
         assert set(resolver.keys()) == set(SPECIALIST_ROLES)
         assert len(resolver) == len(SPECIALIST_ROLES)  # PRD v0.2: 15 (ADR 0003 D1)
 
-    def test_each_role_has_correct_tool_name(self):
-        """Each role resolves to the expected D4/D7 tool_name."""
-        expected = {
-            "zeko": "subagent_zeko",
-            "cto": "subagent_cto",
-            "cfo": "subagent_cfo",
-            "kai": "subagent_kai",
-            "somad": "subagent_somad",
-            "badsector": "subagent_badsector",
-            "nova": "subagent_nova",
-        }
+    def test_each_role_resolves_to_its_agent_preset(self):
+        """Each role resolves to its own role-<id> Agent Preset.
+
+        0.2.1-rc.2 has ONE delegation tool, so the resolution names the preset
+        the model selects rather than a per-role tool name.
+        """
         result = assert_role_resolution()
-        for role, tool in expected.items():
-            assert result[role] == tool, f"{role} -> {result[role]}, expected {tool}"
+        for role in SPECIALIST_ROLES:
+            assert result[role] == f"role-{role}", (
+                f"{role} -> {result[role]}, expected role-{role}")
 
     def test_each_role_has_persona_role_name(self):
-        """Each instance's persona matches the D4/D7 naming convention role-<id>."""
+        """Each instance selects the role-<id> Agent Preset (D4/D7 naming)."""
         instances = resolve_all_role_instances()
         for role, inst in instances.items():
             assert inst.agent_preset == f"role-{role}", f"{role} preset={inst.agent_preset}"
@@ -71,8 +67,9 @@ class TestMountProbe:
         """Without the marker, every instance is NOT_MOUNTED."""
         saved = os.environ.pop(DISCOVERY_MARKER_ENV, None)
         try:
-            for tool in [f"subagent_{r}" for r in SPECIALIST_ROLES]:
-                assert not check_instance_mounted(tool), f"{tool} should be unmounted"
+            for preset in [f"role-{r}" for r in SPECIALIST_ROLES]:
+                assert not check_instance_mounted("subagent"), (
+                    f"the delegation tool must be unmounted for {preset}")
         finally:
             if saved is not None:
                 os.environ[DISCOVERY_MARKER_ENV] = saved
@@ -81,6 +78,6 @@ class TestMountProbe:
         """With the marker, probe returns mounted."""
         os.environ[DISCOVERY_MARKER_ENV] = "1"
         try:
-            assert check_instance_mounted("subagent_cto")
+            assert check_instance_mounted("subagent")
         finally:
             os.environ.pop(DISCOVERY_MARKER_ENV, None)

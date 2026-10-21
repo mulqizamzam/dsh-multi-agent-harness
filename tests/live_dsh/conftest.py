@@ -146,11 +146,15 @@ def real_backend(recording_bridge):
 
 
 @pytest.fixture(params=[
-    (rid, f"subagent_{rid}")
+    (rid, f"role-{rid}")
     for rid in SPECIALIST_ROLES
 ])
 def role_adapter(request):
-    """Parametrized fixture: yields each of the 15 role adapters."""
-    role, expected_tool = request.param
+    """Parametrized fixture: yields each of the 15 role adapters.
+
+    The second element is the Agent Preset the role selects: 0.2.1-rc.2 has
+    ONE delegation tool, so the preset is what tells the roles apart.
+    """
+    role, expected_preset = request.param
     adapter = build_role_adapter(role)
-    return adapter, expected_tool
+    return adapter, expected_preset

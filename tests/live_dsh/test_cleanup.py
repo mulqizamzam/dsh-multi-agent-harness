@@ -39,7 +39,7 @@ class TestCleanup:
         backend = RealDSHBackend(_dispatch, require_marker=False)
         run = backend.start(_instance("cto"), {"task_id": task.task_id})
         children = backend.list_children("orchestrator-root")
-        assert any(c["tool_name"] == "subagent_cto" for c in children)
+        assert any(c["tool_name"] == "subagent" for c in children)
         assert run.run_id == "r-abc"
 
     def test_interrupt_marks_child(self):

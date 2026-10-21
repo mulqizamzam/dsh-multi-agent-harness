@@ -33,7 +33,7 @@ ENTRYPOINT_MODULE = "orchestrator.entrypoint"
 SMOKE_DOC = os.path.join(PROJECT_ROOT, "docs", "phase-5", "entrypoint",
                          "smoke", "0001-dsh-chat-productionrun-smoke-readiness.md")
 REAL_REGISTRY_FILE = os.path.join(PROJECT_ROOT, "state", "registry", "README.md")
-REAL_REGISTRY_SHA = "8f539c65290f4cf47e8fa4327e44258c85375baf0b1247bc8504c8708c52a352"
+REAL_REGISTRY_SHA = "eae973b2244f1e17f1cc4e896f66335ff892329e692d69b588bed491030c4e2b"
 
 # Names/patterns banned from the entrypoint source (no raw DSH bypass).
 BANNED_TOOLS = {

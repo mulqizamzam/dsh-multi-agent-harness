@@ -50,8 +50,11 @@ class TestPerRoleInvocation:
     def test_role_invoked_via_approved_instance(
             self, client, backend, task_factory, delegation_factory,
             role, objective):
-        """Each role is delegated through its subagent_<id> instance and
-        returns a validated TaskResult preserving role identity."""
+        """Each role is delegated through the one delegation tool and returns a
+        validated TaskResult preserving role identity.
+
+        DSH 0.2.1-rc.2: there is one `subagent` tool; the role travels in the
+        `agent_preset` argument, so the provenance names that preset."""
         task = task_factory(role=role, objective=f"{objective} task")
         delegation = delegation_factory(task_id=task.task_id)
         backend.register_result(f"subagent_{role}",
@@ -66,7 +69,7 @@ class TestPerRoleInvocation:
         # ROLE IDENTITY preserved
         assert outcome.result.assigned_role == role
         assert outcome.provenance.role == role
-        assert outcome.provenance.tool_name == f"subagent_{role}"
+        assert outcome.provenance.tool_name == "subagent"
         assert outcome.provenance.agent_preset == f"role-{role}"
         # RUNTIME PROVENANCE preserved
         assert outcome.provenance.delegation_id == delegation.id
@@ -84,7 +87,7 @@ class TestPerRoleInvocation:
         client.delegate(task, delegation)
         calls = backend.start_calls()
         assert len(calls) == 1
-        assert calls[0]["tool_name"] == "subagent_cto"
+        assert calls[0]["tool_name"] == "subagent"
         assert calls[0]["role"] == "cto"
         assert calls[0]["prompt"]["task_id"] == task.task_id
 

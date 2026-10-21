@@ -9,10 +9,14 @@ from .conftest import make_task, make_delegation
 
 class TestAllRoleAdapters:
     def test_role_adapter_tool_names(self, role_adapter):
-        """Each parametrized role resolves to the expected subagent_<id>."""
-        adapter, expected_tool = role_adapter
-        assert adapter.tool_name == expected_tool
-        assert adapter.agent_preset == f"role-{adapter.role}"
+        """Each parametrized role selects its own Agent Preset.
+
+        0.2.1-rc.2 has ONE delegation tool (`subagent`); the role is the
+        `agent_preset` the model passes in.
+        """
+        adapter, expected_preset = role_adapter
+        assert adapter.tool_name == "subagent"
+        assert adapter.agent_preset == expected_preset == f"role-{adapter.role}"
 
     def test_adapter_builds_context_and_invocation(self, role_adapter):
         """Each role adapter builds an authorized context + DSH invocation."""
@@ -53,17 +57,19 @@ class TestAllRoleAdapters:
                     f"{role} must not allow {tool}"
 
     def test_badsector_is_review_only(self):
-        """BadSector denies web_search, write/exec tools, and the six sibling
-        delegation instances — the real delegation surface (restriction
-        matching is exact-name, so the generic workflow-realm tools, which
-        are not on a specialist child's inherited chain, are not deny
-        entries under the canonical deny contract)."""
+        """BadSector denies web_search and the write/exec tools.
+
+        The sibling `subagent_<id>` deny entries are gone: 0.2.1-rc.2 has ONE
+        delegation tool, so there is no per-sibling tool to name. Subdelegation
+        is structural instead — BadSector's Agent Preset mounts no delegation
+        plugin, so its child has no delegation tool in its catalog.
+        """
         from .adapters import ROLE_ADAPTERS
         badsector = ROLE_ADAPTERS["badsector"]
-        for tool in ("bash", "edit", "write", "web_search",
-                     "subagent_cto", "subagent_cfo", "subagent_kai",
-                     "subagent_somad", "subagent_nova", "subagent_zeko"):
+        for tool in ("bash", "edit", "write", "web_search"):
             assert tool in badsector.deny, f"badsector must deny {tool}"
+        assert not any(name.startswith("subagent_") for name in badsector.deny), (
+            f"the sibling delegation tools no longer exist: {badsector.deny}")
 
     def test_no_delegation_tool_in_any_allow(self):
         """Subdelegation DENY BY DEFAULT: no specialist allows delegation tools."""

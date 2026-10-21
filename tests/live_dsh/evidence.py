@@ -46,7 +46,7 @@ class BridgeEvidence:
     role: str = ""
     delegation_id: str = ""
     tool_name: str = ""
-    persona: str = ""
+    agent_preset: str = ""
     backend_kind: str = BackendKind.FAKE.value
     mounted: bool = False
     invocation: dict = dc_field(default_factory=dict)

@@ -151,7 +151,9 @@ class TestLiveMode:
         # The stub dispatch was called exactly once (one role: kai).
         assert len(calls) == 1, f"dispatch was called {len(calls)} times"
         assert calls[0]["instance_role"] == "kai"
-        assert calls[0]["instance_tool"] == "subagent_kai"
+        # DSH 0.2.1-rc.2: ONE delegation tool; the role travels in the
+        # `agent_preset` argument.
+        assert calls[0]["instance_tool"] == "subagent"
 
         # Real child run_id captured in provenance within the flow result.
         flow_result = result.state["flow_result"]
@@ -161,7 +163,8 @@ class TestLiveMode:
         assert provenance.get("run_id") == "real-run-0001", \
             f"expected real-run-0001, got {provenance.get('run_id')!r}"
         assert provenance.get("role") == "kai"
-        assert provenance.get("tool_name") == "subagent_kai"
+        assert provenance.get("tool_name") == "subagent"
+        assert provenance.get("agent_preset") == "role-kai"
 
     def test_backend_kind_real_observable(self, ws, delegation):
         """BoundedExecutor.last_flow.probe_backend() shows REAL when
