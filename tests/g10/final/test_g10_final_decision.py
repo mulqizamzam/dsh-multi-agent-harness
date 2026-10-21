@@ -120,7 +120,7 @@ def test_actor_set_derived_from_current_config():
         mapping = yaml.safe_load(f)
     raw_write = set()
     for role in mapping["roles"]:
-        allow = set(role["tool_filter"]["allow"])
+        allow = set(role["tool_surface"]["allow"])
         if {"bash", "write", "edit"} & allow:
             raw_write.add(role["id"])
     assert raw_write == {"zeko", "cto"}, (
@@ -135,7 +135,7 @@ def test_readonly_roles_unchanged():
     with open(mapping_path) as f:
         mapping = yaml.safe_load(f)
     for role in mapping["roles"]:
-        deny = set(role["tool_filter"]["deny"])
+        deny = set(role["tool_surface"]["deny"])
         if role["id"] in ("badsector", "cfo", "kai"):
             assert "bash" in deny and "write" in deny and "edit" in deny, (
                 f"Read-only role {role['id']} missing raw-write denial")

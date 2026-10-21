@@ -56,4 +56,4 @@ Own server/runtime monitoring, process health, logs, deployment operations, and 
 
 ---
 
-*See `policy.yaml` for the declarative policy. See `config/role-preset-mapping.yaml` for the role→preset/toolFilter mapping.*
+*See `policy.yaml` for the declarative policy. See `config/role-preset-mapping.yaml` for the role→Agent Preset / tool-surface mapping.*

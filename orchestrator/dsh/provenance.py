@@ -49,10 +49,9 @@ class DelegationProvenance:
     delegation_id: str
     task_id: str
     role: str
-    tool_name: str          # subagent_<id>
-    persona: str            # role-<id>
+    tool_name: str          # subagent — the one delegation tool
+    agent_preset: str       # role-<id> — the preset the child is composed from
     instance_max_depth: int = 1
-    background_mode: str = "continuable"
     provider: str = "spawn"
     actor: str = "orchestrator"
     session_id: str = "orchestrator-root"
@@ -76,9 +75,8 @@ class DelegationProvenance:
             task_id=getattr(task, "task_id", ""),
             role=getattr(task, "assigned_role", ""),
             tool_name=instance.tool_name,
-            persona=instance.persona,
+            agent_preset=instance.agent_preset,
             instance_max_depth=instance.max_depth,
-            background_mode=instance.background_mode,
             provider=instance.provider,
             session_id=_session_id(),
             run_id=getattr(run, "run_id", "") or "",

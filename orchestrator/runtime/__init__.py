@@ -17,7 +17,7 @@
 #   - orchestrator.execution for the EXECUTE+VERIFY+RECOVERY assurance engine
 #   - state.helpers / audit.helpers for persistence and append-only audit
 #
-# No DSH core, profile, preset, session policy, role toolFilter, or inline
+# No DSH core, profile, preset, session policy, role tool surface, or inline
 # DSH configuration is modified by this module.
 
 from __future__ import annotations

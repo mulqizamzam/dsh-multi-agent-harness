@@ -1,6 +1,6 @@
 """Session C — G10: DSH 0.1.1-rc.2 capability evidence (static source facts).
 
-These tests assert the DSH sandbox and toolFilter capabilities by reading
+These tests assert the DSH sandbox and tool-surface capabilities by reading
 the read-only DSH source checkout at `/home/administrator/deepseek-harness`.
 They pass when the checkout is available; skip gracefully when absent.
 
@@ -133,7 +133,7 @@ def test_no_path_level_filter_exists(checkout):
 
 
 # ---------------------------------------------------------------------------
-# toolFilter is tool-level only
+# the tool surface is tool-level only
 # ---------------------------------------------------------------------------
 
 def test_tool_restriction_is_tool_level(checkout):

@@ -44,10 +44,12 @@ STOP_REFUSAL = "refusal"
 STOP_REASONS = (STOP_COMPLETED, STOP_ABORTED, STOP_ERROR,
                 STOP_MAX_TOKENS, STOP_REFUSAL)
 
-# Model-facing tool parameters (tool-subagent/src/index.ts:316-335).
-# The tool exposes description + prompt (+ run_in_background when enabled);
-# NO provider/type/agent parameter is exposed to the model.
-TOOL_PARAMETER_KEYS = ("description", "prompt")
+# Model-facing tool parameters (tool-subagent/src/index.ts:222-265).
+# The tool exposes description + prompt + agent_preset; NO provider/type/agent
+# parameter is exposed to the model. `agent_preset` names the Agent Preset
+# the child is composed from — it replaced the removed `run_in_background`
+# argument and the per-instance persona/toolFilter config.
+TOOL_PARAMETER_KEYS = ("description", "prompt", "agent_preset")
 
 # Output `kind` vocabulary (tool-subagent/src/index.ts:336-364).
 FOREGROUND_KIND = "foreground"
@@ -69,18 +71,18 @@ class DSHInvocation:
     - `prompt`: the standalone task prompt handed to the child. It must be
       SELF-CONTAINED (the child does NOT see the parent conversation for a
       spawn provider; inheritsParentContext=false — VERIFIED).
-    - `run_in_background`: False for the orchestrator's foreground delegation
-      (the runtime waits on the result before proceeding).
+    - `agent_preset`: the Agent Preset the child is composed from
+      (`role-<id>`) — the model-facing role selector since 0.2.1-rc.2.
     - `output_schema`: the JSON Schema the child must satisfy through the
       `structured_output` tool so the bridge can capture a structured
       TaskResult from `SubagentResult.structured`.
-    - `persona` / `tool_filter` / `max_depth`: composition the mounted instance
-      already carries from the D4/D7 row; the bridge does NOT re-declare them
-      (they are instance config, not per-call args).
+    - `provider` / `max_depth`: composition the mounted delegation row already
+      carries; the bridge does NOT re-declare them (they are row config, not
+      per-call args).
     """
     description: str
     prompt: str
-    run_in_background: bool = False
+    agent_preset: str = ""
     output_schema: dict = field(default_factory=dict)
 
     def to_tool_args(self) -> dict:
@@ -89,15 +91,15 @@ class DSHInvocation:
             "description": self.description,
             "prompt": self.prompt,
         }
-        if self.run_in_background is not None:
-            args["run_in_background"] = self.run_in_background
+        if self.agent_preset:
+            args["agent_preset"] = self.agent_preset
         return args
 
     def to_dict(self) -> dict:
         return {
             "description": self.description,
             "prompt": self.prompt,
-            "run_in_background": self.run_in_background,
+            "agent_preset": self.agent_preset,
             "output_schema": self.output_schema,
         }
 
@@ -115,6 +117,12 @@ class BuildInvocation:
     def description_for(task) -> str:
         role = getattr(task, "assigned_role", "")
         return f"{role}: delegated subtask"
+
+    @staticmethod
+    def agent_preset_for(task) -> str:
+        """The Agent Preset the child is composed from (`role-<id>`)."""
+        role = getattr(task, "assigned_role", "")
+        return f"role-{role}" if role else ""
 
     @staticmethod
     def prompt_for(task, delegation) -> str:
@@ -140,7 +148,7 @@ class BuildInvocation:
         return DSHInvocation(
             description=cls.description_for(task),
             prompt=cls.prompt_for(task, delegation),
-            run_in_background=False,
+            agent_preset=cls.agent_preset_for(task),
             output_schema=output_schema,
         )
 

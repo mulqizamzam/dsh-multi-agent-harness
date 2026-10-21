@@ -48,9 +48,9 @@ from .backend import (
     STOP_COMPLETED,
 )
 
-# Environment variable the orchestrator session sets when the D4/D7 composition
-# is mounted and the `subagent_<id>` tools are available for delegation (same
-# convention as tests/live_dsh/discovery.py).
+# Environment variable the orchestrator session sets when the composition is
+# mounted and the `subagent` delegation tool is available (same convention as
+# tests/live_dsh/discovery.py).
 BRIDGE_MARKER_ENV = "DSH_LIVE_BRIDGE_ACTIVE"
 
 # DSH stop-reason vocabulary (mirrors SubagentStopReasonMap in 0.1.1-rc.2).
@@ -65,7 +65,7 @@ class BackendKind(enum.Enum):
 
       FAKE        — the deterministic in-process FakeSubagentBackend (always
                     usable; the unit-test deterministic default).
-      REAL        — the live D4/D7 `subagent_<id>` bridge (requires the
+      REAL        — the live `subagent` bridge (requires the
                     DSH_LIVE_BRIDGE_ACTIVE marker AND an injected dispatch).
       UNAVAILABLE — a REAL execution was requested but the bridge is not
                     available (no marker / no dispatch). Fail-closed: the flow
@@ -84,14 +84,14 @@ def probe_backend_kind() -> BackendKind:
     Without the marker, the bridge is UNAVAILABLE — this probe NEVER assumes
     a live bridge exists. It does NOT dispatch.
     """
-    if check_instance_mounted("subagent_probe"):
+    if check_instance_mounted("subagent"):
         # The marker is instance-agnostic: it gates the whole composition.
         return BackendKind.REAL
     return BackendKind.UNAVAILABLE
 
 
 def check_instance_mounted(tool_name: str) -> bool:
-    """Probe whether one `subagent_<id>` instance is mounted.
+    """Probe whether the delegation tool is mounted.
 
     Without a live session probe this returns True ONLY when the
     BRIDGE_MARKER_ENV environment variable is set — the orchestrator session
@@ -138,23 +138,24 @@ class DSHBridgeResponse:
 
 @dataclass(frozen=True)
 class DSHInvocation:
-    """The exact DSH tool-subagent call the real bridge issues.
+    """The exact DSH `subagent` call the real bridge issues.
 
     - `description`: short (3-5 word) display label (tool param).
     - `prompt`: the standalone task prompt handed to the child. It must be
       SELF-CONTAINED (the child does NOT see the parent conversation for a
       spawn provider; inheritsParentContext=false).
-    - `run_in_background`: False for the orchestrator's foreground delegation.
+    - `agent_preset`: the role's Agent Preset (`role-<id>`), the value the
+      model passes in the `agent_preset` argument of the ONE `subagent` tool.
     - `output_schema`: the JSON Schema the child must satisfy through the
       `structured_output` tool so the bridge can capture a structured
       TaskResult from `SubagentResult.structured`.
-    - `persona` / `tool_filter` / `max_depth`: composition the mounted instance
-      already carries; the bridge does NOT re-declare them.
+    - `provider` / `max_depth`: composition the mounted delegation row already
+      carries; the bridge does NOT re-declare them.
     """
     description: str
     prompt: str
     role: str = ""
-    run_in_background: bool = False
+    agent_preset: str = ""
     output_schema: dict = dc_field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -162,7 +163,7 @@ class DSHInvocation:
             "description": self.description,
             "prompt": self.prompt,
             "role": self.role,
-            "run_in_background": self.run_in_background,
+            "agent_preset": self.agent_preset,
             "output_schema": self.output_schema,
         }
 
@@ -219,7 +220,7 @@ DEFAULT_TASK_RESULT_SCHEMA = _load_task_result_schema()
 
 
 class DSHBridgeDispatch:
-    """The injected bridge that performs the ACTUAL `subagent_<id>` tool call.
+    """The injected bridge that performs the ACTUAL `subagent` tool call.
 
     The orchestrator session supplies an implementation when the D4/D7
     composition is mounted. The contract:
@@ -261,7 +262,7 @@ class _RealDSHRun(DelegationRun):
 
 
 class RealDSHBackend(DelegationBackend):
-    """DelegationBackend over the REAL mounted `subagent_<id>` instances.
+    """DelegationBackend over the REAL mounted `subagent` delegation tool.
 
     Parameters
     ----------
@@ -295,6 +296,7 @@ class RealDSHBackend(DelegationBackend):
               signal=None, timeout_seconds: float | None = None) -> DelegationRun:
         tool_name = getattr(instance, "tool_name", "")
         role = getattr(instance, "role", "")
+        agent_preset = getattr(instance, "agent_preset", "")
 
         # Build the DSH invocation from the authorized prompt dict. The prompt
         # must be the authorized context the runtime produced (THREAT-020).
@@ -310,7 +312,7 @@ class RealDSHBackend(DelegationBackend):
             description=description,
             prompt=task_prompt,
             role=role,
-            run_in_background=False,
+            agent_preset=agent_preset,
             output_schema=output_schema,
         )
 

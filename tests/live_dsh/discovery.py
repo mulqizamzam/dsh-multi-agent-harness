@@ -52,19 +52,19 @@ def resolve_all_role_instances() -> dict[str, SubagentInstance]:
 def assert_role_resolution() -> dict[str, str]:
     """Assert that every defined specialist role resolves to an instance.
 
-    Returns {role: tool_name} for all 15 roles. Raises on any failure.
+    Returns {role: agent_preset} for all 15 roles. Raises on any failure.
     """
     from orchestrator.foundation.contracts import SPECIALIST_ROLES
     resolver = RoleResolver()
     result = {}
     for role in SPECIALIST_ROLES:
         inst = resolver.resolve(role)
-        result[role] = inst.tool_name
+        result[role] = inst.agent_preset
     return result
 
 
 def check_instance_mounted(tool_name: str) -> bool:
-    """Probe whether one `subagent_<id>` instance is mounted.
+    """Probe whether the `subagent` delegation tool is mounted.
 
     Without a live session probe, this returns True ONLY when the
     DISCOVERY_MARKER_ENV environment variable is set — the orchestrator
@@ -78,16 +78,17 @@ def check_instance_mounted(tool_name: str) -> bool:
 
 
 def probe_all_instances_mounted() -> dict[str, bool]:
-    """Probe all 15 role instances for mount status.
+    """Probe the delegation tool for mount status, once per role preset.
 
-    Returns {tool_name: mounted} for each D4/D7 instance.
+    Returns {agent_preset: mounted}. Every role shares the one `subagent`
+    tool, so the preset is what tells them apart.
     """
     from orchestrator.foundation.contracts import SPECIALIST_ROLES
     resolver = RoleResolver()
     result = {}
     for role in SPECIALIST_ROLES:
         inst = resolver.resolve(role)
-        result[inst.tool_name] = check_instance_mounted(inst.tool_name)
+        result[inst.agent_preset] = check_instance_mounted(inst.tool_name)
     return result
 
 

@@ -4,7 +4,7 @@
 #
 # Scope (write-only per session brief): this package, docs/operations/, and
 # tests/observability/. It does NOT modify control/*, orchestrator/*,
-# agents/config/toolFilters, DSH, profiles/presets, session policy, or enable
+# agents/config tool surfaces, DSH, profiles/presets, session policy, or enable
 # new tools. It does NOT create a second audit implementation — it reuses the
 # existing audit helpers (append_log.read_events_strict / verify_append_only,
 # integrity.verify_chain) read-only.

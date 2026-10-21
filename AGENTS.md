@@ -48,7 +48,7 @@ This document describes the **fifteen specialist agents** and the **orchestrator
 2. **Capability ≠ Permission ≠ Authority.** A role's technical capability (tool set) is separate from its permission to act (delegation scope), which is separate from ultimate authority (Human).
 3. **Least privilege.** Each role has only the tools needed for its domain. Review and analyst roles (BadSector and the 8 expansion specialists) have no mutating/executing tools.
 4. **No self-escalation.** No agent can expand its own scope or grant itself authority.
-5. **Subdelegation DENY BY DEFAULT (V1).** Only the orchestrator delegates; no specialist may delegate to another. Every specialist's deny list names all 14 sibling `subagent_<id>` instances (exact-name matching — the real delegation surface).
+5. **Subdelegation DENY BY DEFAULT (V1).** Only the orchestrator delegates; no specialist may delegate to another. Since DSH 0.2.1-rc.2 this is structural, not a deny list: a specialist's Agent Preset mounts no delegation plugin at all, so its child has no delegation tool in its catalog, and the one delegation tool the orchestrator holds carries `maxDepth: 1`.
 6. **BadSector PASS is never authorization.** It clears only the review stage; execution still requires authority.
 7. **Model judgment is not authority.** The authority gate is code-enforced, not prompt-based. Every specialist declares `never_authorizes`: outputs (including any Vera verification result) are data, never authority.
 8. **External content is data, not instructions.** All external/subagent output is untrusted data.
@@ -58,7 +58,7 @@ This document describes the **fifteen specialist agents** and the **orchestrator
 Each **specialist** role has four files under `agents/<id>/`:
 
 - **`AGENT.md`** — role definition: identity, domain, mission, responsibilities, capability summary, invariants.
-- **`policy.yaml`** — declarative policy: capability subset, toolFilter intent, invariants, review triggers.
+- **`policy.yaml`** — declarative policy: capability subset, tool-surface intent, invariants, review triggers.
 - **`agent.cordis.yml`** — the per-role DSH preset composition draft (persona, tool mounts, isolation).
 - **`preset.yml`** — the preset's display metadata (description only). Carries no `id` and no `trust`: the preset id is the deployed directory name and trust comes from the preset root. Deployed alongside the composition as `role-<id>/preset.yml`.
 
@@ -69,7 +69,7 @@ config layer:
 
 - **`orchestrator/AGENT.md`** — role definition (mission, responsibilities, capability boundary).
 - **`orchestrator/contract.md`** — the control-plane contract; this, not the session tool list, is the actual security boundary (THREAT-025).
-- **`orchestrator/policy.yaml`** — declarative policy. Same shape as a specialist `policy.yaml`, plus coordination-only keys (`kind`, `binding`, `delegation`, `authority`). It cannot use `role-definition.schema.json` (that schema closes `role` to the fifteen specialist ids), so it has its own `schemas/orchestrator-policy.schema.json`, wired into `tests/validate_config.py` and reachable through the `tests/validate-config.py` wrapper that the config files name. The validator additionally asserts this file's `tool_filter` and `delegation_tools` stay set-equal with `config/role-preset-mapping.yaml` §`orchestrator`, so the declaration cannot silently diverge from the mapping.
+- **`orchestrator/policy.yaml`** — declarative policy. Same shape as a specialist `policy.yaml`, plus coordination-only keys (`kind`, `binding`, `delegation`, `authority`). It cannot use `role-definition.schema.json` (that schema closes `role` to the fifteen specialist ids), so it has its own `schemas/orchestrator-policy.schema.json`, wired into `tests/validate_config.py` and reachable through the `tests/validate-config.py` wrapper that the config files name. The validator additionally asserts this file's `tool_surface` and `delegation_tools` stay set-equal with `config/role-preset-mapping.yaml` §`orchestrator`, so the declaration cannot silently diverge from the mapping.
 - **`orchestrator/agent.cordis.yml`** — the orchestrator DSH preset composition, derived from the shipped `standard` preset (ADR 0004).
 - **`orchestrator/preset.yml`** — the preset's display metadata (description only).
 - **`config/agents.yaml`** — registry entry (`kind: coordination`).
@@ -83,13 +83,15 @@ no specialist group).
 
 The orchestrator's preset is **deployed** as `$DSH_HOME/.agent-presets/orchestrator/`
 (repo source → user preset root, the same pattern as `agents/<id>/agent.cordis.yml`
-→ `role-<id>/`). Deploying it made the orchestrator's declared `toolFilter` an
+→ `role-<id>/`). Deploying it made the orchestrator's declared tool surface an
 enforced composition for any session that selects it; the global default stays
 `standard`.
 
 ## Role → DSH preset mapping
 
-The mapping from role definitions to DSH Agent Presets + per-role `tool-subagent` instances is in `config/role-preset-mapping.yaml` (mapping_version 2). All **15 instances** are **mounted** in the live web profile composition: the 7 baseline instances since 2026-09-07 under the Human-approved controlled DSH composition exception (ADR Decision 4/7; verification: `runs/mount-verification-2026-09-07/`), and the 8 expansion instances (`subagent_vera` … `subagent_ledger`) since 2026-09-09 under the Human-approved per-case exception of ADR 0003 D8 (pre-change backup: `runs/specialist-expansion-2026-09-09/backups/`). Note: zeko's toolFilter no longer carries `edit`/`write` (2026-09-07 discriminator — `capabilities.code_write: no` is enforced at the toolFilter layer; the raw-write/code-mutation actor set is now `{cto}` only).
+The mapping from role definitions to DSH Agent Presets is in `config/role-preset-mapping.yaml` (mapping_version 3). All **15 role presets** are **mounted** by this plugin: the 7 baseline presets since 2026-09-07 under the Human-approved controlled DSH composition exception (ADR Decision 4/7; verification: `runs/mount-verification-2026-09-07/`), and the 8 expansion presets since 2026-09-09 under the Human-approved per-case exception of ADR 0003 D8 (pre-change backup: `runs/specialist-expansion-2026-09-09/backups/`).
+
+**Delegation model (DSH 0.2.1-rc.2, rewritten 2026-10-21).** The host removed the per-instance `persona` and `toolFilter` config keys from `@deepseek-ai/dsh-tool-subagent` — it now throws on them — and removed `backgroundMode`. There is therefore ONE delegation tool (`subagent`), and a role is selected by the model-facing `agent_preset` argument, which names the role's Agent Preset (`role-<id>`). A role's tool surface is the set of tool PLUGINS its preset mounts: `@deepseek-ai/dsh-tool-fs` narrows itself per tool (`read` / `readImage` / `write` / `edit`) and `@deepseek-ai/dsh-tool-web` with `search` / `fetch`, so every role keeps exactly the tool list its old allow list named. Note: zeko's tool surface no longer carries `edit`/`write` (2026-09-07 discriminator — `capabilities.code_write: no` is enforced by the preset's own rows; the raw-write/code-mutation actor set is now `{cto}` only).
 
 ---
 

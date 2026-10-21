@@ -12,7 +12,7 @@ class TestAllRoleAdapters:
         """Each parametrized role resolves to the expected subagent_<id>."""
         adapter, expected_tool = role_adapter
         assert adapter.tool_name == expected_tool
-        assert adapter.persona == f"role-{adapter.role}"
+        assert adapter.agent_preset == f"role-{adapter.role}"
 
     def test_adapter_builds_context_and_invocation(self, role_adapter):
         """Each role adapter builds an authorized context + DSH invocation."""
@@ -22,7 +22,7 @@ class TestAllRoleAdapters:
         ctx = adapter.build_context(task, delegation)
         assert ctx["assigned_role"] == adapter.role
         inv = adapter.build_invocation(task, delegation)
-        assert inv.run_in_background is False
+        assert inv.agent_preset == f"role-{adapter.role}"
         assert inv.output_schema["properties"]["assigned_role"]["enum"]
 
     def test_adapter_mounted_flag_is_false_without_marker(self, role_adapter):
@@ -41,7 +41,7 @@ class TestAllRoleAdapters:
 
     def test_write_capable_roles_allow_write(self):
         """Post-O5 + 2026-09-07 zeko discriminator: only CTO still allows
-        workspace write/edit at the toolFilter layer (ops file changes are
+        workspace write/edit at the tool-surface layer (ops file changes are
         channel-routed through the execution gate; zeko keeps bash for
         diagnosis)."""
         from .adapters import ROLE_ADAPTERS

@@ -127,7 +127,7 @@ class TestDshNativeBoundary:
                                "role-preset-mapping.yaml")) as f:
             mapping = yaml.safe_load(f)
         for role in mapping["roles"]:
-            allow = set(role["tool_filter"]["allow"])
+            allow = set(role["tool_surface"]["allow"])
             assert "web_fetch" not in allow, (
                 f"role {role['id']} would enable web_fetch — prohibited by "
                 "G13 hard constraints")
@@ -140,7 +140,7 @@ class TestDshNativeBoundary:
                                "role-preset-mapping.yaml")) as f:
             mapping = yaml.safe_load(f)
         for role in mapping["roles"]:
-            allow = set(role["tool_filter"]["allow"])
+            allow = set(role["tool_surface"]["allow"])
             secretish = {t for t in allow if any(
                 s in t.lower() for s in ("secret", "credential", "token",
                                          "api_key"))}

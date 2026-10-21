@@ -102,10 +102,17 @@ from tests.d4d7_composition import (  # noqa: E402
 # D8 mount exception (Human-approved 2026-09-09) applied all 15 rows + presets;
 # the 2026-10-10/11 cutover then changed WHERE they live: the plugin registers
 # the presets directly from `agents/<id>/` + `orchestrator/` (repo sources are
-# the persistence fact), and the 15 rows are composed inside the orchestrator
-# preset. Pre-change backup: runs/specialist-expansion-2026-09-09/backups/.
+# the persistence fact), and the delegation row is composed inside the
+# orchestrator preset. Since DSH 0.2.1-rc.2 the host removed the per-instance
+# `persona` / `toolFilter` config keys and `backgroundMode`, so the 15
+# per-role instances became ONE delegation tool whose `allowedAgentPresets`
+# names the 15 role presets and whose model-facing `agent_preset` argument
+# selects the role. Pre-change backup:
+# runs/specialist-expansion-2026-09-09/backups/.
 ROLE_PRESETS = tuple(f"role-{rid}" for rid in SPECIALIST_ROLES)
-ROLE_INSTANCE_IDS = tuple(f"subagent_{rid}" for rid in SPECIALIST_ROLES)
+# The roster a role is selected from: the preset ids the delegation tool's
+# allowedAgentPresets lists.
+ROLE_INSTANCE_IDS = ROLE_PRESETS
 # Explicit alias for config-level rosters (same tuple; kept for readability
 # at call sites that mean "the whole contract pool").
 ALL_INSTANCE_IDS = ROLE_INSTANCE_IDS
@@ -498,13 +505,14 @@ def _check_d4d7(report: ReadinessReport) -> None:
                 f"to this check, the sources are repo files)")))
 
     report.add(ReadinessCheck(
-        "L3ENV-D4D7-2", "15 tool-subagent instance rows composed in "
-        "orchestrator/agent.cordis.yml",
+        "L3ENV-D4D7-2", "delegation row composed in orchestrator/agent.cordis.yml "
+        "with all 15 role presets selectable",
         passed=rows,
         required=False,
         detail=(f"instance_rows_present={rows} instances={list(ROLE_INSTANCE_IDS)} "
-                f"source=orchestrator/agent.cordis.yml (rows moved out of the "
-                f"live profile patch 2026-10-11)")))
+                f"source=orchestrator/agent.cordis.yml (the 15 per-role rows "
+                f"became ONE delegation tool with allowedAgentPresets in "
+                f"DSH 0.2.1-rc.2)")))
 
     report.add(ReadinessCheck(
         "L3ENV-D4D7-3", f"live bridge marker set ({BRIDGE_MARKER_ENV}=1)",

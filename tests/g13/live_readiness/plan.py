@@ -65,8 +65,8 @@ def live_test_plan() -> dict:
         "status": "PREPARED (BLOCKED until a REAL DSH child is observable)",
         "precondition": precondition(),
         "runtime_entry_point": {
-            "surface": "subagent_<role> D4/D7 tool instance (provider=spawn, "
-                       "backgroundMode=continuable, maxDepth=1)",
+            "surface": "the D4/D7 delegation tool (provider=spawn, maxDepth=1) "
+                       "with the role selected by the agent_preset argument",
             "driver": "DelegationClient.delegate -> RealDSHBackend.start -> "
                       "DSHBridgeDispatch (tests/live_dsh/real_backend.py)",
             "prompt_builder": "tests.live_dsh.contract.BuildInvocation.prompt_for "

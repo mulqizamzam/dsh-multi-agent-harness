@@ -195,7 +195,7 @@ class TestVectorV5RequestSecrets:
                                "role-preset-mapping.yaml")) as f:
             mapping = yaml.safe_load(f)
         for role in mapping["roles"]:
-            allow = set(role["tool_filter"]["allow"])
+            allow = set(role["tool_surface"]["allow"])
             # web_fetch is hard out-of-scope for G13 (0003 §8). The allow set
             # is read from the live config and asserted PER ROLE, so a
             # violation names the role that would enable it (the same shape

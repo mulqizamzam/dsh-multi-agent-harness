@@ -232,8 +232,8 @@ def role_filters():
                            "role-preset-mapping.yaml")) as f:
         mapping = yaml.safe_load(f)
     return {r["id"]: {
-        "allow": set(r["tool_filter"]["allow"]),
-        "deny": set(r["tool_filter"]["deny"]),
+        "allow": set(r["tool_surface"]["allow"]),
+        "deny": set(r["tool_surface"]["deny"]),
     } for r in mapping["roles"]}
 
 

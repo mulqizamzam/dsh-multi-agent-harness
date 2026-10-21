@@ -7,10 +7,13 @@
 #      `agents/<id>/` registers as `role-<id>`, and `orchestrator/` registers
 #      as `orchestrator`. The `$DSH_HOME/.agent-presets/` deployment copy is
 #      RETIRED — there is nothing to sync and nothing deployed.
-#   2. The 15 `tool-subagent-<id>` delegation rows moved OUT of the live
-#      profile patch (`$DSH_HOME/profiles/web/cordis.patch.yml`) INTO the
-#      orchestrator preset composition (`orchestrator/agent.cordis.yml`), so
-#      that only orchestrator-bound sessions gain `subagent_<id>`.
+#   2. The delegation rows live in the orchestrator preset composition
+#      (`orchestrator/agent.cordis.yml`), so that only orchestrator-bound
+#      sessions gain the delegation tool. Since DSH 0.2.1-rc.2 there is ONE
+#      row: the host removed the per-instance `persona` / `toolFilter` config
+#      keys and `backgroundMode`, and a role is selected by the model-facing
+#      `agent_preset` argument naming the role's Agent Preset. A role's tool
+#      surface is the set of tool PLUGINS its preset mounts.
 #
 # This module is the single reader for both facts. Every readiness probe,
 # gate axis, and O5 containment check asserts against the SAME parsed repo
@@ -91,24 +94,37 @@ def orchestrator_composition_path() -> str:
     return os.path.join(PROJECT_ROOT, ORCHESTRATOR_ID, COMPOSITION_FILE)
 
 
-def orchestrator_subagent_rows() -> dict[str, dict]:
-    """The 15 delegation rows composed in the orchestrator preset.
-
-    Returns {toolName: row-config} for every row whose id starts with
-    `tool-subagent-`, e.g. {"subagent_zeko": {"persona": "role-zeko",
-    "toolFilter": {...}, ...}}. Parsing the composition that actually
-    carries the rows is what lets a caller FAIL when a row is missing or
-    its filter drifted — the live patch no longer carries them at all.
-    """
+def orchestrator_composition_rows() -> list[dict]:
+    """The orchestrator preset's plugin rows, groups flattened."""
     with open(orchestrator_composition_path(), encoding="utf-8") as fh:
         rows = yaml.load(fh.read(), Loader=JsSafeLoader)
     if not isinstance(rows, list):
         raise ValueError(f"{orchestrator_composition_path()} is not a top-level list of plugin rows")
-    out: dict[str, dict] = {}
+    flat: list[dict] = []
     for row in rows:
         if not isinstance(row, dict):
             continue
-        if not str(row.get("id", "")).startswith("tool-subagent-"):
+        flat.append(row)
+        if row.get("group"):
+            flat.extend(r for r in (row.get("config") or []) if isinstance(r, dict))
+    return flat
+
+
+def orchestrator_subagent_rows() -> dict[str, dict]:
+    """The delegation rows composed in the orchestrator preset.
+
+    Returns {toolName: row-config}. Since DSH 0.2.1-rc.2 there is ONE row —
+    {"subagent": {"provider": "spawn", "maxDepth": 1,
+    "allowedAgentPresets": ["role-zeko", ...]}} — because the host removed the
+    per-instance `persona` / `toolFilter` config keys and collapsed the
+    fifteen per-role instances into one tool whose model-facing `agent_preset`
+    argument names the role's Agent Preset. Parsing the composition that
+    actually carries the rows is what lets a caller FAIL when the row is
+    missing or its allowlist drifted.
+    """
+    out: dict[str, dict] = {}
+    for row in orchestrator_composition_rows():
+        if not str(row.get("id", "")).startswith("tool-subagent"):
             continue
         config = row.get("config") or {}
         tool_name = config.get("toolName")
@@ -118,5 +134,78 @@ def orchestrator_subagent_rows() -> dict[str, dict]:
 
 
 def subagent_row(tool_name: str) -> dict | None:
-    """One delegation row's config by tool name (`subagent_<id>`)."""
+    """The delegation row's config by tool name (`subagent`)."""
     return orchestrator_subagent_rows().get(tool_name)
+
+
+# The tool PLUGINS a preset mounts, and the tools each one exposes. 0.2.1-rc.2
+# gave the two multi-tool plugins this roster uses a per-tool config, so a
+# preset reproduces the exact tool list its role's allow list named.
+TOOL_PLUGIN_BY_TOOL = {
+    "bash": "@deepseek-ai/dsh-tool-bash",
+    "read": "@deepseek-ai/dsh-tool-fs",
+    "read_image": "@deepseek-ai/dsh-tool-fs",
+    "write": "@deepseek-ai/dsh-tool-fs",
+    "edit": "@deepseek-ai/dsh-tool-fs",
+    "glob": "@deepseek-ai/dsh-tool-fs-search",
+    "grep": "@deepseek-ai/dsh-tool-fs-search",
+    "job_kill": "@deepseek-ai/dsh-tool-jobs",
+    "job_list": "@deepseek-ai/dsh-tool-jobs",
+    "job_output": "@deepseek-ai/dsh-tool-jobs",
+    "skill": "@deepseek-ai/dsh-tool-skill",
+    "exit_plan_mode": "@deepseek-ai/dsh-plan-mode",
+    "web_search": "@deepseek-ai/dsh-tool-web",
+    "web_fetch": "@deepseek-ai/dsh-tool-web",
+    "todo_write": "@deepseek-ai/dsh-tool-todo",
+}
+
+
+def preset_tool_surface(preset_id: str) -> set[str]:
+    """The tools one Agent Preset composition exposes to its agent.
+
+    A preset narrows by COMPOSITION: the tool PLUGINS it mounts, each with its
+    own per-tool config applied. A row disabled by a `!!js` platform condition
+    (tool-bash on win32) is counted as enabled: the condition is opaque here.
+    @param preset_id - `role-<id>` or the orchestrator's bare id.
+    @returns The exposed tool names.
+    """
+    with open(preset_source_path(preset_id), encoding="utf-8") as fh:
+        rows = yaml.load(fh.read(), Loader=JsSafeLoader)
+    flat: list[dict] = []
+    for row in rows if isinstance(rows, list) else []:
+        if not isinstance(row, dict):
+            continue
+        flat.append(row)
+        if row.get("group"):
+            flat.extend(r for r in (row.get("config") or []) if isinstance(r, dict))
+    exposed: set[str] = set()
+    for row in flat:
+        name = row.get("name")
+        cfg = row.get("config") or {}
+        if name == "@deepseek-ai/dsh-tool-bash":
+            exposed.add("bash")
+        elif name == "@deepseek-ai/dsh-tool-fs":
+            if cfg.get("read", True):
+                exposed.add("read")
+            if cfg.get("readImage", True):
+                exposed.add("read_image")
+            if cfg.get("write", True):
+                exposed.add("write")
+            if cfg.get("edit", True):
+                exposed.add("edit")
+        elif name == "@deepseek-ai/dsh-tool-fs-search":
+            exposed.update({"glob", "grep"})
+        elif name == "@deepseek-ai/dsh-tool-jobs":
+            exposed.update({"job_kill", "job_list", "job_output"})
+        elif name == "@deepseek-ai/dsh-tool-skill":
+            exposed.add("skill")
+        elif name == "@deepseek-ai/dsh-plan-mode":
+            exposed.add("exit_plan_mode")
+        elif name == "@deepseek-ai/dsh-tool-web":
+            if cfg.get("search", True):
+                exposed.add("web_search")
+            if cfg.get("fetch", True):
+                exposed.add("web_fetch")
+        elif name == "@deepseek-ai/dsh-tool-todo":
+            exposed.add("todo_write")
+    return exposed

@@ -410,7 +410,7 @@ def run_checks(root):
           f"{sorted(orch_allow & per_role_tools)}")
 
     # --- orchestrator policy (declaration ↔ mapping consistency) ------------
-    # orchestrator/policy.yaml COPIES the mapping's tool_filter; without these
+    # orchestrator/policy.yaml COPIES the mapping's tool_surface; without these
     # checks the copy is prose that can silently diverge from the config.
     orch_pol_ts = orch_policy.get("tool_surface", {})
     pol_allow = set(orch_pol_ts.get("allow", []))

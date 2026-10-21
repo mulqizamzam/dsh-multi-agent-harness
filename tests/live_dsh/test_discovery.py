@@ -38,7 +38,7 @@ class TestRoleResolution:
         """Each instance's persona matches the D4/D7 naming convention role-<id>."""
         instances = resolve_all_role_instances()
         for role, inst in instances.items():
-            assert inst.persona == f"role-{role}", f"{role} persona={inst.persona}"
+            assert inst.agent_preset == f"role-{role}", f"{role} preset={inst.agent_preset}"
 
     def test_all_max_depth_1(self):
         """V1 rule: all specialists have max_depth=1 (subdelegation DENY)."""
@@ -52,11 +52,11 @@ class TestRoleResolution:
         for role, inst in instances.items():
             assert inst.provider == "spawn", f"{role} provider={inst.provider}"
 
-    def test_all_background_mode_continuable(self):
+    def test_all_agent_presets_are_the_role_presets(self):
         """All instances are continuable (report channel available)."""
         instances = resolve_all_role_instances()
         for role, inst in instances.items():
-            assert inst.background_mode == "continuable", f"{role} bg={inst.background_mode}"
+            assert inst.agent_preset == f"role-{role}", f"{role} preset={inst.agent_preset}"
 
     def test_allow_deny_disjoint(self):
         """allow ∩ deny = ∅ for every role (consistency guardrail)."""

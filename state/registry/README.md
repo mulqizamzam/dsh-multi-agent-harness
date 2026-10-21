@@ -7,7 +7,7 @@ registry: `delegations.json` + the revocation list.
 
 1. **Single-writer**: only the control-plane/orchestrator registry module writes here.
 2. **Execution gate**: any write targeting `state/registry/` by a non-writer actor is DENIED.
-3. **toolFilter**: roles without write need (CFO, Kai, BadSector) have no `edit`/`write`/`bash`.
+3. **Tool surface**: roles without write need (CFO, Kai, BadSector) have no `edit`/`write`/`bash`.
 4. **Audit**: every registry read/write is an audit event; a non-writer write is a critical alert.
 5. **Schema**: delegations conform to `schemas/delegation.schema.json`; malformed → treated as absent → DENY.
 

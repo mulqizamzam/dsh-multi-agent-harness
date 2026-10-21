@@ -19,8 +19,8 @@ class TestEvidenceModel:
     def test_capture_dispatch_evidence(self):
         ev = capture_dispatch_evidence(
             flow_id="flow-e1", task_id="task-1", role="cto",
-            delegation_id="delegation-e1", tool_name="subagent_cto",
-            persona="role-cto",
+            delegation_id="delegation-e1", tool_name="subagent",
+            agent_preset="role-cto",
             invocation=BuildInvocation.build(make_task(role="cto"),
                                              make_delegation()),
             run_id="r1", stop_reason=STOP_COMPLETED,
@@ -31,12 +31,12 @@ class TestEvidenceModel:
         assert ev.backend_kind == "real-dsh"
         assert ev.mounted is True
         assert ev.structured_result == {"status": "SUCCEEDED"}
-        assert ev.tool_name == "subagent_cto"
+        assert ev.tool_name == "subagent"
 
     def test_failed_dispatch_evidence(self):
         ev = capture_dispatch_evidence(
             flow_id="flow-e2", task_id="task-2", role="cto",
-            tool_name="subagent_cto", persona="role-cto",
+            tool_name="subagent", agent_preset="role-cto",
             run_id="r2", stop_reason=STOP_ERROR, diagnostic="model failure",
             backend_kind=BackendKind.REAL, mounted=True,
         )
@@ -53,13 +53,13 @@ class TestEvidenceModel:
                                            started_at="2026-08-30T00:00:00Z",
                                            settled_at="2026-08-30T00:00:01Z")
         assert prov["role"] == "cto"
-        assert prov["tool_name"] == "subagent_cto"
+        assert prov["tool_name"] == "subagent"
         assert prov["delegation_id"] == delegation.id
 
     def test_evidence_bundle_written(self, tmp_path):
         ev = capture_dispatch_evidence(
             flow_id="flow-e3", task_id="task-3", role="cto",
-            tool_name="subagent_cto", persona="role-cto",
+            tool_name="subagent", agent_preset="role-cto",
             run_id="r3", stop_reason=STOP_COMPLETED,
             backend_kind=BackendKind.FAKE,
         )
@@ -74,7 +74,7 @@ class TestEvidenceModel:
         is a reference, not a grant (AUTH-INV-14)."""
         ev = capture_dispatch_evidence(
             flow_id="f", task_id="t", role="cto", delegation_id="delegation-e9",
-            tool_name="subagent_cto", persona="role-cto",
+            tool_name="subagent", agent_preset="role-cto",
             run_id="r9", stop_reason=STOP_COMPLETED,
             backend_kind=BackendKind.REAL, mounted=True,
         )

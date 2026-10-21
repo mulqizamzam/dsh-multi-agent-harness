@@ -14,11 +14,11 @@ from .conftest import make_task, make_delegation
 
 class TestInvocationContract:
     def test_foreground_invocation_shape(self, task, delegation):
-        """The bridge builds a foreground (run_in_background=False) invocation
+        """The bridge builds an invocation that names the role's preset
         with only the model-facing parameters."""
         inv = BuildInvocation.build(task, delegation)
         assert isinstance(inv, DSHInvocation)
-        assert inv.run_in_background is False
+        assert inv.agent_preset == "role-cto"
         args = inv.to_tool_args()
         assert set(TOOL_PARAMETER_KEYS).issubset(args.keys())
         assert args["description"] == "cto: delegated subtask"

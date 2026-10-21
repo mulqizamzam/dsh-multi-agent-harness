@@ -96,7 +96,7 @@ Orchestrator                  ←  coordinator + delegated decision-maker
 
 | Layer | What | Who enforces |
 |---|---|---|
-| **DSH-native** | Session sandbox, approval policy, toolFilter, Agent Presets, subagent execution, workflow coordination, session persistence, cancellation | DSH engine (per-session / config-level) |
+| **DSH-native** | Session sandbox, approval policy, Agent Presets, per-role tool surfaces, subagent execution, workflow coordination, session persistence, cancellation | DSH engine (per-session / config-level) |
 | **Project control plane** | Role definitions, routing, delegation registry, authority/risk/evidence/conflict gates, BadSector review, project state, audit ledger | `multi-agent-harness/` orchestrator contract |
 | **Human authority** | Ultimate approval, delegation, revocation, override | Human |
 
@@ -116,7 +116,7 @@ multi-agent-harness/
 │   ├── agents.yaml              # agent registry (finalized: 15 specialists + orchestrator)
 │   ├── permissions.yaml         # capability×agent matrix (control-plane input)
 │   ├── registry-writer.yaml     # single-writer delegation-registry daemon config
-│   ├── role-preset-mapping.yaml # role→DSH preset/toolFilter mapping (mapping_version 2)
+│   ├── role-preset-mapping.yaml # role→DSH Agent Preset / tool-surface mapping (mapping_version 3)
 │   └── tool-subagent-instances.yaml # per-role tool-subagent instance rows
 ├── agents/                      # 15 role dirs (7 baseline + 8 PRD v0.2 expansion); all mounted;
 │   │                            # each: AGENT.md, policy.yaml, agent.cordis.yml, preset.yml
@@ -224,10 +224,10 @@ All Phase-0 decisions are documented in ADR 0001. Key current status:
 
 | Decision | Status |
 |---|---|
-| 1. Per-agent permission vs session sandbox/approval | **HUMAN_APPROVED** — two-tier model (per-role toolFilter + per-session sandbox/approval) |
+| 1. Per-agent permission vs session sandbox/approval | **HUMAN_APPROVED** — two-tier model (per-role tool surface + per-session sandbox/approval) |
 | 2. Dev session safety policy | **HUMAN_APPROVED** — `workspace-write` + `ask`; session verified |
 | 3. Orchestrator architecture | **HUMAN_APPROVED** — hybrid root-session + workflow fan-out/collect |
-| 4. Role isolation mechanism | **HUMAN_APPROVED** — per-role presets + per-role tool-subagent/toolFilter instances |
+| 4. Role isolation mechanism | **HUMAN_APPROVED** — per-role Agent Presets, each mounting the tool plugins that make up the role's tool surface |
 | 5. State & audit persistence | **HUMAN_APPROVED** — file-based under `multi-agent-harness/` |
 | 6. Phase-0 docs | **HUMAN_APPROVED** — created, version-pinned to `0.1.1-rc.2` |
 | 7. Phase-1 scope boundary | **HUMAN_APPROVED** — strictly `multi-agent-harness/`; DSH profile/preset change is a per-case exception |

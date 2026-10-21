@@ -67,7 +67,7 @@ RESOLVED_DRIFTED_ROWS = frozenset({"present", "tool-plugin-manager"})
 # 2026-10-11: the fifteen per-role delegation instances MOVED here from the
 # global layer of the live profile patch ($DSH_HOME/profiles/web/cordis.patch.yml).
 # They are the orchestrator's only delegation surface (role-preset-mapping.yaml
-# §orchestrator) and are named in orchestrator/policy.yaml's tool_filter.allow,
+# §orchestrator) and are named in orchestrator/policy.yaml's tool_surface.allow,
 # so the preset is no longer a pure derivation: standard - 4 + 15.
 ADDED_ROWS = frozenset(
     {

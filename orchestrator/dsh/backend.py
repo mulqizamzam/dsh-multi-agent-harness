@@ -113,6 +113,18 @@ class DelegationBackend(ABC):
 # ---------------------------------------------------------------------------
 # In-process fake backend (test + dry-run support)
 # ---------------------------------------------------------------------------
+def _role_of(tool_name: str) -> str:
+    """The role a scripted handler belongs to.
+
+    The `subagent_<role>` spelling is the role id without its prefix; any
+    other key is taken as the role id itself.
+    """
+    prefix = "subagent_"
+    if tool_name.startswith(prefix):
+        return tool_name[len(prefix):]
+    return tool_name
+
+
 class FakeSubagentBackend(DelegationBackend):
     """Deterministic in-process backend that emulates the D4/D7-mounted
     `tool-subagent` surface for tests and DRY_RUN orchestrator flows.
@@ -140,12 +152,17 @@ class FakeSubagentBackend(DelegationBackend):
     # -- scripting -----------------------------------------------------------
 
     def register(self, tool_name: str, handler: callable) -> "FakeSubagentBackend":
-        """Register a handler for a tool_name (e.g. 'subagent_cto').
+        """Register a handler for a role (e.g. 'subagent_cto').
 
         handler(instance, prompt) -> DelegationResult  (or raises).
+
+        Since 0.2.1-rc.2 every role is reached through the same `subagent`
+        tool, so the live tool name no longer tells roles apart — the ROLE
+        does. The scripting key keeps the `subagent_<role>` spelling it always
+        had and is resolved to the role it names.
         """
         with self._lock:
-            self._handlers[tool_name] = handler
+            self._handlers[_role_of(tool_name)] = handler
         return self
 
     def register_result(self, tool_name: str, structured: dict) -> "FakeSubagentBackend":
@@ -160,7 +177,7 @@ class FakeSubagentBackend(DelegationBackend):
         def _handler(instance, prompt):
             time.sleep(delay)
             raise DelegationTimeout(
-                f"subagent {instance.tool_name} exceeded its tool-call budget")
+                f"subagent {instance.role} exceeded its tool-call budget")
         return self.register(tool_name, _handler)
 
     def register_abort(self, tool_name: str, delay: float = 0.0) -> "FakeSubagentBackend":
@@ -169,7 +186,7 @@ class FakeSubagentBackend(DelegationBackend):
             if delay:
                 time.sleep(delay)
             raise DelegationAborted(
-                f"subagent {instance.tool_name} cancelled (stopReason aborted)")
+                f"subagent {instance.role} cancelled (stopReason aborted)")
         return self.register(tool_name, _handler)
 
     def register_failure(self, tool_name: str, reason: str = "model failure",
@@ -180,7 +197,7 @@ class FakeSubagentBackend(DelegationBackend):
             return DelegationResult(
                 output="partial", structured=None,
                 stop_reason=stop_reason,
-                diagnostic=diagnostic or f"{instance.tool_name}: {reason}")
+                diagnostic=diagnostic or f"{instance.role}: {reason}")
         return self.register(tool_name, _handler)
 
     # -- observation ---------------------------------------------------------
@@ -199,18 +216,21 @@ class FakeSubagentBackend(DelegationBackend):
     def start(self, instance, prompt: dict, *,
               signal=None, timeout_seconds: float | None = None) -> DelegationRun:
         tool_name = instance.tool_name
+        role = instance.role
         run_id = f"fake-{uuid.uuid4().hex[:12]}"
         with self._lock:
-            handler = self._handlers.get(tool_name)
+            handler = self._handlers.get(role)
             self._start_calls.append({
                 "tool_name": tool_name,
-                "role": instance.role,
+                "role": role,
+                "agent_preset": getattr(instance, "agent_preset", ""),
                 "prompt": prompt,
                 "run_id": run_id,
             })
             self._children[run_id] = {
                 "tool_name": tool_name,
-                "role": instance.role,
+                "role": role,
+                "agent_preset": getattr(instance, "agent_preset", ""),
                 "status": "running",
             }
         if handler is None:

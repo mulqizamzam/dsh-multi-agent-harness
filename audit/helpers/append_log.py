@@ -3,7 +3,7 @@
 # The audit ledger is append-only: events are APPENDED to a JSON Lines file
 # (one JSON object per line). Never overwrite, never edit. The single writer
 # is the orchestrator/control plane (enforced by the execution gate and
-# toolFilter — see ADR 0002).
+# tool surface — see ADR 0002).
 #
 # File: audit/<project>/events.jsonl
 # Each line: one JSON object matching schemas/audit-event.schema.json

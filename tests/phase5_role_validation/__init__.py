@@ -4,7 +4,7 @@
 #
 # See harness.py for the validation logic. The tests in this package prove:
 #   - deterministic checks pass for all six target roles (resolution,
-#     toolFilter consistency, prohibited tools, subdelegation denial)
+#     tool-surface consistency, prohibited tools, subdelegation denial)
 #   - live checks honestly report BLOCKED when the D4/D7 mount is absent
 #     (never a fake live result)
 #   - the harness reports deterministic failures as failures

@@ -8,7 +8,7 @@
 #
 # Controls covered: L3-ISO-001..010, L3-AUTH-002. The oracle enumerates a
 # role's tool/capability set from an INDEPENDENT capability matrix (the
-# documented catalog), NOT from the runtime toolFilter — so the runtime cannot
+# documented catalog), NOT from the runtime tool surface — so the runtime cannot
 # influence the oracle.
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 # Independent capability matrix (documented catalog, docs/security/0001 §1)
 # This is a REFERENCE copy of the capability matrix — a public document, not a
 # secret — held independently so the verifier can cross-check the runtime
-# toolFilter without asking the runtime or the role.
+# tool surface without asking the runtime or the role.
 # ---------------------------------------------------------------------------
 # Capability set (tool names / capability ids).
 CAP = frozenset({

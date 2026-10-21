@@ -2,11 +2,17 @@
 #
 # Phase 3 / Session B. Scope: multi-agent-harness/ only.
 #
-# Resolves a role id (e.g. "cto") to the approved D4/D7
-# `tool-subagent-<id>` instance configuration declared in
-# `config/role-preset-mapping.yaml` (+ `config/tool-subagent-instances.yaml` as
-# cross-check).  The resolver is a READ-ONLY consumer of the approved mapping;
-# it never modifies DSH profile, preset, or core.
+# Resolves a role id (e.g. "cto") to its approved delegation configuration
+# declared in `config/role-preset-mapping.yaml` (+ `config/tool-subagent-instances.yaml`
+# as cross-check).  The resolver is a READ-ONLY consumer of the approved
+# mapping; it never modifies DSH profile, preset, or core.
+#
+# MODEL (DeepSeek Harness 0.2.1-rc.2): the host removed the per-instance
+# `persona` and `toolFilter` config keys from `@deepseek-ai/dsh-tool-subagent`
+# (it now throws on them) and removed `backgroundMode`.  There is ONE
+# delegation tool per provider, so a role is selected by the model-facing
+# `agent_preset` argument naming the role's Agent Preset, and the role's tool
+# surface is the set of tool PLUGINS that preset mounts.
 #
 # The mapping is the single source of truth (Phase-1A finalized, D4/D7
 # approved).  If the YAML files are absent or the mapping drifts from the
@@ -47,28 +53,31 @@ _DELEGATION_TOOLS = frozenset({
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class SubagentInstance:
-    """Immutable record of one approved D4/D7 subagent instance configuration.
+    """Immutable record of one role's approved delegation configuration.
 
-    Fields mirror the `tool-subagent` config schema (provider, toolName,
-    persona, toolFilter, backgroundMode, maxDepth) and the
-    `role-preset-mapping.yaml` roles[].tool_instance + tool_filter sections.
+    Fields mirror the 0.2.1-rc.2 model: the ONE `subagent` delegation tool
+    (tool_name, provider, max_depth) and the Agent Preset the model selects
+    through the `agent_preset` argument (agent_preset).  The role's own tool
+    surface is the set of tool PLUGINS its preset mounts; `allow`/`deny`
+    record that surface for the control plane.
     """
+
     role: str
-    tool_name: str            # subagent_<id>
-    persona: str              # role-<id>
+    tool_name: str            # subagent — the one delegation tool
+    agent_preset: str         # role-<id> — the preset the model selects
     provider: str = "spawn"
-    background_mode: str = "continuable"
     max_depth: int = 1
     allow: tuple[str, ...] = ()
     deny: tuple[str, ...] = ()
 
-    def tool_filter(self) -> dict:
-        """The toolFilter shape this instance would carry at mount."""
+    def tool_surface(self) -> dict:
+        """The role's declared tool surface (allow/deny)."""
         return {"allow": list(self.allow), "deny": list(self.deny)}
 
     def __post_init__(self):
-        if not self.role or not self.tool_name or not self.persona:
-            raise RoleResolutionError("SubagentInstance: role/tool_name/persona required")
+        if not self.role or not self.tool_name or not self.agent_preset:
+            raise RoleResolutionError(
+                "SubagentInstance: role/tool_name/agent_preset required")
         if self.max_depth != 1:
             raise RoleResolutionError(
                 f"SubagentInstance {self.tool_name}: max_depth must be 1 "
@@ -77,18 +86,15 @@ class SubagentInstance:
             raise RoleResolutionError(
                 f"SubagentInstance {self.tool_name}: provider must be "
                 f"'spawn', got {self.provider!r}")
-        if self.background_mode != "continuable":
-            raise RoleResolutionError(
-                f"SubagentInstance {self.tool_name}: background_mode must be "
-                f"'continuable', got {self.background_mode!r}")
-        if self.tool_name != f"subagent_{self.role}":
+        if self.tool_name != "subagent":
             raise RoleResolutionError(
                 f"SubagentInstance {self.tool_name}: expected tool_name "
-                f"'subagent_{self.role}' (D4/D7 approved naming)")
-        if self.persona != f"role-{self.role}":
+                f"'subagent' — 0.2.1-rc.2 has one delegation tool per provider "
+                f"and selects the role through the agent_preset argument")
+        if self.agent_preset != f"role-{self.role}":
             raise RoleResolutionError(
-                f"SubagentInstance {self.tool_name}: expected persona "
-                f"'role-{self.role}' (D4/D7 approved naming)")
+                f"SubagentInstance {self.tool_name}: expected agent_preset "
+                f"'role-{self.role}', got {self.agent_preset!r}")
         # allow ∩ deny must be empty (consistency guardrail)
         overlap = set(self.allow) & set(self.deny)
         if overlap:
@@ -163,8 +169,16 @@ class RoleResolver:
         return tuple(self._by_role.keys())
 
     def tool_names(self) -> dict[str, str]:
-        """{role → tool_name} for every resolved instance."""
+        """{role → tool_name} for every resolved instance.
+
+        Since 0.2.1-rc.2 every role is reached through the same `subagent`
+        tool; `agent_presets()` names the preset each role selects.
+        """
         return {r: inst.tool_name for r, inst in self._by_role.items()}
+
+    def agent_presets(self) -> dict[str, str]:
+        """{role → agent_preset} for every resolved instance."""
+        return {r: inst.agent_preset for r, inst in self._by_role.items()}
 
     # -- loader --------------------------------------------------------------
 
@@ -218,42 +232,61 @@ class RoleResolver:
                     f"role {role!r} missing from role-preset mapping "
                     "(D4/D7 composition incomplete)")
             ti = entry.get("tool_instance", {})
-            tf = entry.get("tool_filter", {})
+            ts = entry.get("tool_surface", {})
             inst = SubagentInstance(
                 role=role,
-                tool_name=ti.get("tool_name", f"subagent_{role}"),
-                persona=ti.get("persona", f"role-{role}"),
+                tool_name=ti.get("tool_name", "subagent"),
+                agent_preset=ti.get("agent_preset", f"role-{role}"),
                 provider=ti.get("provider", "spawn"),
-                background_mode=ti.get("background_mode", "continuable"),
                 max_depth=ti.get("max_depth", 1),
-                allow=tuple(tf.get("allow", [])),
-                deny=tuple(tf.get("deny", [])),
+                allow=tuple(ts.get("allow", [])),
+                deny=tuple(ts.get("deny", [])),
             )
             built[role] = inst
 
-        # Cross-check against tool-subagent-instances.yaml if available
+        # Cross-check against tool-subagent-instances.yaml if available. The
+        # file records the ONE delegation row (whose allowedAgentPresets must
+        # cover every role) and one preset declaration per role.
         if instances:
-            cross = instances.get("insert_draft", [])
-            for entry in cross:
-                eid: str = entry.get("id", "")
-                rid = eid.removeprefix("tool-subagent-")
-                if rid in built:
-                    cfg = entry.get("config", {})
-                    inst = built[rid]
-                    tf = cfg.get("toolFilter", {})
-                    cfg_allow = set(tf.get("allow", []))
-                    cfg_deny = set(tf.get("deny", []))
-                    if cfg.get("toolName") != inst.tool_name:
-                        raise RoleResolutionError(
-                            f"cross-check: {eid} toolName mismatch "
-                            f"({cfg.get('toolName')} vs {inst.tool_name})")
-                    if cfg_allow != set(inst.allow):
-                        raise RoleResolutionError(
-                            f"cross-check: {eid} allow set drift "
-                            f"(mapping={set(inst.allow)} vs instances={cfg_allow})")
-                    if cfg_deny != set(inst.deny):
-                        raise RoleResolutionError(
-                            f"cross-check: {eid} deny set drift "
-                            f"(mapping={set(inst.deny)} vs instances={cfg_deny})")
+            insert = instances.get("insert_draft", [])
+            if len(insert) != 1:
+                raise RoleResolutionError(
+                    f"cross-check: expected exactly one delegation row, got "
+                    f"{len(insert)}")
+            cfg = insert[0].get("config", {})
+            for removed in ("persona", "toolFilter", "backgroundMode",
+                            "enableRunInBackground"):
+                if removed in cfg:
+                    raise RoleResolutionError(
+                        f"cross-check: the delegation row still declares "
+                        f"{removed!r}; DSH 0.2.1-rc.2 removed that config key")
+            if cfg.get("toolName") != "subagent":
+                raise RoleResolutionError(
+                    f"cross-check: delegation row toolName mismatch "
+                    f"({cfg.get('toolName')!r} vs 'subagent')")
+            allowed = set(cfg.get("allowedAgentPresets", []))
+            missing = {inst.agent_preset for inst in built.values()} - allowed
+            if missing:
+                raise RoleResolutionError(
+                    f"cross-check: the delegation row's allowedAgentPresets "
+                    f"omits {sorted(missing)}")
+            declared = {d.get("id"): d for d in instances.get("agent_presets", [])}
+            for role, inst in built.items():
+                dec = declared.get(inst.agent_preset)
+                if dec is None:
+                    raise RoleResolutionError(
+                        f"cross-check: no preset declaration for "
+                        f"{inst.agent_preset!r}")
+                dec_ts = dec.get("tool_surface", {})
+                if set(dec_ts.get("allow", [])) != set(inst.allow):
+                    raise RoleResolutionError(
+                        f"cross-check: {inst.agent_preset} allow set drift "
+                        f"(mapping={set(inst.allow)} vs "
+                        f"instances={set(dec_ts.get('allow', []))})")
+                if set(dec_ts.get("deny", [])) != set(inst.deny):
+                    raise RoleResolutionError(
+                        f"cross-check: {inst.agent_preset} deny set drift "
+                        f"(mapping={set(inst.deny)} vs "
+                        f"instances={set(dec_ts.get('deny', []))})")
 
         return built

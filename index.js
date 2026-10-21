@@ -20,9 +20,10 @@
 //   - `preset.yml` contributes the description only (display metadata).
 //   - Registration is a generator effect: each `register()` disposer is
 //     yielded, so HMR or host teardown unregisters cleanly.
-//   - Ids are load-bearing. The live web profile names every subagent by
-//     `persona: role-<id>` and defaults the root session to `orchestrator`, so
-//     the ids registered here MUST be exactly role-<dirname> (15) + orchestrator.
+//   - Ids are load-bearing. The delegation tool's `allowedAgentPresets`
+//     names every role preset, and the root session defaults to
+//     `orchestrator`, so the ids registered here MUST be exactly
+//     role-<dirname> (15) + orchestrator.
 //   - A missing source dir is logged and skipped; a preset whose parse or
 //     registration fails is logged per-preset. Neither throws out of `apply`,
 //     so one bad preset cannot take the host down. The registry itself records

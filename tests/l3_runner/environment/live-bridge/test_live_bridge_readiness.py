@@ -5,15 +5,16 @@ Locks the live-bridge readiness assessment
 to the CURRENT environment with read-only checks:
 
   - D4D7_FILES: the 16 preset composition sources (15 roles + orchestrator)
-    persist in the repo and the 15 tool-subagent rows are composed in
+    persist in the repo and the delegation row is composed in
     orchestrator/agent.cordis.yml (2026-10-10/11 cutover: direct plugin
     registration, rows moved out of the live profile patch; D8 mount
-    exception applied 2026-09-09);
-  - D4D7_COMPOSITION: mapping == policy == instance, allow∩deny=∅,
+    exception applied 2026-09-09; DSH 0.2.1-rc.2 collapsed the 15 per-role
+    rows into ONE row whose allowedAgentPresets names the 15 role presets);
+  - D4D7_COMPOSITION: mapping == policy == preset declaration, allow∩deny=∅,
     deny-list hygiene (no `run_code`, no 25 VERIFIED_UNREGISTERED names),
-    post-O5 + 2026-09-07-discriminator role/toolFilter invariants (somad/
+    post-O5 + 2026-09-07-discriminator role tool-surface invariants (somad/
     nova read-only, cto keeps bash+write+edit, zeko keeps bash only),
-    the composed rows match the config;
+    the composed role presets match the config;
   - BRIDGE_MARKER: DSH_LIVE_BRIDGE_ACTIVE is unset (reported, never set);
   - REAL_BACKEND: probe_backend_kind() == UNAVAILABLE (fail-closed);
   - LIVE_DISPATCH_POSSIBLE: NO — RealDSHBackend.start() raises
@@ -86,7 +87,7 @@ def _role_filters():
     with open(os.path.join(_PROJECT_ROOT, "config",
                            "role-preset-mapping.yaml")) as f:
         mapping = yaml.safe_load(f)
-    return {r["id"]: r["tool_filter"] for r in mapping["roles"]}
+    return {r["id"]: r["tool_surface"] for r in mapping["roles"]}
 
 
 # ---------------------------------------------------------------------------
@@ -130,22 +131,21 @@ def test_all_instance_rows_present():
 # ---------------------------------------------------------------------------
 
 def test_mapping_matches_policy_and_instances():
-    """mapping == policy == instance for allow+deny across all 15 roles."""
+    """mapping == policy == the role's preset declaration, across all 15 roles."""
     import yaml
     with open(os.path.join(_PROJECT_ROOT, "config",
                            "tool-subagent-instances.yaml")) as f:
         instances = yaml.safe_load(f)
-    inst_map = {c["config"]["toolName"]: c["config"]["toolFilter"]
-                for c in instances["insert_draft"]}
+    declared = {d["id"]: d["tool_surface"] for d in instances["agent_presets"]}
     filters = _role_filters()
     for rid, tf in filters.items():
         with open(os.path.join(_PROJECT_ROOT, "agents", rid, "policy.yaml")) as f:
             pol = yaml.safe_load(f)
-        assert set(tf["allow"]) == set(pol["tool_filter"]["allow"]), rid
-        assert set(tf["deny"]) == set(pol["tool_filter"]["deny"]), rid
-        inst = inst_map[f"subagent_{rid}"]
-        assert set(tf["allow"]) == set(inst["allow"]), rid
-        assert set(tf["deny"]) == set(inst["deny"]), rid
+        assert set(tf["allow"]) == set(pol["tool_surface"]["allow"]), rid
+        assert set(tf["deny"]) == set(pol["tool_surface"]["deny"]), rid
+        dec = declared[f"role-{rid}"]
+        assert set(tf["allow"]) == set(dec["allow"]), rid
+        assert set(tf["deny"]) == set(dec["deny"]), rid
 
 
 def test_allow_deny_disjoint():
@@ -179,35 +179,33 @@ def test_post_o5_role_tool_expectations():
 
 
 def test_live_rows_match_config():
-    """All 15 composed rows in orchestrator/agent.cordis.yml match mapping v2
-    allow/deny sets.
+    """The composed delegation row selects every role preset, and every role
+    preset's composition matches its mapping allow/deny sets.
 
-    The rows this checks are the ones the live host actually composes (the
-    orchestrator preset is the mounted composition; the retired
-    cordis.patch.yml global rows are gone). The strict-xfail history kept its
-    meaning: live == config, asserted against the composition that carries
-    the rows now.
+    Since DSH 0.2.1-rc.2 there is ONE composed delegation row (the fifteen
+    per-role rows were removed by the host), so the check moved to the two
+    facts the new model makes load-bearing: the row's `allowedAgentPresets`
+    names all fifteen role presets, and each role preset's OWN plugin rows
+    compose exactly the tool list its mapping declares.
 
-    This also CLOSES a coverage gap: before the cutover nothing compared the
-    composed rows' toolFilter against the config triple (mapping == policy
-    == instances), so a row could drift silently inside the composition.
+    This also CLOSES a coverage gap: nothing compared the composed role
+    presets' tool surface against the config triple (mapping == policy ==
+    instances), so a preset could drift silently.
     """
+    from tests.d4d7_composition import preset_tool_surface
     rows = orchestrator_subagent_rows()
-    live = {f"tool-subagent-{name.removeprefix('subagent_')}": cfg["toolFilter"]
-            for name, cfg in rows.items()}
-    assert len(live) == 15, f"expected 15 composed rows, got {sorted(live)}"
-    filters = _role_filters()
-    assert set(filters) == {lid.removeprefix("tool-subagent-")
-                            for lid in live}
-    for rid, tf in filters.items():
-        lid = f"tool-subagent-{rid}"
-        assert set(tf["allow"]) == set(live[lid]["allow"]), rid
-        assert set(tf["deny"]) == set(live[lid]["deny"]), rid
+    assert set(rows) == {"subagent", "subagent_fork"}, f"expected one delegation row, got {sorted(rows)}"
+    allowed = set(rows["subagent"].get("allowedAgentPresets") or [])
+    assert allowed == {f"role-{rid}" for rid in _role_filters()}, (
+        f"the delegation row's allowedAgentPresets must cover every role: "
+        f"{sorted(allowed)}")
+    for rid, tf in _role_filters().items():
+        assert set(tf["allow"]) == preset_tool_surface(f"role-{rid}"), rid
 
 
 def test_role_resolution_all_fifteen():
     """Config-level resolution: every contract role (PRD v0.2: 15) resolves to
-    its `subagent_<id>` instance from mapping v2. This is registry parity, not
+    its `role-<id>` Agent Preset from mapping v3. This is registry parity, not
     a live-mount claim (D8: registration ≠ activation)."""
     from tests.l3_runner.environment.readiness import ALL_INSTANCE_IDS
     result = assert_role_resolution()

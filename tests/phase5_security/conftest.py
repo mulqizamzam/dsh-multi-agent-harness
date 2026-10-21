@@ -27,7 +27,7 @@ def tmp_workspace(tmp_path):
 
 @pytest.fixture
 def role_filters():
-    """The D4/D7 toolFilter allow/deny sets from config (read-only)."""
+    """The D4/D7 tool-surface allow/deny sets from config (read-only)."""
     import yaml
     root = PROJECT_ROOT
     with open(os.path.join(root, "config", "role-preset-mapping.yaml")) as f:
@@ -35,8 +35,8 @@ def role_filters():
     roles = {}
     for role in mapping["roles"]:
         roles[role["id"]] = {
-            "allow": set(role["tool_filter"]["allow"]),
-            "deny": set(role["tool_filter"]["deny"]),
+            "allow": set(role["tool_surface"]["allow"]),
+            "deny": set(role["tool_surface"]["deny"]),
         }
     return roles
 

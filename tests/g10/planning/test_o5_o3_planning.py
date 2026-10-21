@@ -176,10 +176,10 @@ def test_mapping_matches_policy_yaml_still_holds():
         rid = role["id"]
         with open(os.path.join(PROJECT_ROOT, "agents", rid, "policy.yaml")) as f:
             pol = yaml.safe_load(f)
-        assert set(role["tool_filter"]["allow"]) == set(
-            pol["tool_filter"]["allow"]), f"{rid} mapping!=policy allow"
-        assert set(role["tool_filter"]["deny"]) == set(
-            pol["tool_filter"]["deny"]), f"{rid} mapping!=policy deny"
+        assert set(role["tool_surface"]["allow"]) == set(
+            pol["tool_surface"]["allow"]), f"{rid} mapping!=policy allow"
+        assert set(role["tool_surface"]["deny"]) == set(
+            pol["tool_surface"]["deny"]), f"{rid} mapping!=policy deny"
 
 
 def raw_write_for(role_filters):

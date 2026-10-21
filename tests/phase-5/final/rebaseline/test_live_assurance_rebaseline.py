@@ -216,14 +216,15 @@ class TestO5ContainmentApplied:
         `todo_write` does not trip it. Containment is both-sided: write/edit
         absent from allow AND named in deny (the read-only-roles contract).
         """
-        from tests.d4d7_composition import orchestrator_subagent_rows
-        rows = orchestrator_subagent_rows()
-        for rid in ("subagent_somad", "subagent_nova"):
-            assert rid in rows, (
-                f"{rid} row not composed in orchestrator/agent.cordis.yml")
-            tf = rows[rid].get("toolFilter") or {}
-            allow = set(tf.get("allow") or [])
-            deny = set(tf.get("deny") or [])
+        import yaml
+        from tests.d4d7_composition import preset_tool_surface
+        with open(os.path.join(PROJECT_ROOT, "config",
+                               "role-preset-mapping.yaml")) as f:
+            mapping = yaml.safe_load(f)
+        surfaces = {r["id"]: r["tool_surface"] for r in mapping["roles"]}
+        for rid in ("somad", "nova"):
+            allow = preset_tool_surface(f"role-{rid}")
+            deny = set(surfaces[rid]["deny"] or [])
             assert "write" not in allow, f"O5 FAIL: {rid} allow still has write: {sorted(allow)}"
             assert "edit" not in allow, f"O5 FAIL: {rid} allow still has edit: {sorted(allow)}"
             assert {"write", "edit"} <= deny, (

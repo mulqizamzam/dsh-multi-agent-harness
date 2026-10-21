@@ -209,6 +209,7 @@ class TestStaticRequestSchema:
         assert "status" not in fields
         assert "permissions" not in fields
         assert "tool_filter" not in fields
+        assert "tool_surface" not in fields
 
     def test_delegation_id_is_structured_only(self):
         """delegation_id must match the structured pattern or be rejected."""

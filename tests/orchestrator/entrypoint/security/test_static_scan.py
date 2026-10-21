@@ -60,7 +60,8 @@ _BYPASS_TARGETS = frozenset({
 # Authority-shaped parameter names that must never be accepted.
 _AUTHORITY_FIELDS = frozenset({
     "declared_risk", "approval_reference", "review", "verdict",
-    "permissions", "role", "status", "tool_filter", "grant", "sudo",
+    "permissions", "role", "status", "tool_filter", "tool_surface",
+    "grant", "sudo",
 })
 
 

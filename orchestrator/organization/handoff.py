@@ -1,7 +1,7 @@
 # orchestrator.organization.handoff — typed task/result handoff (MVP)
 #
 # Typed handoff uses the EXISTING Task/TaskResult data contracts and the
-# EXISTING outputSchema/toolFilter machinery.  This module adds NO new
+# EXISTING outputSchema/tool-surface machinery.  This module adds NO new
 # wire format: TypedHandoff is a deterministic VIEW over a Task/TaskResult
 # pair that carries the PRD vocabulary (done|blocked|uncertain) via the
 # fail-closed mapping in packet.py.

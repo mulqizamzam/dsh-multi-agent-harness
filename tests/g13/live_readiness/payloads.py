@@ -44,7 +44,7 @@ from tests.g13.payloads import CHANNELS, VECTORS  # canonical C1..C7 / V1..V8 ta
 #     -> settle SubagentResult { output, structured, stopReason }
 # The child prompt is built by BuildInvocation.prompt_for(task, delegation)
 # (tests/live_dsh/contract.py) from the authorized task context; the injection
-# payload is embedded as DATA inside the task prompt. The child's toolFilter
+# payload is embedded as DATA inside the task prompt. The child's tool surface
 # (config/role-preset-mapping.yaml) and the control plane are what must keep
 # the payload inert — the observation is a runtime-observed denial, never a
 # prompt-based claim.

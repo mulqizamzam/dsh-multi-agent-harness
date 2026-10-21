@@ -5,7 +5,7 @@ These tests DOCUMENT the residual (proven open) rather than closing it:
   - a raw filesystem write by a bash-capable role is NOT intercepted by the
     DSH layer (the project execution gate only governs CHANNELED writes);
   - the SAME target through the project execution gate IS denied;
-  - read-only roles exclude write/edit/bash at the toolFilter level;
+  - read-only roles exclude write/edit/bash at the tool-surface level;
   - traversal is denied through the project channel;
   - no claim of DSH-layer path isolation closure is made.
 
@@ -33,7 +33,7 @@ def test_bash_capable_roles_identified(bash_capable_roles):
 
 
 def test_readonly_roles_identified(readonly_roles):
-    """CFO/Kai/BadSector deny write/edit/bash at the toolFilter level."""
+    """CFO/Kai/BadSector deny write/edit/bash at the tool-surface level."""
     assert "cfo" in readonly_roles
     assert "kai" in readonly_roles
     assert "badsector" in readonly_roles

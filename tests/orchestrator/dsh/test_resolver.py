@@ -2,7 +2,7 @@
 #
 # Role resolution: the adapter must resolve every specialist role id to its
 # approved D4/D7 subagent instance (tool-subagent toolName subagent_<id>,
-# persona role-<id>, provider spawn, backgroundMode continuable, maxDepth 1).
+# agent_preset role-<id>, provider spawn, maxDepth 1).
 # The orchestrator is NOT a delegation target.  Unknown roles fail closed.
 
 import pytest
@@ -25,23 +25,22 @@ class TestRoleResolution:
             assert inst.role == role
 
     def test_all_roles_map_to_approved_tool_names(self, resolver):
-        """role → subagent_<id> (D4/D7 approved toolName naming)."""
+        """role → the ONE delegation tool (0.2.1-rc.2 has one per provider)."""
         tool_names = resolver.tool_names()
         assert set(tool_names.keys()) == set(ALL_SPECIALISTS)
         for role in ALL_SPECIALISTS:
-            assert tool_names[role] == f"subagent_{role}"
+            assert tool_names[role] == "subagent"
 
-    def test_persona_matches_approved_naming(self, resolver):
-        """Each instance persona is role-<id> (D4/D7 approved)."""
+    def test_agent_preset_matches_approved_naming(self, resolver):
+        """Each instance selects its own role preset (role-<id>)."""
         for role in ALL_SPECIALISTS:
-            assert resolver.resolve(role).persona == f"role-{role}"
+            assert resolver.resolve(role).agent_preset == f"role-{role}"
 
-    def test_all_instances_spawn_continuable_maxdepth1(self, resolver):
-        """provider spawn, backgroundMode continuable, maxDepth 1 (V1)."""
+    def test_all_instances_spawn_maxdepth1(self, resolver):
+        """provider spawn, maxDepth 1 (V1 subdelegation DENY BY DEFAULT)."""
         for role in ALL_SPECIALISTS:
             inst = resolver.resolve(role)
             assert inst.provider == "spawn"
-            assert inst.background_mode == "continuable"
             assert inst.max_depth == 1
 
     def test_no_delegation_tools_in_any_allow(self, resolver):
@@ -75,9 +74,9 @@ class TestRoleResolution:
     def test_roles_set_is_exactly_specialists(self, resolver):
         assert set(resolver.roles()) == set(SPECIALIST_ROLES)
 
-    def test_resolution_preserves_approved_tool_filters(self, resolver):
+    def test_resolution_preserves_approved_tool_surfaces(self, resolver):
         """CTO retains bash; CFO/Kai/BadSector deny edit/write/bash; Nova
-        denies bash; per D4/D7 approved toolFilter."""
+        denies bash; per the approved tool surface."""
         cto = resolver.resolve("cto")
         assert "bash" in cto.allow
         assert "edit" in cto.allow and "write" in cto.allow
@@ -106,32 +105,32 @@ class TestSubagentInstanceInvariants:
     def test_instance_rejects_bad_naming(self):
         with pytest.raises(RoleResolutionError):
             SubagentInstance(role="cto", tool_name="subagent_other",
-                             persona="role-cto")
+                             agent_preset="role-cto")
 
     def test_instance_rejects_maxdepth_gt_1(self):
         with pytest.raises(RoleResolutionError):
-            SubagentInstance(role="cto", tool_name="subagent_cto",
-                             persona="role-cto", max_depth=2)
+            SubagentInstance(role="cto", tool_name="subagent",
+                             agent_preset="role-cto", max_depth=2)
 
     def test_instance_rejects_provider_not_spawn(self):
         with pytest.raises(RoleResolutionError):
-            SubagentInstance(role="cto", tool_name="subagent_cto",
-                             persona="role-cto", provider="acp")
+            SubagentInstance(role="cto", tool_name="subagent",
+                             agent_preset="role-cto", provider="acp")
 
     def test_instance_rejects_allow_deny_overlap(self):
         with pytest.raises(RoleResolutionError):
-            SubagentInstance(role="cto", tool_name="subagent_cto",
-                             persona="role-cto",
+            SubagentInstance(role="cto", tool_name="subagent",
+                             agent_preset="role-cto",
                              allow=("read", "bash"), deny=("bash",))
 
     def test_instance_rejects_delegation_tool_in_allow(self):
         with pytest.raises(RoleResolutionError):
-            SubagentInstance(role="cto", tool_name="subagent_cto",
-                             persona="role-cto",
+            SubagentInstance(role="cto", tool_name="subagent",
+                             agent_preset="role-cto",
                              allow=("read", "subagent"), deny=())
 
-    def test_tool_filter_shape(self, resolver):
+    def test_tool_surface_shape(self, resolver):
         inst = resolver.resolve("cto")
-        tf = inst.tool_filter()
-        assert set(tf["allow"]) == set(inst.allow)
-        assert set(tf["deny"]) == set(inst.deny)
+        ts = inst.tool_surface()
+        assert set(ts["allow"]) == set(inst.allow)
+        assert set(ts["deny"]) == set(inst.deny)

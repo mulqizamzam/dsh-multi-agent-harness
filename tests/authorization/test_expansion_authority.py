@@ -67,7 +67,7 @@ def test_config_level_boundaries(project_root):
     all_inst = {f"subagent_{r}" for r in
                 ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova") + NEW}
     for entry in mapping["roles"]:
-        rid, tf = entry["id"], entry["tool_filter"]
+        rid, tf = entry["id"], entry["tool_surface"]
         allow, deny = set(tf["allow"]), set(tf["deny"])
         assert not (allow & deny)
         assert not (allow & {"subagent", "subagent_fork", "send_message", "workflow"})

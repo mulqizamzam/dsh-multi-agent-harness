@@ -22,7 +22,7 @@
 #   - no L3
 #   - no G10 changes
 #   - no session-policy changes
-#   - no role/toolFilter changes
+#   - no role tool-surface changes
 
 import json
 import os

@@ -67,7 +67,7 @@ class TestPerRoleInvocation:
         assert outcome.result.assigned_role == role
         assert outcome.provenance.role == role
         assert outcome.provenance.tool_name == f"subagent_{role}"
-        assert outcome.provenance.persona == f"role-{role}"
+        assert outcome.provenance.agent_preset == f"role-{role}"
         # RUNTIME PROVENANCE preserved
         assert outcome.provenance.delegation_id == delegation.id
         assert outcome.provenance.task_id == task.task_id

@@ -151,7 +151,7 @@ class TestSchemas:
                 "id": rid, "preset": f"role-{rid}", "policy_ref": f"agents/{rid}/policy.yaml",
                 "tool_instance": {"tool_name": f"subagent_{rid}", "provider": "spawn",
                                   "background_mode": "continuable", "max_depth": 1, "persona": f"role-{rid}"},
-                "tool_filter": {"allow": ["read"], "deny": ["bash", "edit", "write"]},
+                "tool_surface": {"allow": ["read"], "deny": ["bash", "edit", "write"]},
             })
         doc = {
             "mapping_version": 1, "status": "finalized",
@@ -161,7 +161,7 @@ class TestSchemas:
             "roles": roles,
             "orchestrator": {"id": "orchestrator", "binding": "root_session", "policy_ref": "orchestrator/AGENT.md",
                              "delegation_tools": ["subagent"],
-                             "tool_filter": {"allow": ["read", "subagent"], "deny": ["bash"]}},
+                             "tool_surface": {"allow": ["read", "subagent"], "deny": ["bash"]}},
             "consistency_rules": {"tool_names_verified": True},
         }
         self.validate(self.mapping_schema, doc)
@@ -176,7 +176,7 @@ class TestSchemas:
                 "roles": [],  # 0 roles, minItems=7
                 "orchestrator": {"id": "orchestrator", "binding": "root_session", "policy_ref": "orchestrator/AGENT.md",
                                  "delegation_tools": ["subagent"],
-                                 "tool_filter": {"allow": ["read"], "deny": ["bash"]}},
+                                 "tool_surface": {"allow": ["read"], "deny": ["bash"]}},
                 "consistency_rules": {},
             })
 
@@ -190,7 +190,7 @@ class TestSchemas:
             "display_name": "CTO", "domain": "Engineering", "summary": "test",
             "capabilities": {"code_read": "yes", "code_write": "yes", "financial_analysis": "no"},
             "sandbox_approval_intent": {"sandbox": "workspace-write", "approval": "ask"},
-            "tool_filter": {"allow": ["bash", "read"], "deny": []},
+            "tool_surface": {"allow": ["bash", "read"], "deny": []},
             "prohibited_actions": ["financial_transaction"],
             "invariants": {"no_self_delegation": True},
         })
@@ -204,7 +204,7 @@ class TestSchemas:
                 "display_name": "Architect", "domain": "x", "summary": "x",
                 "capabilities": {"code_read": "yes"},
                 "sandbox_approval_intent": {"sandbox": "workspace-write", "approval": "ask"},
-                "tool_filter": {"allow": ["read"], "deny": []},
+                "tool_surface": {"allow": ["read"], "deny": []},
                 "prohibited_actions": [],
                 "invariants": {},
             })
@@ -217,7 +217,7 @@ class TestSchemas:
                 "display_name": "CTO", "domain": "x", "summary": "x",
                 "capabilities": {"code_read": "maybe"},  # not in enum
                 "sandbox_approval_intent": {"sandbox": "workspace-write", "approval": "ask"},
-                "tool_filter": {"allow": ["read"], "deny": []},
+                "tool_surface": {"allow": ["read"], "deny": []},
                 "prohibited_actions": [],
                 "invariants": {},
             })
@@ -234,13 +234,13 @@ class TestSchemas:
                 "display_name": "CTO", "domain": "x", "summary": "x",
                 "capabilities": {"code_read": "yes"},
                 "sandbox_approval_intent": {"sandbox": "danger", "approval": "ask"},  # bad sandbox
-                "tool_filter": {"allow": ["read"], "deny": []},
+                "tool_surface": {"allow": ["read"], "deny": []},
                 "prohibited_actions": [],
                 "invariants": {},
             })
 
-    def test_invalid_role_definition_tool_filter_missing_allow(self):
-        """tool_filter must have both allow and deny."""
+    def test_invalid_role_definition_tool_surface_missing_allow(self):
+        """tool_surface must have both allow and deny."""
         with pytest.raises(ValidationError):
             self.validate(self.role_schema, {
                 "role": "cto", "role_version": 1, "status": "finalized",
@@ -248,7 +248,7 @@ class TestSchemas:
                 "display_name": "CTO", "domain": "x", "summary": "x",
                 "capabilities": {"code_read": "yes"},
                 "sandbox_approval_intent": {"sandbox": "workspace-write", "approval": "ask"},
-                "tool_filter": {"allow": ["read"]},  # missing deny
+                "tool_surface": {"allow": ["read"]},  # missing deny
                 "prohibited_actions": [],
                 "invariants": {},
             })

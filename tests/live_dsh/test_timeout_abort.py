@@ -16,8 +16,8 @@ from .conftest import make_task, make_delegation
 
 def _instance(role="cto"):
     from orchestrator.dsh.resolver import SubagentInstance
-    return SubagentInstance(role=role, tool_name=f"subagent_{role}",
-                            persona=f"role-{role}")
+    return SubagentInstance(role=role, tool_name="subagent",
+                            agent_preset=f"role-{role}")
 
 
 class TestTimeoutAbort:

@@ -165,7 +165,7 @@ class RealDSHBackend(DelegationBackend):
         invocation = DSHInvocation(
             description=description,
             prompt=task_prompt,
-            run_in_background=False,
+            agent_preset=getattr(instance, "agent_preset", ""),
             output_schema=output_schema,
         )
 

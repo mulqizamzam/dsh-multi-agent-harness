@@ -43,7 +43,7 @@ class TestStructuredCapture:
         backend = RealDSHBackend(_dispatch, require_marker=False)
         run = backend.start(
             __import__("orchestrator.dsh.resolver", fromlist=["SubagentInstance"])
-            .SubagentInstance(role="cto", tool_name="subagent_cto", persona="role-cto"),
+            .SubagentInstance(role="cto", tool_name="subagent", agent_preset="role-cto"),
             {"task_id": task.task_id, "objective": task.objective,
              "assigned_role": "cto"})
         outcome = run.result()
@@ -72,7 +72,7 @@ class TestStructuredCapture:
         backend = RealDSHBackend(_dispatch, require_marker=False)
         run = backend.start(
             __import__("orchestrator.dsh.resolver", fromlist=["SubagentInstance"])
-            .SubagentInstance(role="cto", tool_name="subagent_cto", persona="role-cto"),
+            .SubagentInstance(role="cto", tool_name="subagent", agent_preset="role-cto"),
             {"task_id": task.task_id, "objective": task.objective,
              "assigned_role": "cto"})
         with pytest.raises(SubtaskFailed):
@@ -91,7 +91,7 @@ class TestStructuredCapture:
         backend = RealDSHBackend(_dispatch, require_marker=False)
         run = backend.start(
             __import__("orchestrator.dsh.resolver", fromlist=["SubagentInstance"])
-            .SubagentInstance(role="cto", tool_name="subagent_cto", persona="role-cto"),
+            .SubagentInstance(role="cto", tool_name="subagent", agent_preset="role-cto"),
             {"task_id": task.task_id, "objective": task.objective,
              "assigned_role": "cto"})
         result = run.result()

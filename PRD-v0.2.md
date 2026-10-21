@@ -77,7 +77,7 @@ The system must not require every specialist to participate in every workflow.
 
    * agent registry;
    * permission matrix;
-   * DSH preset/toolFilter mapping;
+   * DSH Agent Preset / tool-surface mapping;
    * role policy;
    * validation and test suite.
 5. Support capability-based, on-demand routing.
@@ -531,7 +531,7 @@ Project control plane
 DSH-native enforcement
 ```
 
-DSH `toolFilter` and related subagent configuration are used for capability shaping and execution constraints.
+The DSH Agent Preset composition (the tool plugins a role's preset mounts) and the related subagent configuration are used for capability shaping and execution constraints.
 
 They must **not** be treated as the sole authority boundary.
 
@@ -821,7 +821,7 @@ Each new specialist must have:
 * explicit lifecycle designation;
 * explicit permission set;
 * role-specific policy;
-* DSH preset/toolFilter mapping;
+* DSH Agent Preset / tool-surface mapping;
 * delegation constraints;
 * applicable verification requirements.
 
@@ -914,7 +914,7 @@ Adding the new pool must not silently change:
 
 * role boundaries;
 * permissions;
-* toolFilter behavior;
+* tool-surface behavior (the preset composition);
 * authority semantics;
 * BadSector semantics;
 * workflow assumptions;
@@ -949,7 +949,7 @@ model output → mistaken as authority
 project state → mistaken as authority
 verification → mistaken as authorization
 BadSector PASS → mistaken as authorization
-toolFilter → mistaken as complete security boundary
+role tool surface → mistaken as complete security boundary
 ```
 
 ---
@@ -1063,7 +1063,7 @@ The expansion is accepted only when all required criteria pass.
 
 ## 25.4 DSH
 
-* Each specialist maps to a valid DSH preset/toolFilter configuration.
+* Each specialist maps to a valid DSH Agent Preset composition.
 * DSH remains pinned to `0.2.0-rc.2` *(re-verified 2026-10-09; was `0.1.1-rc.2` at v0.2 authoring — README.md §Version pin)*.
 * No DSH core modification is required.
 * ToolFilter is not treated as the sole authorization/security boundary.

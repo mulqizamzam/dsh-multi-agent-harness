@@ -88,7 +88,7 @@ class TestAuthorityGate:
 
 
 class TestRoleIsolation:
-    """ISO-001..007 — capability boundaries via toolFilter + gate."""
+    """ISO-001..007 — capability boundaries via the role tool surface + gate."""
 
     def test_iso_001_cto_no_financial_capability(self):
         """CTO cannot access CFO-only financial capability."""
@@ -105,7 +105,7 @@ class TestRoleIsolation:
         assert pol["invariants"].get("no_financial_capability") is True
 
     def test_iso_002_cfo_no_code_write(self):
-        """CFO has no write/exec tools in its toolFilter (asserted in test_config);
+        """CFO has no write/exec tools in its tool surface (asserted in test_config);
         at the gate level, an action outside the (correctly scoped) delegation is
         DENIED. A delegation must never grant CFO code_write — here we model the
         correct delegation, which does not include code_write."""
@@ -117,13 +117,13 @@ class TestRoleIsolation:
             authorize("cfo", "code_write", "multi-agent-harness/code/x.py", cfo_delegation)
 
     def test_iso_002_cfo_no_write_tools_in_filter(self, project_root):
-        """ISO-002 enforcement point #1: CFO's toolFilter has no write/exec tools."""
+        """ISO-002 enforcement point #1: CFO's tool surface has no write/exec tools."""
         import yaml
         with open(project_root + "/agents/cfo/policy.yaml") as f:
             pol = yaml.safe_load(f)
-        allow = set(pol["tool_filter"]["allow"])
+        allow = set(pol["tool_surface"]["allow"])
         assert not (allow & {"bash", "edit", "write", "str_replace_editor"}), \
-            f"CFO toolFilter must have no write/exec tools, got {allow}"
+            f"CFO tool surface must have no write/exec tools, got {allow}"
 
     def test_iso_003_kai_no_project_write(self):
         """Kai is read-only by default — no project file write."""
@@ -137,7 +137,7 @@ class TestRoleIsolation:
         import yaml
         with open(project_root + "/agents/kai/policy.yaml") as f:
             pol = yaml.safe_load(f)
-        allow = set(pol["tool_filter"]["allow"])
+        allow = set(pol["tool_surface"]["allow"])
         assert not (allow & {"bash", "edit", "write"}), \
             f"Kai toolFilter must have no write tools, got {allow}"
 
@@ -153,7 +153,7 @@ class TestRoleIsolation:
         import yaml
         with open(project_root + "/agents/somad/policy.yaml") as f:
             pol = yaml.safe_load(f)
-        allow = set(pol["tool_filter"]["allow"])
+        allow = set(pol["tool_surface"]["allow"])
         assert "bash" not in allow, f"Somad must not allow bash, got {allow}"
         assert pol["invariants"].get("no_infra_capability") is True
 
@@ -169,7 +169,7 @@ class TestRoleIsolation:
         import yaml
         with open(project_root + "/agents/nova/policy.yaml") as f:
             pol = yaml.safe_load(f)
-        allow = set(pol["tool_filter"]["allow"])
+        allow = set(pol["tool_surface"]["allow"])
         assert "bash" not in allow, f"Nova must not allow bash, got {allow}"
         assert pol["invariants"].get("no_infra_capability") is True
 
@@ -396,7 +396,7 @@ class TestCapabilityBoundary:
         for rid in ("zeko", "cto"):
             with open(project_root + f"/agents/{rid}/policy.yaml") as f:
                 pol = yaml.safe_load(f)
-            allow = set(pol["tool_filter"]["allow"])
+            allow = set(pol["tool_surface"]["allow"])
             assert allow <= VERIFIED_TOOLS, f"{rid} allow has unknown tools"
 
 
@@ -436,7 +436,7 @@ class TestSubdelegation:
         for rid in ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"):
             with open(project_root + f"/agents/{rid}/policy.yaml") as f:
                 pol = yaml.safe_load(f)
-            allow = set(pol["tool_filter"]["allow"])
+            allow = set(pol["tool_surface"]["allow"])
             assert not (allow & DELEGATION_TOOLS), f"{rid} allows delegation tools"
 
     def test_message_authority_assertion_ignored(self):

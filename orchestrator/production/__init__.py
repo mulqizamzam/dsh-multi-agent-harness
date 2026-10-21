@@ -33,7 +33,7 @@
 #   - enable web_fetch
 #   - modify DSH
 #   - modify profiles/presets
-#   - alter role toolFilters
+#   - alter role tool surfaces
 
 from __future__ import annotations
 

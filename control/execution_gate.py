@@ -26,7 +26,7 @@
 #
 # ENFORCEMENT LOCATION
 #   DSH has no path-level sandbox: the per-session sandbox is workspace-wide
-#   and toolFilter is tool-level (VERIFIED). Therefore the enforcement point is
+#   and the role's tool surface is tool-level (VERIFIED). Therefore the enforcement point is
 #   the project control-plane write channel: all registry/audit state writes
 #   must go through write_through()/registry_write(), which normalizes the
 #   target and consults this gate before any filesystem mutation. This is the
@@ -41,7 +41,7 @@
 #   write that passes through the project write channel to a protected path is
 #   denied by code.
 #
-# NOT modified by this milestone: role architecture, toolFilter, DSH core,
+# NOT modified by this milestone: role architecture, the role tool surface, DSH core,
 # DSH profile/presets, session sandbox/approval policy.
 
 import os

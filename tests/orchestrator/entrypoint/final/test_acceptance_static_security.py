@@ -211,7 +211,7 @@ class TestStaticSecurity:
             from orchestrator.entrypoint import FrontDoorRequest
             fields = {f.name for f in dataclasses.fields(FrontDoorRequest)}
             for banned in ("approval_reference", "declared_risk", "review",
-                           "status", "permissions", "tool_filter"):
+                           "status", "permissions", "tool_filter", "tool_surface"):
                 assert banned not in fields, \
                     f"FrontDoorRequest accepts authority field {banned!r}"
         finally:

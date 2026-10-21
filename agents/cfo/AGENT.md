@@ -54,4 +54,4 @@ Own pricing, unit economics, cost, margin, budget, ROI, and financial scenario a
 
 ---
 
-*See `policy.yaml` for the declarative policy. See `config/role-preset-mapping.yaml` for the role→preset/toolFilter mapping.*
+*See `policy.yaml` for the declarative policy. See `config/role-preset-mapping.yaml` for the role→Agent Preset / tool-surface mapping.*

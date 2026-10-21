@@ -62,6 +62,6 @@ orchestrator re-checks after collection.
 Note on `agent()`: the commented-out `agent()` call in `delegate()` is a
 DRY_RUN-path placeholder for this skeleton, **not** the real delegation
 surface — a child spawned through generic `agent()` does **not** inherit a
-role's fences (persona and `toolFilter`), so it carries none of the role's
+role's fences (the persona row and the tool-surface plugin rows), so it carries none of the role's
 authority boundary. Real delegation to a role goes through that role's
 `subagent_<id>` instance, never through this path.

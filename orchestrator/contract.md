@@ -57,7 +57,7 @@ PLAN          decompose; select minimum specialist set; risk class; evidence pla
 AUTHORITY     authority gate: is the task within delegation? (fail-closed)
 DELEGATE      scoped task → per-role tool-subagent instance (explicit boundaries)
 GATES         risk → evidence → conflict → BadSector review (when mandatory)
-EXECUTION     execution gate re-check → DSH sandbox + approval + toolFilter
+EXECUTION     execution gate re-check → DSH sandbox + approval + tool surface
 VERIFY        expected vs actual outcome; verification evidence (independent for HIGH)
 COMPLETE      only after verification passes; failure → BLOCKED/FAILED/ESCALATED/RECOVERING
 ```
@@ -79,7 +79,7 @@ Failure states (Human-visible): `BLOCKED`, `FAILED`, `ESCALATED`, `RECOVERING`. 
 - **Default: coordinates only.** The orchestrator may itself perform **read-only** and **reversible internal** actions (reading state, running validation, collecting results) **within its delegated scope**, always through the execution gate.
 - It may perform **reversible internal writes** only for project state/audit maintenance (`multi-agent-harness/state/`, `audit/`) — single-writer, atomic, versioned.
 - **Never directly**: production changes, destructive actions, financial commitments, credential changes, material external publication (ORC-002). These route to a specialist under authority + approval.
-- A broad root session is **not** a secure orchestrator — the control plane is the security boundary (THREAT-025); the session's toolFilter is an L2 backstop only.
+- A broad root session is **not** a secure orchestrator — the control plane is the security boundary (THREAT-025); the session's tool surface is an L2 backstop only.
 
 ## 8. State and audit (single-writer)
 

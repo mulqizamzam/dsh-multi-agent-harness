@@ -309,13 +309,9 @@ class TestLiveEnvironmentFacts:
         the parsed allow list holds exact tool names, so `todo_write` does
         not trip the O5 write/edit guard.
         """
-        from tests.d4d7_composition import orchestrator_subagent_rows
-        rows = orchestrator_subagent_rows()
-        for rid in ("subagent_somad", "subagent_nova"):
-            assert rid in rows, (
-                f"{rid} row not composed in orchestrator/agent.cordis.yml")
-            tf = rows[rid].get("toolFilter") or {}
-            allow_tools = set(tf.get("allow") or [])
+        from tests.d4d7_composition import preset_tool_surface
+        for rid in ("somad", "nova"):
+            allow_tools = preset_tool_surface(f"role-{rid}")
             assert "write" not in allow_tools, (
                 f"{rid} allow list still contains 'write' (O5 not applied): "
                 f"{sorted(allow_tools)}")

@@ -50,7 +50,7 @@ def tmp_workspace(tmp_path):
 
 @pytest.fixture
 def role_filters():
-    """The D4/D7 per-role toolFilter allow/deny sets from config (read-only)."""
+    """The D4/D7 per-role tool-surface allow/deny sets from config (read-only)."""
     import yaml
     with open(os.path.join(PROJECT_ROOT, "config",
                            "role-preset-mapping.yaml")) as f:
@@ -58,8 +58,8 @@ def role_filters():
     roles = {}
     for role in mapping["roles"]:
         roles[role["id"]] = {
-            "allow": set(role["tool_filter"]["allow"]),
-            "deny": set(role["tool_filter"]["deny"]),
+            "allow": set(role["tool_surface"]["allow"]),
+            "deny": set(role["tool_surface"]["deny"]),
         }
     return roles
 
@@ -69,7 +69,7 @@ def raw_write_roles(role_filters):
     """Roles that can mutate the filesystem via raw DSH tools.
 
     A role is raw-write-capable when `bash` OR `write`/`edit` is in its
-    toolFilter allow set (any one of those tools can carry a raw write that
+    tool-surface allow set (any one of those tools can carry a raw write that
     bypasses the project channel). See G10 residual proof §1.
     """
     return sorted(

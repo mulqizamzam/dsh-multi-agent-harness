@@ -68,7 +68,7 @@ class BridgeEvidence:
             "role": self.role,
             "delegation_id": self.delegation_id,
             "tool_name": self.tool_name,
-            "persona": self.persona,
+            "agent_preset": self.agent_preset,
             "backend_kind": self.backend_kind,
             "mounted": self.mounted,
             "invocation": dict(self.invocation),
@@ -87,7 +87,7 @@ class BridgeEvidence:
 
 def capture_dispatch_evidence(*, flow_id: str = "", task_id: str = "",
                               role: str = "", delegation_id: str = "",
-                              tool_name: str = "", persona: str = "",
+                              tool_name: str = "", agent_preset: str = "",
                               invocation: DSHInvocation | None = None,
                               run_id: str = "", stop_reason: str = "",
                               structured: dict | None = None,
@@ -99,7 +99,7 @@ def capture_dispatch_evidence(*, flow_id: str = "", task_id: str = "",
     outcome = map_stop_reason_to_outcome(stop_reason)
     ev = BridgeEvidence(
         flow_id=flow_id, task_id=task_id, role=role,
-        delegation_id=delegation_id, tool_name=tool_name, persona=persona,
+        delegation_id=delegation_id, tool_name=tool_name, agent_preset=agent_preset,
         backend_kind=backend_kind.value, mounted=mounted,
         invocation=invocation.to_dict() if invocation is not None else {},
         run_id=run_id,

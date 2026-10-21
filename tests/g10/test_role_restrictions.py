@@ -1,6 +1,6 @@
-"""Session C — G10: current D4/D7 role restrictions (toolFilter).
+"""Session C — G10: current D4/D7 role restrictions (tool surface).
 
-Asserts the per-role toolFilter allow/deny sets from the project config:
+Asserts the per-role tool-surface allow/deny sets from the project config:
 
   - read-only roles (badsector, cfo, kai) deny bash/edit/write;
   - bash/write/edit-capable roles: zeko (bash only, since the 2026-09-07
@@ -25,7 +25,7 @@ from orchestrator.foundation.contracts import SPECIALIST_ROLES  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
-# Actor set: who can raw-write at the DSH layer (toolFilter allow sets)
+# Actor set: who can raw-write at the DSH layer (tool-surface allow sets)
 # ---------------------------------------------------------------------------
 
 def test_readonly_roles_deny_raw_write_tools(role_filters):
@@ -46,8 +46,8 @@ def test_raw_write_capable_roles_identified(raw_write_roles):
 def test_write_edit_capable_roles_identified(role_filters):
     """2026-09-07 zeko discriminator (task 3 of the Human-approved
     "laksanakan 1-4" plan): exactly {cto} still holds write/edit.
-    zeko's capabilities.code_write: no is now enforced at the toolFilter
-    layer instead of being advisory."""
+    zeko's capabilities.code_write: no is now enforced by the role's preset
+    composition instead of being advisory."""
     write_edit = sorted(
         r for r, f in role_filters.items() if {"write", "edit"} & f["allow"])
     assert write_edit == ["cto"]

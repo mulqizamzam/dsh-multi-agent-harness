@@ -8,7 +8,7 @@
 #
 # Per role the harness validates:
 #   - role resolution (role -> subagent_<id> instance from the D4/D7 config)
-#   - toolFilter (allow/deny as declared; allow ∩ deny = ∅; no delegation tools)
+#   - tool surface (allow/deny as declared; allow ∩ deny = ∅; no delegation tools)
 #   - prohibited tools (per config/permissions.yaml capability matrix: tools a
 #     role must NOT have)
 #   - provenance (a dispatched child, when live, records role identity + real
@@ -18,7 +18,7 @@
 # HONESTY RULE: the harness is gated on the D4/D7 mount marker
 # (DSH_LIVE_BRIDGE_ACTIVE). When the mount is absent the live checks report
 # BLOCKED / UNAVAILABLE — NEVER a fake live result. Deterministic checks
-# (resolution, toolFilter config, prohibited-tools config, subdelegation
+# (resolution, tool-surface config, prohibited-tools config, subdelegation
 # denial) always run and must pass.
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ READ_ONLY_ROLES = ("cfo", "kai", "badsector")
 # Roles whose allow list legitimately carries mutation tools.
 # Post-O5: somad/nova had write/edit removed (containment step).
 # 2026-09-07 (Human-approved discriminator): zeko lost write/edit too
-# (capabilities.code_write: no now enforced at the toolFilter layer);
+# (capabilities.code_write: no now enforced by the role preset composition);
 # only cto holds code-mutation tools.
 WRITE_CAPABLE_ROLES = ("cto",)
 
@@ -141,20 +141,20 @@ def check_role_resolution(role: str) -> RoleCheck:
         inst = RoleResolver().resolve(role)
     except Exception as e:  # noqa: BLE001
         return RoleCheck(role, "resolution", False, f"resolve failed: {e}")
-    expected_tool = f"subagent_{role}"
-    expected_persona = f"role-{role}"
+    expected_tool = "subagent"
+    expected_preset = f"role-{role}"
     ok = (inst.tool_name == expected_tool
-          and inst.persona == expected_persona
+          and inst.agent_preset == expected_preset
           and inst.provider == "spawn"
           and inst.max_depth == 1)
     return RoleCheck(
         role, "resolution", ok,
-        f"tool_name={inst.tool_name} persona={inst.persona} "
+        f"tool_name={inst.tool_name} agent_preset={inst.agent_preset} "
         f"provider={inst.provider} max_depth={inst.max_depth}")
 
 
 def check_toolfilter_consistency(role: str) -> RoleCheck:
-    """toolFilter is internally consistent (allow ∩ deny = ∅, no delegation
+    """The tool surface is internally consistent (allow ∩ deny = ∅, no delegation
     tools in allow, max_depth=1)."""
     try:
         inst = RoleResolver().resolve(role)

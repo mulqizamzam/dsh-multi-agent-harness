@@ -4,7 +4,7 @@
 #
 # One adapter per specialist role (CTO, CFO, Kai, Somad, BadSector, Nova, Zeko).
 # An adapter binds the D4/D7-approved SubagentInstance to:
-#   - the role's expected tool_name / persona / toolFilter (from config)
+#   - the role's expected tool_name / agent_preset / tool surface (from config)
 #   - the authorized task-context builder (THREAT-020: no authority in messages)
 #   - the DSH invocation shape the real bridge sends
 #   - the structured TaskResult schema the child must satisfy
@@ -42,10 +42,11 @@ class RoleAdapter:
     """One specialist role's REAL-bridge adapter.
 
     role:            the specialist role id
-    instance:        the approved D4/D7 SubagentInstance
-    tool_name:       subagent_<id> (the mounted tool to call)
-    allow/deny:      the approved toolFilter (from config)
-    mounted:         whether the instance is currently mounted (probe)
+    instance:        the approved SubagentInstance
+    tool_name:       subagent (the ONE delegation tool to call)
+    agent_preset:    role-<id> (the preset the model selects)
+    allow/deny:      the approved tool surface (from config)
+    mounted:         whether the delegation tool is currently mounted (probe)
     """
     role: str
     instance: SubagentInstance
@@ -55,8 +56,8 @@ class RoleAdapter:
         return self.instance.tool_name
 
     @property
-    def persona(self) -> str:
-        return self.instance.persona
+    def agent_preset(self) -> str:
+        return self.instance.agent_preset
 
     @property
     def allow(self) -> tuple:
@@ -69,10 +70,6 @@ class RoleAdapter:
     @property
     def provider(self) -> str:
         return self.instance.provider
-
-    @property
-    def background_mode(self) -> str:
-        return self.instance.background_mode
 
     @property
     def max_depth(self) -> int:
@@ -97,9 +94,8 @@ class RoleAdapter:
         return {
             "role": self.role,
             "tool_name": self.tool_name,
-            "persona": self.persona,
+            "agent_preset": self.agent_preset,
             "provider": self.provider,
-            "background_mode": self.background_mode,
             "max_depth": self.max_depth,
             "allow": list(self.allow),
             "deny": list(self.deny),

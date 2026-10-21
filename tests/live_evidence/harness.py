@@ -282,7 +282,6 @@ class LiveEvidenceHarness:
             "task_id": task_id,
             "run_id": run_id,
             "provider": "spawn",
-            "background_mode": "continuable",
             "max_depth": 1,
             "started_at": started_at,
             "settled_at": settled_at,

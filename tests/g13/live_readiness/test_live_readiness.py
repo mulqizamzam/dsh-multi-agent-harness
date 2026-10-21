@@ -150,7 +150,7 @@ class TestLivePayloadFixtures:
                                "role-preset-mapping.yaml")) as f:
             mapping = yaml.safe_load(f)
         for role in mapping["roles"]:
-            allow = set(role["tool_filter"]["allow"])
+            allow = set(role["tool_surface"]["allow"])
             assert "web_fetch" not in allow
 
     def test_plan_claims_no_immunity(self):

@@ -3,16 +3,20 @@
 Phase 3 / Session B. Scope: `multi-agent-harness/` only.
 
 The minimal adapter between the **production Orchestrator runtime** and the
-**already-approved DSH subagent/workflow primitives** (the D4/D7 role
-composition: per-role `tool-subagent` instances `subagent_<id>` bound to
-persona `role-<id>`, provider `spawn`, `backgroundMode: continuable`,
-`maxDepth: 1`).
+**already-approved DSH subagent/workflow primitives**.
+
+Since DSH 0.2.1-rc.2 the role composition is: ONE `tool-subagent` row
+(provider `spawn`, `maxDepth: 1`) whose `allowedAgentPresets` lists the
+fifteen role presets, and the model names the role in the `agent_preset`
+argument. The host removed the per-instance `persona` / `toolFilter` config
+keys and `backgroundMode`; a role's persona and tool surface now live in its
+own Agent Preset (`agents/<id>/agent.cordis.yml`).
 
 ## What it does
 
 | Requirement | Module |
 |---|---|
-| resolve role → subagent instance | `resolver.py` (`RoleResolver`) |
+| resolve role → delegation configuration | `resolver.py` (`RoleResolver`) |
 | pass only authorized task context | `context.py` (`build_task_context`) |
 | preserve delegation scope | `client.py` (AUTH-INV-04 containment check) |
 | collect structured `TaskResult` | `result.py` (`TaskResultCollector`) |
@@ -48,7 +52,7 @@ outcome = client.delegate(task, delegation)
 ```
 
 The client is **backend-agnostic**: production mounts a bridge to the DSH
-session's `subagent_<id>` tools; tests and DRY_RUN flows use
+session's `subagent` tool; tests and DRY_RUN flows use
 `FakeSubagentBackend`, which models the DSH tool-subagent contract
 in-process (stop reasons `completed | aborted | error | max-tokens | refusal`,
 tool-call budget, cancellation signal).
@@ -58,7 +62,7 @@ tool-call budget, cancellation signal).
 - **No DSH profile / preset / core modification.** This package is a pure
   Python consumer of the approved composition; it never mounts or configures
   anything.
-- **Role toolFilters are not changed.** `RoleResolver` reads them; it never
+- **Role tool surfaces are not changed.** `RoleResolver` reads them; it never
   writes them.
 - **No new tools are enabled; `web_fetch` stays disabled** (verified by tests).
 - **Subdelegation DENY BY DEFAULT (V1, DLG-003):** only the orchestrator may
@@ -84,4 +88,4 @@ results, timeout, abort, and child failure.
 ---
 
 *Status: implemented (Phase 3 / Session B). No DSH core, profile, preset,
-config, or role-toolFilter change; `web_fetch` remains disabled.*
+config, or role tool-surface change; `web_fetch` remains disabled.*

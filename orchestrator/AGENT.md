@@ -63,4 +63,4 @@ Coordinate and delegate. Convert objectives into scoped tasks, select the minimu
 
 ---
 
-*See `contract.md` for the full orchestrator contract (gate ownership, delegation protocol). See `config/role-preset-mapping.yaml` for the session toolFilter intent.*
+*See `contract.md` for the full orchestrator contract (gate ownership, delegation protocol). See `config/role-preset-mapping.yaml` for the session tool-surface intent.*
