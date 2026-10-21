@@ -5,7 +5,7 @@
 role: badsector
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: BadSector
 domain: Adversarial Review / Validation
 summary: challenge assumptions, red-team plans, identify failure modes, detect contradictions, verify evidence
@@ -32,26 +32,23 @@ sandbox_approval_intent:
   sandbox: read-only
   approval: never
 
-# Intended toolFilter (mapping: config/role-preset-mapping.yaml).
+# Intended tool surface (mapping: config/role-preset-mapping.yaml).
 # Strictly read-only: no mutating or executing tools, no web, no delegation.
-tool_filter:
+tool_surface:
   allow: [read, read_image, glob, grep,
           job_kill, job_list, job_output,
           skill, exit_plan_mode, todo_write]
-  deny: [bash, edit, write, web_search,
-         subagent_cto, subagent_cfo, subagent_kai,
-         subagent_somad, subagent_nova, subagent_zeko,
-         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
+  deny: [bash, edit, write, web_search]
   unmounted_candidates: []
   notes: >
     BadSector NEVER executes the reviewed plan. web_search is excluded from the
     review surface: reviews inspect the proposal + evidence set (project-local
     reads) rather than fetching new material. PASS from this role is advisory
-    only and never authorizes execution (INV-03, AUTH-INV-09). Deny contract:
-    the write/exec/web hard-block plus the six sibling delegation instances
-    (exact-name subdelegation deny-by-default; the generic workflow-realm tools
-    are not on a specialist child's inherited chain and are rejected by
-    tools.restrict()).
+    Deny contract: the hard prohibitions named above are realised by the
+    role's preset composition — a tool the role may not use is either not
+    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    structural rather than a deny list: the preset mounts no delegation
+    plugin, so a child of this role has no delegation tool in its catalog.
 
 prohibited_actions: [any_mutation, any_execution, delegation_write]
 

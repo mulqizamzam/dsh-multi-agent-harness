@@ -5,7 +5,7 @@
 role: zeko
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: Zeko
 domain: Operations & Infrastructure
 summary: server/runtime monitoring, process health, logs, deployment operations, operational recovery
@@ -32,30 +32,30 @@ sandbox_approval_intent:
   sandbox: workspace-write
   approval: ask
 
-# Intended toolFilter (mapping: config/role-preset-mapping.yaml).
-# allow = the role's model-facing tool surface (mounted in the standard preset).
-# deny = hard prohibitions; unmounted_candidates = not mounted, requires a
+# Intended tool surface (mapping: config/role-preset-mapping.yaml).
+# allow = the role's model-facing tool surface, composed by the rows of this
+# role's own Agent Preset. deny = hard prohibitions; unmounted_candidates =
+# not mounted, requires a
 # controlled composition exception before use.
-tool_filter:
+tool_surface:
   # 2026-09-07 (Human-approved discriminator, task 3 of "laksanakan 1-4"):
   # edit/write removed — capabilities.code_write: no is now enforceable at the
-  # toolFilter layer, not advisory. Ops writes are channel/script-routed; bash
+  # tool-surface layer, not advisory. Ops writes are channel/script-routed; bash
   # remains for diagnosis (G10 residual, documented).
   allow: [bash, read, read_image, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [subagent_cto, subagent_cfo, subagent_kai,
-         subagent_somad, subagent_badsector, subagent_nova,
-         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
+  deny: []
   unmounted_candidates: []
   notes: >
     bash is scoped to ops diagnosis and delegation-bounded operations; ops
     file changes are channel-routed through the execution gate (edit/write
     removed from this role's allow on 2026-09-07 so the tool surface matches
-    capabilities.code_write: no). Deny contract: the six sibling delegation
-    instances (exact-name subdelegation deny-by-default; the generic
-    workflow-realm tools are not on a specialist child's inherited chain and
-    are rejected by tools.restrict()).
+    Deny contract: the hard prohibitions named above are realised by the
+    role's preset composition — a tool the role may not use is either not
+    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    structural rather than a deny list: the preset mounts no delegation
+    plugin, so a child of this role has no delegation tool in its catalog.
 
 prohibited_actions: [code_architecture_change, financial_transaction, credential_change]
 

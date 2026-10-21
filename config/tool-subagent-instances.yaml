@@ -1,316 +1,347 @@
 # ============================================================================
-# Per-role tool-subagent instances (subagent_<id>)
-# MOUNTED 2026-09-07 in the live web profile composition
-# ($DSH_HOME/profiles/web/cordis.patch.yml) under the Human-approved D4/D7
-# composition exception (ADR Decision 4/7). Verification evidence:
-# runs/mount-verification-2026-09-07/. This file remains the composition
-# source-of-record; further composition changes are per-case exceptions.
+# Delegation tool + Agent Preset declarations — multi-agent-harness
 #
-# Originally authored as the Phase 1C DRAFT (see
-# docs/phase-1/0002-role-isolation-draft.md); written in cordis patch style.
+# REWRITTEN 2026-10-21 for DeepSeek Harness 0.2.1-rc.2.
 #
-# Config keys VERIFIED against the DSH 0.2.0-rc.2 tool-subagent source:
-#   provider, toolName, persona, toolFilter {allow, deny}, backgroundMode,
-#   maxDepth, enableRunInBackground (default true).
+# What changed in the host:
+#   - `@deepseek-ai/dsh-tool-subagent` REMOVED the per-instance `persona` and
+#     `toolFilter` config keys. It now throws at config time
+#     ("tool-subagent: persona is no longer supported; configure persona and
+#     tool plugins in an Agent Preset and select it with agentPreset"), so a
+#     row carrying either of them FAILS TO MOUNT.
+#   - It REMOVED `backgroundMode` and the `enableRunInBackground` config key.
+#     Continuability is now a provider capability (`prepareContinuable`), not a
+#     row setting.
+#   - The model-facing `run_in_background` argument is gone; role selection is
+#     the `agent_preset` argument.
 #
-# Rules preserved:
-#   - subdelegation DENY BY DEFAULT: every specialist deny list names exactly
-#     its fourteen sibling subagent_<id> instances (the real delegation surface —
-#     restriction matching is exact-name, so the generic "subagent" deny never
-#     blocked subagent_<id>), and no delegation tool appears in any allow set.
-#     Generic workflow-realm tools (subagent, subagent_fork, send_message,
-#     interrupt_agent, list_agents, workflow, ralph) are NOT deny entries:
-#     they register in the standard preset's workflow isolate realm, outside a
-#     specialist child's inherited chain, and tools.restrict() rejects them.
-#   - toolFilter allow∩deny = ∅ (validated by tests/validate-config.py).
-#   - read-only roles (cfo, kai, badsector) deny edit/write/bash even though
-#     tool-fs is mounted in their preset (tool-fs is atomic — VERIFIED).
-#   - deny vocabulary is canonical and matches the deployed live profile
-#     composition ($DSH_HOME/profiles/web/cordis.patch.yml) row for row
-#     (locked by tests/l3_runner/.../test_live_rows_match_config).
+# What this file therefore records:
+#   `insert_draft`   the ONE delegation tool the orchestrator holds, with the
+#                    Agent Presets it may select.
+#   `agent_presets`  the fifteen role presets, each with the tool PLUGINS whose
+#                    rows compose the role's tool surface. The old
+#                    `toolFilter.allow` list became exactly this set:
+#                    a tool name maps to the plugin that provides it, and the
+#                    plugin's own per-tool config narrows it further.
+#
+# The tool -> plugin map (verified against the 0.2.1-rc.2 packages):
+#   bash                            -> @deepseek-ai/dsh-tool-bash
+#   read, read_image                -> @deepseek-ai/dsh-tool-fs
+#   write, edit                     -> @deepseek-ai/dsh-tool-fs
+#   glob, grep                      -> @deepseek-ai/dsh-tool-fs-search
+#   job_kill, job_list, job_output  -> @deepseek-ai/dsh-tool-jobs
+#   skill                           -> @deepseek-ai/dsh-tool-skill
+#   exit_plan_mode                  -> @deepseek-ai/dsh-plan-mode
+#   web_search, web_fetch           -> @deepseek-ai/dsh-tool-web
+#   todo_write                      -> @deepseek-ai/dsh-tool-todo
+#
+# GRANULARITY: a plugin provides several tools, so mounting it exposes all of
+# them. That loss is NOT suffered here, because 0.2.1-rc.2 gave the two
+# multi-tool plugins this roster uses a per-tool config:
+#   - `@deepseek-ai/dsh-tool-fs`  -> read / readImage / write / edit
+#   - `@deepseek-ai/dsh-tool-web` -> search / fetch
+# The `tool_surface` rows below record those switches, so each role's mounted
+# tool set equals its old allow list exactly.
+#
+# SUBDelegation DENY BY DEFAULT is now structural rather than a deny list: a
+# role preset mounts no delegation plugin at all, and the one delegation tool
+# carries `maxDepth: 1`, so a second hop is rejected at start. The fourteen
+# sibling `subagent_<id>` deny entries the old rows carried are obsolete —
+# those tools no longer exist — and are gone.
 # ============================================================================
 
-draft_version: 2
-status: mounted           # All 15 rows mounted: 7 baseline rows 2026-09-07
-                          # (Human-approved D4/D7) + the 8 PRD v0.2 expansion
-                          # rows (vera..ledger) 2026-09-09 (Human-approved
-                          # per-case exception, ADR 0003 D8). Pre-change
-                          # backup: runs/specialist-expansion-2026-09-09/backups/.
-version_pin: deepseek-harness-0.2.0-rc.2
+draft_version: 3
+status: mounted
+version_pin: deepseek-harness-0.2.1-rc.2
 mapping_ref: config/role-preset-mapping.yaml
-policy_ref_prefix: agents/  # <id>/policy.yaml
+policy_ref_prefix: agents/       # <id>/policy.yaml
+preset_ref_prefix: agents/       # <id>/agent.cordis.yml
 
-# The insert block below is the row set executed into the live profile
-# composition on 2026-09-07 (was: a Phase 1C projection).
+# The row set mounted into the orchestrator preset composition
+# (orchestrator/agent.cordis.yml, in the `delegation` group). ONE row, ONE
+# model-facing tool: the model names the role in `agent_preset`.
 insert_draft:
-  - id: tool-subagent-zeko
+  - id: tool-subagent
     name: '@deepseek-ai/dsh-tool-subagent'
     config:
       provider: spawn
-      toolName: subagent_zeko
-      persona: role-zeko
-      backgroundMode: continuable
+      toolName: subagent
       maxDepth: 1
-      toolFilter:
-        # 2026-09-07 (Human-approved discriminator): edit/write removed —
-        # capabilities.code_write: no is now enforceable at the toolFilter
-        # layer; raw-write actor set {zeko, cto} -> {cto}.
-        allow: [bash, read, read_image, glob, grep,
-                job_kill, job_list, job_output,
-                web_search, skill, exit_plan_mode, todo_write]
-        deny: [subagent_cto, subagent_cfo, subagent_kai,
-               subagent_somad, subagent_badsector, subagent_nova,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
+      allowedAgentPresets:
+          - role-zeko
+          - role-cto
+          - role-cfo
+          - role-kai
+          - role-somad
+          - role-badsector
+          - role-nova
+          - role-vera
+          - role-argus
+          - role-atlas
+          - role-tess
+          - role-quill
+          - role-scout
+          - role-talon
+          - role-ledger
 
-  - id: tool-subagent-cto
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_cto
-      persona: role-cto
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [bash, read, read_image, edit, write, glob, grep,
-                job_kill, job_list, job_output,
-                web_search, skill, exit_plan_mode, todo_write]
-        deny: [subagent_cfo, subagent_kai, subagent_somad,
-               subagent_badsector, subagent_nova, subagent_zeko,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
-
-  - id: tool-subagent-cfo
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_cfo
-      persona: role-cfo
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep,
-                job_kill, job_list, job_output,
-                web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write,
-               subagent_cto, subagent_kai, subagent_somad,
-               subagent_badsector, subagent_nova, subagent_zeko,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
-
-  - id: tool-subagent-kai
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_kai
-      persona: role-kai
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep,
-                job_kill, job_list, job_output,
-                web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write,
-               subagent_cto, subagent_cfo, subagent_somad,
-               subagent_badsector, subagent_nova, subagent_zeko,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
-
-  - id: tool-subagent-somad
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_somad
-      persona: role-somad
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep,
-                job_kill, job_list, job_output,
-                web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write,
-               subagent_cto, subagent_cfo, subagent_kai,
-               subagent_badsector, subagent_nova, subagent_zeko,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
-
-  - id: tool-subagent-badsector
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_badsector
-      persona: role-badsector
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep,
-                job_kill, job_list, job_output,
-                skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, web_search,
-               subagent_cto, subagent_cfo, subagent_kai,
-               subagent_somad, subagent_nova, subagent_zeko,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
-
-  - id: tool-subagent-nova
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_nova
-      persona: role-nova
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep,
-                job_kill, job_list, job_output,
-                skill, exit_plan_mode, todo_write]
-        deny: [edit, write,
-               subagent_cto, subagent_cfo, subagent_kai,
-               subagent_somad, subagent_badsector, subagent_zeko,
-               subagent_vera,
-               subagent_argus,
-               subagent_atlas,
-               subagent_tess,
-               subagent_quill,
-               subagent_scout,
-               subagent_talon,
-               subagent_ledger]
-
-  - id: tool-subagent-vera
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_vera
-      persona: role-vera
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-argus
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_argus
-      persona: role-argus
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, subagent_vera, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-atlas
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_atlas
-      persona: role-atlas
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-tess
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_tess
-      persona: role-tess
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-quill
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_quill
-      persona: role-quill
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-scout
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_scout
-      persona: role-scout
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-talon
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_talon
-      persona: role-talon
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-
-  - id: tool-subagent-ledger
-    name: '@deepseek-ai/dsh-tool-subagent'
-    config:
-      provider: spawn
-      toolName: subagent_ledger
-      persona: role-ledger
-      backgroundMode: continuable
-      maxDepth: 1
-      toolFilter:
-        allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-        deny: [bash, edit, write, web_search, subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
-# Consistency guardrails (validated by tests/validate-config.py):
+# The fifteen Agent Presets the delegation tool can select. Each is
+# registered by this plugin from the `source` composition file (id
+# `role-<id>`), and each carries its persona in a `@deepseek-ai/dsh-persona`
+# row and its tool surface in the tool plugin rows listed here.
+agent_presets:
+  - id: role-zeko
+    source: agents/zeko/agent.cordis.yml
+    policy_ref: agents/zeko/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [bash, read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: []
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-bash'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-cto
+    source: agents/cto/agent.cordis.yml
+    policy_ref: agents/cto/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [bash, read, read_image, edit, write, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: []
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-bash'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_web_config: {search: true, fetch: false}
+  - id: role-cfo
+    source: agents/cfo/agent.cordis.yml
+    policy_ref: agents/cfo/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-kai
+    source: agents/kai/agent.cordis.yml
+    policy_ref: agents/kai/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-somad
+    source: agents/somad/agent.cordis.yml
+    policy_ref: agents/somad/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-badsector
+    source: agents/badsector/agent.cordis.yml
+    policy_ref: agents/badsector/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write, web_search]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+  - id: role-nova
+    source: agents/nova/agent.cordis.yml
+    policy_ref: agents/nova/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+      deny: [edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+  - id: role-vera
+    source: agents/vera/agent.cordis.yml
+    policy_ref: agents/vera/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write, web_search]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+  - id: role-argus
+    source: agents/argus/agent.cordis.yml
+    policy_ref: agents/argus/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-atlas
+    source: agents/atlas/agent.cordis.yml
+    policy_ref: agents/atlas/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-tess
+    source: agents/tess/agent.cordis.yml
+    policy_ref: agents/tess/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-quill
+    source: agents/quill/agent.cordis.yml
+    policy_ref: agents/quill/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write, web_search]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+  - id: role-scout
+    source: agents/scout/agent.cordis.yml
+    policy_ref: agents/scout/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-talon
+    source: agents/talon/agent.cordis.yml
+    policy_ref: agents/talon/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, web_search, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+      - '@deepseek-ai/dsh-tool-web'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+    tool_web_config: {search: true, fetch: false}
+  - id: role-ledger
+    source: agents/ledger/agent.cordis.yml
+    policy_ref: agents/ledger/policy.yaml
+    persona_row: persona
+    tool_surface:
+      allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
+      deny: [bash, edit, write, web_search]
+    tool_plugins:
+      - '@deepseek-ai/dsh-plan-mode'
+      - '@deepseek-ai/dsh-tool-fs'
+      - '@deepseek-ai/dsh-tool-fs-search'
+      - '@deepseek-ai/dsh-tool-jobs'
+      - '@deepseek-ai/dsh-tool-skill'
+      - '@deepseek-ai/dsh-tool-todo'
+    tool_fs_config: {read: true, readImage: true, write: false, edit: false}
+# Consistency guardrails (validated by tests/validate_config.py):
 consistency_rules:
-  instance_allow_deny_disjoint: true
-  instance_matches_role_mapping: true   # each instance's allow/deny == role-preset-mapping entry
-  matches_role_policy_yaml: true        # transitive via mapping == policy
-  delegation_deny_by_default: true      # no delegation tool in any specialist allow
-  tool_names_verified: true             # against docs/tool-catalog.md (0.2.0-rc.2)
+  single_delegation_row: true       # exactly one tool-subagent row
+  agent_presets_cover_roster: true  # the allowlist names all 15 role presets
+  instance_matches_role_mapping: true
+  matches_role_policy_yaml: true     # each role's allow/deny == policy.yaml
+  matches_preset_composition: true  # each role's tool plugins == what its
+                                     # preset composition actually mounts
+  delegation_deny_by_default: true  # no delegation tool in any specialist
+  tool_names_verified: true          # against the DSH 0.2.1-rc.2 catalog

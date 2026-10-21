@@ -5,7 +5,7 @@
 role: nova
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: Nova
 domain: Writing & Novel
 summary: novel writing, editing, continuity, character consistency, worldbuilding, style review
@@ -31,16 +31,13 @@ sandbox_approval_intent:
   sandbox: workspace-write
   approval: never
 
-# Intended toolFilter (mapping: config/role-preset-mapping.yaml).
+# Intended tool surface (mapping: config/role-preset-mapping.yaml).
 # Manuscript content is channel-routed (no raw write/edit); no bash — no infra execution (ISO-005).
-tool_filter:
+tool_surface:
   allow: [read, read_image, glob, grep,
           job_kill, job_list, job_output,
           skill, exit_plan_mode, todo_write]
-  deny: [edit, write,
-         subagent_cto, subagent_cfo, subagent_kai,
-         subagent_somad, subagent_badsector, subagent_zeko,
-         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
+  deny: [edit, write]
   unmounted_candidates: []
   notes: >
     No bash, no web — manuscript work is project-local and non-destructive.

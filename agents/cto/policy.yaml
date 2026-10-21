@@ -8,7 +8,7 @@
 role: cto
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: CTO
 domain: Coding & System Architecture
 summary: coding, architecture, testing, technical feasibility, security, performance, implementation
@@ -32,22 +32,21 @@ sandbox_approval_intent:
   sandbox: workspace-write
   approval: ask
 
-tool_filter:
+tool_surface:
   allow: [bash, read, read_image, edit, write, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [subagent_cfo, subagent_kai, subagent_somad,
-         subagent_badsector, subagent_nova, subagent_zeko,
-         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
+  deny: []
   unmounted_candidates: [lsp, str_replace_editor]
   notes: >
     lsp and str_replace_editor are code-engineering tools that are NOT mounted
     in the standard web preset; enabling them for CTO requires a controlled
     DSH composition exception (HUMAN_PENDING). Until then they are denied.
-    Deny contract: the six sibling delegation instances (exact-name
-    subdelegation deny-by-default; the generic workflow-realm tools are not on
-    a specialist child's inherited chain and are rejected by
-    tools.restrict()).
+    Deny contract: the hard prohibitions named above are realised by the
+    role's preset composition — a tool the role may not use is either not
+    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    structural rather than a deny list: the preset mounts no delegation
+    plugin, so a child of this role has no delegation tool in its catalog.
 
 prohibited_actions: [financial_transaction, credential_change]
 

@@ -5,7 +5,7 @@
 role: vera
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: Vera
 domain: Verification & Evidence
 summary: acceptance-criteria verification, test-result inspection, evidence completeness, claimed-result validation, expected-vs-observed comparison, unsupported completion detection
@@ -40,16 +40,18 @@ sandbox_approval_intent:
   approval: never
 
 # L-group tool surface (read-only analyst; no write/exec; web per group).
-tool_filter:
+tool_surface:
   allow: [read, read_image, glob, grep, job_kill, job_list, job_output, skill, exit_plan_mode, todo_write]
-  deny: [bash, edit, write, web_search, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger, subagent_zeko, subagent_cto, subagent_cfo, subagent_kai, subagent_somad, subagent_badsector, subagent_nova]
+  deny: [bash, edit, write, web_search]
   unmounted_candidates: []
   notes: >
     Vera is a read-only analysis role: project-local reads only; no write/exec, no delegation.
     Vera does not authorize, create policy, implement the reviewed work, or substitute for BadSector's adversarial review.
-    Deny contract: write/exec hard-block plus web_search plus the 14 sibling delegation instances (exact-name subdelegation
-    deny-by-default; the generic workflow-realm tools are not on a specialist
-    child's inherited chain and are rejected by tools.restrict()).
+    Deny contract: the hard prohibitions named above are realised by the
+    role's preset composition — a tool the role may not use is either not
+    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    structural rather than a deny list: the preset mounts no delegation
+    plugin, so a child of this role has no delegation tool in its catalog.
 
 prohibited_actions: [authorization, policy_creation, implementation, adversarial_substitution]
 

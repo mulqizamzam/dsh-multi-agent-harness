@@ -5,7 +5,7 @@
 role: somad
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: Somad
 domain: Social Media & Distribution
 summary: social strategy, content, campaigns, editorial calendar, audience analysis, distribution
@@ -31,27 +31,24 @@ sandbox_approval_intent:
   sandbox: workspace-write
   approval: ask
 
-# Intended toolFilter (mapping: config/role-preset-mapping.yaml).
+# Intended tool surface (mapping: config/role-preset-mapping.yaml).
 # Drafting content is channel-routed (no raw write/edit); no bash — no infra execution (ISO-004).
-tool_filter:
+tool_surface:
   allow: [read, read_image, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [bash, edit, write,
-         subagent_cto, subagent_cfo, subagent_kai,
-         subagent_badsector, subagent_nova, subagent_zeko,
-         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
+  deny: [bash, edit, write]
   unmounted_candidates: []
   notes: >
     Publishing is NOT a tool in this role: social_publishing is scoped_approval
     at the capability level and is performed only through the control plane with
     explicit Human approval. This role drafts content via the project channel
     (no raw write/edit); it never publishes on its own. No bash — no
-    infrastructure capability (ISO-004). Deny contract: the write/exec
-    hard-block plus the six sibling delegation instances (exact-name
-    subdelegation deny-by-default; the generic workflow-realm tools are not on
-    a specialist child's inherited chain and are rejected by
-    tools.restrict()).
+    Deny contract: the hard prohibitions named above are realised by the
+    role's preset composition — a tool the role may not use is either not
+    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    structural rather than a deny list: the preset mounts no delegation
+    plugin, so a child of this role has no delegation tool in its catalog.
 
 prohibited_actions: [server_write, infrastructure_action, credential_change]
 

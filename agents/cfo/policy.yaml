@@ -5,7 +5,7 @@
 role: cfo
 role_version: 1
 status: finalized
-version_pin: deepseek-harness-0.2.0-rc.2
+version_pin: deepseek-harness-0.2.1-rc.2
 display_name: CFO
 domain: Finance, Pricing & Economics
 summary: pricing, unit economics, cost, margin, budget, ROI, financial scenario analysis
@@ -32,24 +32,22 @@ sandbox_approval_intent:
   sandbox: read-only
   approval: never
 
-# Intended toolFilter (mapping: config/role-preset-mapping.yaml).
+# Intended tool surface (mapping: config/role-preset-mapping.yaml).
 # Read-only surface: no bash, no edit/write — no execution path.
-tool_filter:
+tool_surface:
   allow: [read, read_image, glob, grep,
           job_kill, job_list, job_output,
           web_search, skill, exit_plan_mode, todo_write]
-  deny: [bash, edit, write,
-         subagent_cto, subagent_kai, subagent_somad,
-         subagent_badsector, subagent_nova, subagent_zeko,
-         subagent_vera, subagent_argus, subagent_atlas, subagent_tess, subagent_quill, subagent_scout, subagent_talon, subagent_ledger]
+  deny: [bash, edit, write]
   unmounted_candidates: []
   notes: >
     CFO has NO execution path: read-only tools only. Any financial transaction
     requires a fresh delegation + Human approval and is never performed by this
-    role directly (RISK-003). Deny contract: the write/exec hard-block plus the
-    six sibling delegation instances (exact-name subdelegation deny-by-default;
-    the generic workflow-realm tools are not on a specialist child's inherited
-    chain and are rejected by tools.restrict()).
+    Deny contract: the hard prohibitions named above are realised by the
+    role's preset composition — a tool the role may not use is either not
+    mounted or switched off by its plugin's per-tool config. Subdelegation is
+    structural rather than a deny list: the preset mounts no delegation
+    plugin, so a child of this role has no delegation tool in its catalog.
 
 prohibited_actions: [financial_transaction, code_write, credential_change, production_deploy]
 
