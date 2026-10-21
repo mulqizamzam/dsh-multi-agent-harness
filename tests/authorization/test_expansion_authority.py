@@ -59,11 +59,21 @@ def test_stale_delegation_denied_for_new_specialist():
 
 
 def test_config_level_boundaries(project_root):
-    """ToolFilter/capability boundaries: no write/exec in allow; deny names all
-    14 siblings; read-only roles have no write tools (validator cross-check)."""
+    """Tool-surface boundaries: no write/exec in allow; no delegation plugin in
+    the role's preset; read-only roles have no write tools (validator cross-check).
+
+    DSH 0.2.1-rc.2 removed the per-instance toolFilter config key, so the
+    declared allow/deny sets are the ROLE's intent and the Agent Preset
+    composition is what enforces them. The per-sibling `subagent_<id>` deny
+    entries are gone with the tools themselves: there is one delegation tool
+    per provider now, and a role's preset mounts no delegation plugin at all,
+    so its child has no delegation tool in its catalog.
+    """
+    import os
+
     import yaml
     mapping = yaml.safe_load(open(
-        __import__("os").path.join(project_root, "config", "role-preset-mapping.yaml")))
+        os.path.join(project_root, "config", "role-preset-mapping.yaml")))
     all_inst = {f"subagent_{r}" for r in
                 ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova") + NEW}
     for entry in mapping["roles"]:
@@ -71,6 +81,11 @@ def test_config_level_boundaries(project_root):
         allow, deny = set(tf["allow"]), set(tf["deny"])
         assert not (allow & deny)
         assert not (allow & {"subagent", "subagent_fork", "send_message", "workflow"})
+        assert not (deny & all_inst), sorted(deny & all_inst)
+        composition = yaml.safe_load(open(
+            os.path.join(project_root, "agents", rid, "agent.cordis.yml")))
+        mounted = {row.get("name") for row in composition if isinstance(row, dict)}
+        assert not {name for name in mounted if name and "tool-subagent" in name}, \
+            f"{rid}: a role preset must mount no delegation plugin"
         if rid in NEW:
             assert not (allow & {"bash", "edit", "write"})
-            assert all_inst - {f"subagent_{rid}"} <= deny

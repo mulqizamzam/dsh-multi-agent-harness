@@ -236,7 +236,11 @@ class TestRealSelection:
         assert len(result.results) == 1
         prov = result.results[0].get("provenance", {})
         assert prov.get("run_id") == "real-run-001", prov
-        assert prov.get("tool_name") == "subagent_cto"
+        # DSH 0.2.1-rc.2: ONE delegation tool; the role travels in the
+        # `agent_preset` argument and the provenance names that preset.
+        assert prov.get("tool_name") == "subagent", prov
+        assert prov.get("agent_preset") == "role-cto", prov
+        assert prov.get("role") == "cto", prov
 
 
 # ======================================================================
