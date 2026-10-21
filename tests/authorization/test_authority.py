@@ -139,7 +139,7 @@ class TestRoleIsolation:
             pol = yaml.safe_load(f)
         allow = set(pol["tool_surface"]["allow"])
         assert not (allow & {"bash", "edit", "write"}), \
-            f"Kai toolFilter must have no write tools, got {allow}"
+            f"Kai tool surface must have no write tools, got {allow}"
 
     def test_iso_004_somad_no_infra(self):
         """Somad cannot execute infrastructure actions (no bash/server_write)."""
@@ -361,7 +361,7 @@ class TestCapabilityBoundary:
 
     def test_actor_without_capability_denied(self):
         """A specialist attempting an action outside its capability matrix is
-        DENIED (toolFilter at the DSH layer; gate here is the second net)."""
+        DENIED (the role tool surface at the DSH layer; gate here is the second net)."""
         # CFO has no code_write capability; a delegation must never grant it.
         d = _delegation(scope={
             "operations": ["financial_analysis", "read"],
@@ -388,7 +388,7 @@ class TestCapabilityBoundary:
                     f"badsector must not execute {cap}: {v!r}"
 
     def test_role_policy_allow_subset_of_verified_tools(self, project_root):
-        """Every role's toolFilter allow set is a subset of the verified catalog
+        """Every role's tool-surface allow set is a subset of the verified catalog
         (validated in validate_config; spot-checked here for the write roles)."""
         import yaml
         from validate_config import VERIFIED_TOOLS
@@ -423,14 +423,14 @@ class TestSubdelegation:
     """DLG-003 — subdelegation DENY BY DEFAULT (V1)."""
 
     def test_specialist_cannot_subdelegate(self):
-        """A specialist has no delegation tools (toolFilter) and the registry
+        """A specialist has no delegation tools (tool surface) and the registry
         is single-writer; a subdelegation attempt is a registry write → DENY."""
         d = _delegation()
         with pytest.raises(Deny):
             authorize("cto", "registry_write", "state/registry/delegation-child.yaml", d)
 
     def test_no_delegation_tools_in_specialist_allow(self, project_root):
-        """No specialist toolFilter may include delegation/orchestration tools."""
+        """No specialist tool surface may include delegation/orchestration tools."""
         import yaml
         from validate_config import DELEGATION_TOOLS
         for rid in ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova"):
@@ -464,8 +464,8 @@ class TestDelegationRegistry:
             authorize("cto", "bash_write", "state/registry/revocations.yaml", _delegation())
 
     def test_reg_002_no_write_tools_role(self):
-        """Roles without write tools simply lack the path (validated by toolFilter)."""
-        # The toolFilter check is in test_config (CFO/Kai/BadSector have no edit/write/bash).
+        """Roles without write tools simply lack the path (validated by the tool surface)."""
+        # The tool-surface check is in test_config (CFO/Kai/BadSector have no edit/write/bash).
         # At the gate level the action is un-permitted:
         with pytest.raises(Deny):
             authorize("kai", "write", "state/registry/delegations.yaml", _delegation())

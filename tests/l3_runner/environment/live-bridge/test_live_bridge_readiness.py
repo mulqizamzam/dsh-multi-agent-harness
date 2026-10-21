@@ -164,7 +164,7 @@ def test_deny_lists_free_of_reserved_and_unregistered_names():
 def test_post_o5_role_tool_expectations():
     """somad/nova have no raw-write tool; cto keeps bash+write+edit while
     zeko keeps bash only (2026-09-07 discriminator: write/edit removed,
-    capabilities.code_write: no enforced at the toolFilter layer);
+    capabilities.code_write: no enforced by the role preset composition);
     read-only roles unchanged."""
     filters = _role_filters()
     for rid in ("somad", "nova"):

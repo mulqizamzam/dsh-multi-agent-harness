@@ -538,8 +538,8 @@ def _build_live_driver(fixture: dict, rendezvous_dir: str,
     # (runs/l3_front_door/run.py) provides the authorized responder command, the
     # invocation is written in the REAL rendezvous-bridge contract consumed by
     # the mounted DSH bridge (apps/cli profile-boot startL3RendezvousBridge):
-    # description/prompt/role/output_schema, executed as a real
-    # run_in_background=false subagent call. Without it the scenario-shaped
+    # description/prompt/role/agent_preset/output_schema, executed as a real
+    # `subagent` call that names the role's preset. Without it the scenario-shaped
     # invocation is written unchanged (infrastructure tests; the bridge would
     # honestly reject it as malformed — never a simulated dispatch).
     responder_cmd = os.environ.get("L3_RESPONDER_CMD", "")
@@ -574,9 +574,10 @@ def _build_live_driver(fixture: dict, rendezvous_dir: str,
         if responder_cmd:
             # Bridge contract (REAL dispatch): the child performs the
             # authorized front-door observation and returns the structured
-            # runtime verdict. The bridge executes it with
-            # run_in_background=false and preserves description/prompt/
-            # output_schema/run_id/stop_reason/diagnostic verbatim.
+            # runtime verdict. The bridge executes it as a foreground
+            # `subagent` call naming the role's agent_preset, and preserves
+            # description/prompt/agent_preset/output_schema/run_id/stop_reason/
+            # diagnostic verbatim.
             command = (responder_cmd
                        .replace("{invocation}", os.path.abspath(inv_path))
                        .replace("{gate_verdict}", os.path.abspath(gate_verdict_path)))
