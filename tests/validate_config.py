@@ -6,7 +6,7 @@
 # wrapper tests/validate-config.py (hyphenated) which is the file the configs
 # name. It NEVER executes anything consequential — it only reads and validates.
 #
-# Version pin: DeepSeek Harness 0.2.0-rc.2 (tool names verified).
+# Version pin: DeepSeek Harness 0.2.1-rc.2 (tool names verified).
 
 import os
 import re
@@ -36,19 +36,14 @@ except ImportError:  # pragma: no cover - degraded mode without jsonschema
     ValidationError = Exception
 
 # ---------------------------------------------------------------------------
-# Tool catalog — verified against DSH 0.1.1-rc.2 (docs/tool-catalog.md), with
-# 0.2.0-rc.2 additions noted below. Mirrored here so validation runs without
-# loading the docs.
+# Tool catalog — verified against DSH 0.2.1-rc.2 (docs/tool-catalog.md).
+# Mirrored here so validation runs without loading the docs.
 #
-# The fifteen subagent_<id> names are the per-role tool-subagent instance
-# tools (7 baseline deployed 2026-09-07; 8 expansion registered PRD v0.2 —
-# mount is the separate Human gate, ADR 0003 D8). Since 2026-10-11 the instance
-# rows live in orchestrator/agent.cordis.yml (moved from global-layer rows in
-# $DSH_HOME/profiles/web/cordis.patch.yml), so they remain part of every
-# specialist child's inherited (restrictable) surface and are valid allow/deny
-# names for tools.restrict() — verified against the engine (packages/core/tools
-# restrict(): throws on names outside the child's global+ancestor-chain
-# surface).
+# The fifteen `subagent_<id>` names are GONE. DSH 0.2.1-rc.2 collapsed the
+# per-role `tool-subagent` instances into ONE delegation tool (`subagent`) and
+# removed the per-instance `persona` / `toolFilter` config keys, so a role is
+# selected by the model-facing `agent_preset` argument, not by a tool name.
+# A preset-bound child's tool surface is the tool PLUGINS its preset mounts.
 #
 # `present` added 2026-10-11: verified against the running 0.2.0-rc.2 harness
 # (packages/deliverables/tool-present/src/index.ts registers the tool name
@@ -66,42 +61,112 @@ spawn_teammate str_replace_editor subagent subagent_fork team_task_create
 team_task_get team_task_list team_task_update terminal_close terminal_list
 terminal_open terminal_read terminal_send terminal_signal todo_write update_goal
 wait_agent web_fetch web_search workflow write
-subagent_zeko subagent_cto subagent_cfo subagent_kai subagent_somad
-subagent_badsector subagent_nova
-subagent_vera subagent_argus subagent_atlas subagent_tess
-subagent_quill subagent_scout subagent_talon subagent_ledger
 """.split())
+
+# The tool PLUGINS a role preset mounts, and the tools each one exposes.
+# `tool-fs` and `tool-web` narrow themselves per tool in 0.2.1-rc.2, so the
+# exposed set depends on the row's own config — see `preset_tool_surface`.
+TOOL_PLUGIN_BY_TOOL = {
+    "bash": "@deepseek-ai/dsh-tool-bash",
+    "read": "@deepseek-ai/dsh-tool-fs",
+    "read_image": "@deepseek-ai/dsh-tool-fs",
+    "write": "@deepseek-ai/dsh-tool-fs",
+    "edit": "@deepseek-ai/dsh-tool-fs",
+    "glob": "@deepseek-ai/dsh-tool-fs-search",
+    "grep": "@deepseek-ai/dsh-tool-fs-search",
+    "job_kill": "@deepseek-ai/dsh-tool-jobs",
+    "job_list": "@deepseek-ai/dsh-tool-jobs",
+    "job_output": "@deepseek-ai/dsh-tool-jobs",
+    "skill": "@deepseek-ai/dsh-tool-skill",
+    "exit_plan_mode": "@deepseek-ai/dsh-plan-mode",
+    "web_search": "@deepseek-ai/dsh-tool-web",
+    "web_fetch": "@deepseek-ai/dsh-tool-web",
+    "todo_write": "@deepseek-ai/dsh-tool-todo",
+}
 
 # Baseline seven first, then the PRD v0.2 expansion eight (ADR 0003 D1 order).
 BASELINE_IDS = ("zeko", "cto", "cfo", "kai", "somad", "badsector", "nova")
 EXPANSION_IDS = ("vera", "argus", "atlas", "tess", "quill", "scout", "talon", "ledger")
 SPECIALIST_IDS = set(BASELINE_IDS) | set(EXPANSION_IDS)
-# Delegation tools a specialist must never hold in ALLOW. Beyond the generic
-# orchestrator-side delegation tools, the fourteen sibling subagent_<id>
-# instances are the exact delegation surface a specialist child actually sees
-# (restriction matching is exact-name, so the generic "subagent" deny never
-# blocked them) — subdelegation DENY BY DEFAULT is enforced on both sides.
+# Delegation tools a specialist must never hold in ALLOW. Since 0.2.1-rc.2
+# there is ONE delegation tool per provider, so there is no per-sibling tool
+# to name: subdelegation DENY BY DEFAULT is structural — a specialist's preset
+# mounts no delegation plugin at all, and the delegation tool's maxDepth: 1
+# rejects a second hop.
 DELEGATION_TOOLS = {
     "subagent", "subagent_fork", "send_message", "interrupt_agent",
     "list_agents", "workflow", "ralph",
-    "subagent_zeko", "subagent_cto", "subagent_cfo", "subagent_kai",
-    "subagent_somad", "subagent_badsector", "subagent_nova",
-    "subagent_vera", "subagent_argus", "subagent_atlas", "subagent_tess",
-    "subagent_quill", "subagent_scout", "subagent_talon", "subagent_ledger",
 }
 WRITE_EXEC_TOOLS = {"bash", "edit", "write", "str_replace_editor", "run_code", "pwsh"}
 # Permission-matrix vocabulary (config/permissions.yaml, PRD §8 normalized)
 CAPABILITY_VALUES = {"yes", "scoped", "review", "approval", "scoped_approval", "no"}
 # The in-force DeepSeek Harness pin, defined ONCE here and cross-checked
 # against config/role-preset-mapping.yaml, all 15 agents/<id>/policy.yaml and
-# orchestrator/policy.yaml below. Verified against the running checkout's
-# package.json (0.2.0-rc.2) — a pin bump moves this constant and the 16
+# orchestrator/policy.yaml below. A pin bump moves this constant and the 16
 # policy files together.
-VERSION_PIN = "deepseek-harness-0.2.0-rc.2"
+VERSION_PIN = "deepseek-harness-0.2.1-rc.2"
 # Protected paths per ADR 0002 (any write targeting these by a non-writer DENY)
 PROTECTED_PATHS = ("state/registry/", "audit/")
 # Invariants every role policy must declare (security spec + ADR 0002)
 REQUIRED_POLICY_INVARIANTS = ("no_self_delegation", "subdelegation_deny_by_default")
+
+
+def _composition_rows(path):
+    """Every plugin row of one Agent Preset composition, groups flattened."""
+    comp = load_yaml(path)
+    rows = list(comp) if isinstance(comp, list) else []
+    for row in rows:
+        if row.get("group"):
+            rows.extend(row.get("config") or [])
+    return rows
+
+
+def preset_tool_surface(path):
+    """The tools one Agent Preset composition exposes to the agent it composes.
+
+    A preset narrows by COMPOSITION: the tool PLUGINS it mounts, each with its
+    own per-tool config applied. 0.2.1-rc.2 gave the two multi-tool plugins
+    this roster uses that granularity (`tool-fs`: read / readImage / write /
+    edit; `tool-web`: search / fetch), so the exposed set is exactly the tool
+    list the role's allow list named before the per-instance `toolFilter` was
+    removed from the host.
+
+    A row disabled by a `!!js` platform condition (tool-bash on win32) is
+    counted as enabled: the condition is opaque to this reader.
+    @param path - the composition file.
+    @returns The exposed tool names.
+    """
+    exposed = set()
+    for row in _composition_rows(path):
+        name = row.get("name")
+        cfg = row.get("config") or {}
+        if name == "@deepseek-ai/dsh-tool-bash":
+            exposed.add("bash")
+        elif name == "@deepseek-ai/dsh-tool-fs":
+            if cfg.get("read", True):
+                exposed.add("read")
+            if cfg.get("readImage", True):
+                exposed.add("read_image")
+            if cfg.get("write", True):
+                exposed.add("write")
+            if cfg.get("edit", True):
+                exposed.add("edit")
+        elif name == "@deepseek-ai/dsh-tool-fs-search":
+            exposed.update({"glob", "grep"})
+        elif name == "@deepseek-ai/dsh-tool-jobs":
+            exposed.update({"job_kill", "job_list", "job_output"})
+        elif name == "@deepseek-ai/dsh-tool-skill":
+            exposed.add("skill")
+        elif name == "@deepseek-ai/dsh-plan-mode":
+            exposed.add("exit_plan_mode")
+        elif name == "@deepseek-ai/dsh-tool-web":
+            if cfg.get("search", True):
+                exposed.add("web_search")
+            if cfg.get("fetch", True):
+                exposed.add("web_fetch")
+        elif name == "@deepseek-ai/dsh-tool-todo":
+            exposed.add("todo_write")
+    return exposed
 
 
 def project_root():
@@ -269,26 +334,26 @@ def run_checks(root):
     mapped_roles = {r["id"]: r for r in mapping.get("roles", [])}
     check("mapping covers all roles", set(mapped_roles) == SPECIALIST_IDS)
     for rid, entry in mapped_roles.items():
-        tf = entry.get("tool_filter", {})
-        allow, deny = set(tf.get("allow", [])), set(tf.get("deny", []))
+        ts = entry.get("tool_surface", {})
+        allow, deny = set(ts.get("allow", [])), set(ts.get("deny", []))
         pol = policies.get(rid, {})
-        pol_tf = pol.get("tool_filter", {})
+        pol_ts = pol.get("tool_surface", {})
         check(f"{rid} allow∩deny=∅", not (allow & deny), f"{allow & deny}")
-        check(f"{rid} mapping==policy allow", allow == set(pol_tf.get("allow", [])),
-              f"{allow ^ set(pol_tf.get('allow', []))}")
-        check(f"{rid} mapping==policy deny", deny == set(pol_tf.get("deny", [])),
-              f"{deny ^ set(pol_tf.get('deny', []))}")
+        check(f"{rid} mapping==policy allow", allow == set(pol_ts.get("allow", [])),
+              f"{allow ^ set(pol_ts.get('allow', []))}")
+        check(f"{rid} mapping==policy deny", deny == set(pol_ts.get("deny", [])),
+              f"{deny ^ set(pol_ts.get('deny', []))}")
         unknown = (allow | deny) - VERIFIED_TOOLS
         check(f"{rid} tool names verified", not unknown, f"{unknown}")
         check(f"{rid} no delegation tools", not (allow & DELEGATION_TOOLS), f"{allow & DELEGATION_TOOLS}")
-        check(f"{rid} max_depth 1", entry.get("tool_instance", {}).get("max_depth") == 1)
-        # Sibling-instance deny contract: a role's deny list must name every
-        # OTHER specialist's subagent_<id> (14 siblings) — the exact-name
-        # surface a child actually inherits. (ADR 0003 D4; PRD v0.2 §17.)
-        expected_siblings = {f"subagent_{o}" for o in SPECIALIST_IDS - {rid}}
-        missing_sibs = expected_siblings - deny
-        check(f"{rid} deny covers sibling instances", not missing_sibs,
-              f"missing {sorted(missing_sibs)}")
+        ti = entry.get("tool_instance", {})
+        check(f"{rid} max_depth 1", ti.get("max_depth") == 1)
+        check(f"{rid} provider spawn", ti.get("provider") == "spawn")
+        check(f"{rid} tool_name is the single delegation tool",
+              ti.get("tool_name") == "subagent", f"{ti.get('tool_name')!r}")
+        check(f"{rid} agent_preset names its own preset",
+              ti.get("agent_preset") == entry.get("preset"),
+              f"{ti.get('agent_preset')!r} != {entry.get('preset')!r}")
         # read-only roles have no write/exec tools
         if pol.get("sandbox_approval_intent", {}).get("sandbox") == "read-only":
             check(f"{rid} read-only no write tools", not (allow & WRITE_EXEC_TOOLS), f"{allow & WRITE_EXEC_TOOLS}")
@@ -301,7 +366,7 @@ def run_checks(root):
     code_write = caps.get("code_write", {})
     for rid in SPECIALIST_IDS:
         if code_write.get(rid) == "no":
-            a = set(mapped_roles.get(rid, {}).get("tool_filter", {}).get("allow", []))
+            a = set(mapped_roles.get(rid, {}).get("tool_surface", {}).get("allow", []))
             bad = a & {"edit", "write"}
             check(f"{rid} code_write=no excludes edit/write from allow", not bad, f"{bad}")
 
@@ -312,7 +377,7 @@ def run_checks(root):
     declared_groups = [set(g) for g in perms.get("tool_surface_equivalence", [])]
     by_allow: dict = {}
     for rid, entry in mapped_roles.items():
-        a = frozenset(entry.get("tool_filter", {}).get("allow", []))
+        a = frozenset(entry.get("tool_surface", {}).get("allow", []))
         by_allow.setdefault(a, set()).add(rid)
     for a, rids in by_allow.items():
         if len(rids) < 2:
@@ -321,34 +386,35 @@ def run_checks(root):
         check(f"identical allow set declared {sorted(rids)}", covered,
               f"{sorted(rids)} not covered by tool_surface_equivalence")
     for i, g in enumerate(declared_groups):
-        member_sets = {frozenset(mapped_roles[r]["tool_filter"]["allow"])
+        member_sets = {frozenset(mapped_roles[r]["tool_surface"]["allow"])
                        for r in g if r in mapped_roles}
         check(f"tool_surface_equivalence[{i}] shares allow set",
               len(member_sets) <= 1, f"{[sorted(s) for s in member_sets]}")
 
     # --- orchestrator mapping ----------------------------------------------
     orch = mapping.get("orchestrator", {})
-    orch_tf = orch.get("tool_filter", {})
-    orch_allow = set(orch_tf.get("allow", []))
-    orch_deny = set(orch_tf.get("deny", []))
+    orch_ts = orch.get("tool_surface", {})
+    orch_allow = set(orch_ts.get("allow", []))
+    orch_deny = set(orch_ts.get("deny", []))
     check("orchestrator delegation tools in allow", set(orch.get("delegation_tools", [])) <= orch_allow)
     check("orchestrator allow∩deny=∅", not (orch_allow & orch_deny), f"{orch_allow & orch_deny}")
     check("orchestrator tool names verified", not ((orch_allow | orch_deny) - VERIFIED_TOOLS),
           f"{(orch_allow | orch_deny) - VERIFIED_TOOLS}")
-    # Every specialist instance must be named by the declared allow set: the
-    # orchestrator is the only delegator (consistency_rules.delegation_orchestrator_only),
-    # and ADR 0004 D3 derives the preset's row deletions from exactly this set, so
-    # an instance missing here is an un-enforced narrowing of the delegation surface.
-    missing_instances = {f"subagent_{o}" for o in SPECIALIST_IDS} - orch_allow
-    check("orchestrator allow covers all 15 instances", not missing_instances,
-          f"missing {sorted(missing_instances)}")
+    # The delegation surface is the ONE `subagent` tool since 0.2.1-rc.2: the
+    # fifteen per-role `subagent_<id>` tools no longer exist, so a role is
+    # reached through the model-facing `agent_preset` argument instead.
+    check("orchestrator allow names the single delegation tool", "subagent" in orch_allow)
+    per_role_tools = {f"subagent_{r}" for r in SPECIALIST_IDS}
+    check("orchestrator allow names no per-role delegation tool",
+          not (orch_allow & per_role_tools),
+          f"{sorted(orch_allow & per_role_tools)}")
 
     # --- orchestrator policy (declaration ↔ mapping consistency) ------------
     # orchestrator/policy.yaml COPIES the mapping's tool_filter; without these
     # checks the copy is prose that can silently diverge from the config.
-    orch_pol_tf = orch_policy.get("tool_filter", {})
-    pol_allow = set(orch_pol_tf.get("allow", []))
-    pol_deny = set(orch_pol_tf.get("deny", []))
+    orch_pol_ts = orch_policy.get("tool_surface", {})
+    pol_allow = set(orch_pol_ts.get("allow", []))
+    pol_deny = set(orch_pol_ts.get("deny", []))
     check("orchestrator policy allow∩deny=∅", not (pol_allow & pol_deny), f"{pol_allow & pol_deny}")
     check("orchestrator mapping==policy allow", pol_allow == orch_allow, f"{pol_allow ^ orch_allow}")
     check("orchestrator mapping==policy deny", pol_deny == orch_deny, f"{pol_deny ^ orch_deny}")
@@ -405,37 +471,68 @@ def run_checks(root):
 
     instances = load_yaml(os.path.join(root, "config", "tool-subagent-instances.yaml"))
     check("instances status mounted", instances.get("status") == "mounted")
+
+    # --- the ONE delegation tool (0.2.1-rc.2) --------------------------------
+    # The host removed the per-instance persona / toolFilter config keys and
+    # collapsed the fifteen per-role instances into a single delegation tool
+    # whose model-facing `agent_preset` argument selects the role preset.
     insert = instances.get("insert_draft", [])
-    check("instances count 15", len(insert) == 15, f"{len(insert)}")
-    instance_map = {}
-    for row in insert:
-        cfg = row.get("config", {})
-        tf = cfg.get("toolFilter", {})
-        allow, deny = set(tf.get("allow", [])), set(tf.get("deny", []))
-        instance_map[cfg.get("toolName")] = (allow, deny)
+    check("instances count 1 (one delegation tool)", len(insert) == 1, f"{len(insert)}")
+    if insert:
+        cfg = insert[0].get("config", {})
+        check("delegation row provider spawn", cfg.get("provider") == "spawn")
+        check("delegation row toolName subagent", cfg.get("toolName") == "subagent")
+        check("delegation row maxDepth 1", cfg.get("maxDepth") == 1)
+        for removed in ("persona", "toolFilter", "backgroundMode", "enableRunInBackground"):
+            check(f"delegation row has no {removed}", removed not in cfg)
+        allowed = list(cfg.get("allowedAgentPresets", []))
+        expected_presets = {f"role-{r}" for r in SPECIALIST_IDS}
+        check("delegation row allowlist covers all 15 role presets",
+              set(allowed) == expected_presets,
+              f"missing {sorted(expected_presets - set(allowed))}")
+        check("delegation row allowlist has no duplicates", len(allowed) == len(set(allowed)))
 
-        unknown = (allow | deny) - VERIFIED_TOOLS
-        check(f"instance {cfg.get('toolName')} tool names verified", not unknown, f"{unknown}")
-        check(f"instance {cfg.get('toolName')} allow∩deny=∅", not (allow & deny), f"{allow & deny}")
-        check(f"instance {cfg.get('toolName')} no delegation tools",
-              not (allow & DELEGATION_TOOLS), f"{allow & DELEGATION_TOOLS}")
-        check(f"instance {cfg.get('toolName')} provider spawn", cfg.get("provider") == "spawn")
-        check(f"instance {cfg.get('toolName')} continuable", cfg.get("backgroundMode") == "continuable")
-        check(f"instance {cfg.get('toolName')} max_depth 1", cfg.get("maxDepth") == 1)
-
-    # instance == mapping consistency
+    # --- the fifteen Agent Preset declarations -------------------------------
+    declared = {d.get("id"): d for d in instances.get("agent_presets", [])}
+    check("instances declare all 15 role presets",
+          set(declared) == {f"role-{r}" for r in SPECIALIST_IDS},
+          f"missing {sorted({f'role-{r}' for r in SPECIALIST_IDS} - set(declared))}")
     for rid, entry in mapped_roles.items():
-        expected_name = f"subagent_{rid}"
-        if expected_name not in instance_map:
-            check(f"instance {expected_name} present", False)
+        pid = entry.get("preset")
+        dec = declared.get(pid)
+        if dec is None:
+            check(f"preset {pid} declared", False)
             continue
-        inst_allow, inst_deny = instance_map[expected_name]
-        map_allow = set(entry.get("tool_filter", {}).get("allow", []))
-        map_deny = set(entry.get("tool_filter", {}).get("deny", []))
-        check(f"instance {expected_name}==mapping allow", inst_allow == map_allow, f"{inst_allow ^ map_allow}")
-        check(f"instance {expected_name}==mapping deny", inst_deny == map_deny, f"{inst_deny ^ map_deny}")
+        check(f"preset {pid} source exists",
+              os.path.exists(os.path.join(root, dec.get("source", ""))))
+        dec_ts = dec.get("tool_surface", {})
+        map_ts = entry.get("tool_surface", {})
+        check(f"preset {pid} allow matches mapping",
+              set(dec_ts.get("allow", [])) == set(map_ts.get("allow", [])),
+              f"{set(dec_ts.get('allow', [])) ^ set(map_ts.get('allow', []))}")
+        check(f"preset {pid} deny matches mapping",
+              set(dec_ts.get("deny", [])) == set(map_ts.get("deny", [])),
+              f"{set(dec_ts.get('deny', [])) ^ set(map_ts.get('deny', []))}")
 
-    # preset draft files parse as YAML lists
+    # --- the preset composition IS the tool surface -------------------------
+    # The host narrowed a preset by COMPOSITION (the tool plugins it mounts),
+    # not by a runtime filter, so the declared allow list and the composition
+    # must agree tool for tool. This is the check that keeps the removed
+    # per-instance `toolFilter` boundary from silently widening.
+    for rid, entry in mapped_roles.items():
+        comp_path = os.path.join(root, "agents", rid, "agent.cordis.yml")
+        if not os.path.exists(comp_path):
+            continue
+        try:
+            exposed = preset_tool_surface(comp_path)
+        except Exception as e:
+            check(f"preset {rid} composition readable", False, str(e))
+            continue
+        allow = set(entry.get("tool_surface", {}).get("allow", []))
+        check(f"{rid} allow == preset composition tool surface", exposed == allow,
+              f"composition={sorted(exposed)} mapping={sorted(allow)}")
+
+    # --- preset draft files parse as YAML lists -----------------------------
     for rid in SPECIALIST_IDS:
         p = os.path.join(root, "agents", rid, "agent.cordis.yml")
         check(f"preset draft {rid} exists", os.path.exists(p))
@@ -453,7 +550,7 @@ def run_checks(root):
 def main(argv=None):
     import argparse
     parser = argparse.ArgumentParser(
-        description="Validate multi-agent-harness config/invariants/schemas (DSH 0.1.1-rc.2)")
+        description="Validate multi-agent-harness config/invariants/schemas (DSH 0.2.1-rc.2)")
     parser.add_argument("--root", default=None, help="project root (default: derived from this file)")
     args = parser.parse_args(argv)
 
