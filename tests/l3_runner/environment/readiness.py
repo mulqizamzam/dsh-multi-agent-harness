@@ -276,19 +276,27 @@ def _d4d7_presets_present() -> bool:
 
 
 def _d4d7_instance_rows_present() -> bool:
-    """The 15 `tool-subagent-<id>` rows are composed in the orchestrator preset.
+    """The ONE delegation row is composed in the orchestrator preset and it
+    selects every role Agent Preset.
 
-    The rows moved out of the live profile patch
-    ($DSH_HOME/profiles/web/cordis.patch.yml) into
-    `orchestrator/agent.cordis.yml` (commit 84e630f), so the composition that
-    carries them is a repo file. Parsing it — instead of scanning the patch
-    that no longer carries the rows — is what keeps this check able to fail.
+    DSH 0.2.1-rc.2 removed the per-instance `persona` / `toolFilter` config
+    keys, so the fifteen `tool-subagent-<id>` rows cannot exist: the
+    composition carries ONE `tool-subagent` row whose `allowedAgentPresets`
+    names the fifteen role Agent Presets, and the model picks one through the
+    `agent_preset` argument. The composition is a repo file (it moved out of
+    the live profile patch in commit 84e630f) — parsing it, instead of
+    scanning the patch that no longer carries the rows, is what keeps this
+    check able to fail.
     """
     try:
         rows = orchestrator_subagent_rows()
     except (OSError, ValueError):
         return False
-    return all(f"subagent_{rid}" in rows for rid in SPECIALIST_ROLES)
+    row = rows.get("subagent")
+    if row is None:
+        return False
+    allowed = set(row.get("allowedAgentPresets") or [])
+    return all(f"role-{rid}" in allowed for rid in SPECIALIST_ROLES)
 
 
 def _d4d7_bridge_marker_set() -> bool:

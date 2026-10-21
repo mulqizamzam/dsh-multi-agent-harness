@@ -113,17 +113,25 @@ def test_preset_sources_persistent_on_disk():
 
 
 def test_all_instance_rows_present():
-    """All 15 contract instance rows are composed in the orchestrator preset.
+    """The ONE delegation row selects all 15 role Agent Presets.
 
-    The rows moved out of the live profile patch into
-    orchestrator/agent.cordis.yml (commit 84e630f) — that composition is the
-    only place they exist now, so it is the only place they are checked.
-    Parsing the file (rather than text-scanning the patch that no longer
-    carries the rows) is what lets this test FAIL when a row disappears.
+    DSH 0.2.1-rc.2 removed the per-instance `persona` / `toolFilter` config
+    keys, so the fifteen `tool-subagent-<id>` rows cannot exist: the
+    composition carries ONE `tool-subagent` row whose `allowedAgentPresets`
+    names the fifteen role Agent Presets, and the model picks one through
+    the `agent_preset` argument. Parsing the file (rather than text-scanning
+    the patch that no longer carries the rows) is what lets this test FAIL
+    when a role becomes unselectable.
     """
     rows = orchestrator_subagent_rows()
+    row = rows.get("subagent")
+    assert row is not None, (
+        "the delegation row is not composed in orchestrator/agent.cordis.yml")
+    allowed = set(row.get("allowedAgentPresets") or [])
     for rid in ALL_INSTANCE_IDS:
-        assert rid in rows, f"missing row: {rid} (not composed in orchestrator/agent.cordis.yml)"
+        assert rid in allowed, (
+            f"role preset not selectable: {rid} (not in the delegation row's "
+            f"allowedAgentPresets)")
 
 
 # ---------------------------------------------------------------------------
