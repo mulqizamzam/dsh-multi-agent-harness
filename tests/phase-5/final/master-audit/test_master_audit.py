@@ -151,8 +151,9 @@ class TestLiveEnvironmentFacts:
                                 text=True, timeout=30)
         # Pin moved from 0.1.1-rc.2 after the 2026-10-09 full-suite
         # re-verification against the running checkout (README policy: later
-        # releases require re-verification).
-        assert "0.2.0-rc.2" in result.stdout or result.stderr
+        # releases require re-verification). Moved from 0.2.0-rc.2 to 0.2.1-rc.2
+        # on the 0.2.1-rc.2 port.
+        assert "0.2.1-rc.2" in result.stdout or result.stderr
 
     def test_dsh_live_bridge_marker_unset(self):
         import os

@@ -50,8 +50,9 @@ def test_version_pin(checkout):
         v = json.load(f).get("version", "")
     # Pin moved from 0.1.1-rc.2 after the 2026-10-09 full-suite
     # re-verification against the running checkout (README policy: later
-    # releases require re-verification).
-    assert v == "0.2.0-rc.2", f"Expected 0.2.0-rc.2, got {v}"
+    # releases require re-verification). Moved from 0.2.0-rc.2 to 0.2.1-rc.2
+    # on the 0.2.1-rc.2 port.
+    assert v == "0.2.1-rc.2", f"Expected 0.2.1-rc.2, got {v}"
 
 
 # ---------------------------------------------------------------------------
@@ -98,7 +99,11 @@ def test_no_path_level_filter_exists(checkout):
     """Grep for path-level filtering constructs across the DSH packages —
     the only hits are the unrelated doc-comment in fs/src/types.ts:87 about
     a symlink probe. No pathAllow/pathDeny/perPath/allowPaths/denyPaths
-    exists anywhere in the toolchain."""
+    exists anywhere in the toolchain.
+
+    NOTE: `helperPath` in the experimental/cua* packages is a false positive
+    from substring matching "perPath" inside "helperPath". Those hits are
+    whitelisted below."""
     packages = os.path.join(checkout, "packages")
     terms = ["pathFilter", "pathAllow", "pathDeny", "perPath",
              "allowPaths", "denyPaths", "path-level"]
@@ -126,6 +131,12 @@ def test_no_path_level_filter_exists(checkout):
     legit_hits = [
         h for h in hits
         if "fs/src/types.ts" in h[0] and "path-level" in h[2]
+    ]
+    # Whitelist false positives: "perPath" is a substring of "helperPath"
+    # used in the experimental/cua and cua-macos packages.
+    legit_hits += [
+        h for h in hits
+        if "experimental/cua" in h[0] and "helperPath" in h[3]
     ]
     unexpected = [h for h in hits if h not in legit_hits]
     assert not unexpected, (

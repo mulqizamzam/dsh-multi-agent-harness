@@ -43,21 +43,77 @@ class GateRunner:
     def __init__(self, *, risk=None, evidence=None, conflict=None,
                  badsector=None, authority=None, execution=None,
                  verification=None, recovery=None):
-        from control.risk import RiskClassifier
-        from control.evidence import EvidenceGate
-        from control.conflict import ConflictGate
-        from control.badsector import BadSectorGate
-        from control.authority import AuthorityGate as ControlAuthorityGate
-        from control.execution_gate import authorize_write, Denied as ExecDenied
-        from control.verification import VerificationGate as ControlVerificationGate
-        self._risk = risk or RiskClassifier()
-        self._evidence = evidence or EvidenceGate()
-        self._conflict = conflict or ConflictGate()
-        self._badsector = badsector or BadSectorGate()
-        self._authority = authority or ControlAuthorityGate()
-        self._exec_denied = ExecDenied
-        self._authorize_write = authorize_write
-        self._verification = verification or ControlVerificationGate()
+        # When no mocks are injected, defer all 8 control-module imports until
+        # the first gate method is called.  Most test fixtures pass explicit
+        # pre-wired instances — those keep their existing behaviour.
+        self._risk = risk
+        self._evidence = evidence
+        self._conflict = conflict
+        self._badsector = badsector
+        self._authority = authority
+        self._verification = verification
+        self._authorize_write = execution
+        self._exec_denied = None  # resolved lazily via _lazy_exec_denied
+
+    # -- lazy-loaders ---------------------------------------------------------
+    # Each property lazily imports its control module exactly once per instance.
+    # Test fixtures that pass injected instances bypass all of these.
+
+    @property
+    def _risk_instance(self):
+        if self._risk is None:
+            from control.risk import RiskClassifier
+            self._risk = RiskClassifier()
+        return self._risk
+
+    @property
+    def _evidence_instance(self):
+        if self._evidence is None:
+            from control.evidence import EvidenceGate
+            self._evidence = EvidenceGate()
+        return self._evidence
+
+    @property
+    def _conflict_instance(self):
+        if self._conflict is None:
+            from control.conflict import ConflictGate
+            self._conflict = ConflictGate()
+        return self._conflict
+
+    @property
+    def _badsector_instance(self):
+        if self._badsector is None:
+            from control.badsector import BadSectorGate
+            self._badsector = BadSectorGate()
+        return self._badsector
+
+    @property
+    def _authority_instance(self):
+        if self._authority is None:
+            from control.authority import AuthorityGate as ControlAuthorityGate
+            self._authority = ControlAuthorityGate()
+        return self._authority
+
+    @property
+    def _verification_instance(self):
+        if self._verification is None:
+            from control.verification import VerificationGate as ControlVerificationGate
+            self._verification = ControlVerificationGate()
+        return self._verification
+
+    @property
+    def _exec_denied_cls(self):
+        if self._exec_denied is None:
+            from control.execution_gate import Denied as ExecDenied
+            self._exec_denied = ExecDenied
+        return self._exec_denied
+
+    @property
+    def _authorize_write_fn(self):
+        if self._authorize_write is None:
+            from control.execution_gate import authorize_write
+            self._authorize_write = authorize_write
+        return self._authorize_write
 
     # -- risk gate (AUTH-INV-10) --------------------------------------------
     def risk_gate(self, *, action: str = "", target: str = "",
@@ -67,7 +123,7 @@ class GateRunner:
         """Deterministic risk classification. An intrinsic HIGH can NEVER be
         downgraded by model judgment (declared/declared-risk) — a downgrade
         attempt is DENIED (THREAT-011/012)."""
-        rc = self._risk.classify(
+        rc = self._risk_instance.classify(
             action, target, environment, requires_approval=requires_approval,
             operation_flags=operation_flags, tool=tool, command=command,
             declared=declared)
@@ -110,8 +166,8 @@ class GateRunner:
                                 "evidence_gate",
                                 {"rung": "SOURCE_EXISTS",
                                  "evidence_present": False})
-        verdict = self._evidence.evaluate(claims or (), sources or (),
-                                          risk=risk)
+        verdict = self._evidence_instance.evaluate(claims or (), sources or (),
+                                           risk=risk)
         if verdict.accepted:
             return GateDecision("ALLOW", verdict.reason, "evidence_gate",
                                 {"rung": verdict.rung_reached,
@@ -128,7 +184,7 @@ class GateRunner:
         """Detect -> material -> inspect evidence -> rework -> synthesize ->
         escalate. Material conflicts ALWAYS escalate; disagreement is never
         resolved by counting (no majority voting)."""
-        resolution = self._conflict.resolve(
+        resolution = self._conflict_instance.resolve(
             outputs, risk=risk, decision_topics=decision_topics,
             evidence_map=evidence_map)
         if resolution.escalated:
@@ -149,7 +205,7 @@ class GateRunner:
         """Mandatory review for HIGH / intrinsic-high / explicit review_required.
         A PASS clears the review stage ONLY — it NEVER authorizes (AUTH-INV-09);
         provenance is verified (review_id + input_hash against the review log)."""
-        dec = self._badsector.evaluate(
+        dec = self._badsector_instance.evaluate(
             risk=risk, action=action, review=review,
             review_required=review_required,
             expected_input_hash=expected_input_hash,
@@ -165,7 +221,7 @@ class GateRunner:
                        revocation_list=(), now=None) -> GateDecision:
         """Planning-time authority check. Consumes structured authority records
         ONLY. Missing/invalid delegation -> DENY; approval required -> ESCALATE."""
-        return self._authority.evaluate({
+        return self._authority_instance.evaluate({
             "delegation": delegation, "action": action, "target": target,
             "environment": environment, "actor": actor, "project": project,
             "approval_reference": approval_reference,
@@ -178,9 +234,9 @@ class GateRunner:
         """Path-aware execution gate for writes: protected / outside /
         malformed targets DENY (ADR 0002). Non-write actions ALLOW."""
         try:
-            self._authorize_write(action, target, base=base)
+            self._authorize_write_fn(action, target, base=base)
             return GateDecision("ALLOW", "", "execution_gate", {})
-        except self._exec_denied as e:
+        except self._exec_denied_cls as e:
             return GateDecision("DENY", str(e), "execution_gate",
                                 {"target": target})
 
@@ -191,7 +247,7 @@ class GateRunner:
         if session is None:
             return GateDecision("DENY", "no verification session",
                                 "verification_gate", {})
-        result = self._verification.evaluate(session)
+        result = self._verification_instance.evaluate(session)
         if result.is_verified():
             return GateDecision("ALLOW", result.reason, "verification_gate",
                                 {"verdict": result.verdict})

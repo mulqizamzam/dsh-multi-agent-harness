@@ -310,13 +310,14 @@ def test_dsh_version_pin():
         v = json.load(f).get("version", "")
     # Pin moved from 0.1.1-rc.2 after the 2026-10-09 full-suite
     # re-verification against the running checkout (README policy: later
-    # releases require re-verification).
-    assert v == "0.2.0-rc.2", f"Expected 0.2.0-rc.2, got {v}"
+    # releases require re-verification). Moved from 0.2.0-rc.2 to 0.2.1-rc.2
+    # on the 0.2.1-rc.2 port.
+    assert v == "0.2.1-rc.2", f"Expected 0.2.1-rc.2, got {v}"
     with open(DECISION_DOC) as f:
         text = f.read()
     # The dated decision package names a pin; either the historical or the
     # current pin satisfies the reference (the record is dated prose).
-    assert "0.2.0-rc.2" in text or "0.1.1-rc.2" in text, (
+    assert "0.2.1-rc.2" in text or "0.2.0-rc.2" in text or "0.1.1-rc.2" in text, (
         "decision package must reference the DSH version pin")
 
 

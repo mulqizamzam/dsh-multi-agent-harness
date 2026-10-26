@@ -16,11 +16,10 @@
 #   |-----------------------------|-----------------------------------------|------------------------------------------------------------------------|
 #   | `persona`                   | REPLACE `text:` with the orchestrator   | identity — this role's mission and hard boundaries from                |
 #   |                             | persona                                 | `orchestrator/AGENT.md`                                                |
-#   | `tool-ralph`                | DELETE the row                          | `orchestrator.tool_surface.deny` names `ralph` — "ralph is a fresh-agent|
-#   |                             |                                         | loop, not orchestration"                                               |
 #   | `tool-pwsh`                 | DELETE the row                          | `orchestrator.tool_surface.deny` names `pwsh`                          |
-#   | `tool-subagent-codex`       | DELETE the row                          | not in `orchestrator.tool_surface.allow`                               |
-#   | `tool-subagent-claude-code` | DELETE the row                          | not in `orchestrator.tool_surface.allow`                               |
+#   | `time-context`              | DELETE the row                          | not in `orchestrator.tool_surface.allow` (0.2.1-rc.2 addition)         |
+#   | `tool-schedule`             | DELETE the row                          | not in `orchestrator.tool_surface.allow` (0.2.1-rc.2 addition)         |
+#   | `tool-plugin-market`        | DELETE the row                          | `disabled: true` upstream; not needed for coordination surface         |
 #
 # Every other `standard` row is unchanged, including its explanatory comments:
 # the `delegation` group (with its `workflowEngine` isolate realm), `tool-goal`,

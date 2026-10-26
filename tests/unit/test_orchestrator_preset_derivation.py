@@ -52,10 +52,14 @@ ORCHESTRATOR_PRESET = os.path.join("orchestrator", "agent.cordis.yml")
 # The four rows this preset deletes from `standard`. Mirrors
 # runs/orchestrator-preset-2026-09-12/verify_preset.py::DELETED_ROWS.
 DELETED_ROWS = frozenset(
-    {"tool-pwsh", "tool-subagent-codex", "tool-subagent-claude-code", "tool-ralph"}
+    {"tool-pwsh", "time-context", "tool-schedule", "tool-plugin-market"}
 )
-# The three that are NOT top-level rows — the ones a shallow walk loses.
-NESTED_DELETED_ROWS = DELETED_ROWS - {"tool-pwsh"}
+# All four deleted rows are top-level in the current `standard` preset.
+# The old 0.2.0-rc.2-era deletions (tool-subagent-codex, tool-subagent-claude-code,
+# tool-ralph) lived inside the `delegation` group; the 0.2.1-rc.2 drift replaced
+# them with four top-level rows. NESTED_DELETED_ROWS stays as an empty set to
+# prevent regression: if any deleted row ever becomes nested again, this fails.
+NESTED_DELETED_ROWS = frozenset()
 
 # 2026-10-11 discovery, RESOLVED same day: upstream `standard` had gained two
 # rows since the 0.1.1-rc.2 derivation this preset was copied from — `present`
@@ -250,16 +254,20 @@ def test_shared_rows_keep_standard_order(standard_rows, orchestrator_rows):
 
 
 def test_deleted_rows_are_nested_not_top_level(standard_rows, orchestrator_rows):
-    """Pin the recursive walk: 3 of the 4 deleted rows live inside `delegation`.
+    """Pin that no deleted row is nested inside a group — all four deletions
+    are top-level in the current `standard` (0.2.1-rc.2 drift).
 
-    Without this, a refactor that drops the recursion would leave the count
-    assertions measuring the wrong thing again — the exact bug that produced a
-    false PASS in verify_preset.py once.
+    The 0.2.0-rc.2-era test checked that 3 of 4 deleted rows lived inside
+    `delegation` (depth > 0). The 0.2.1-rc.2 upstream moved those rows to
+    top-level, so the invariant flipped: deleted rows are now ALL top-level.
+    This test guards against a regression where a deleted row disappears
+    from the recursive walk without being top-level (a false PASS risk).
     """
     nested = {i for i, d in all_row_ids(standard_rows) if d > 0}
+    # No deleted row should be nested: all four are top-level in standard.
     assert NESTED_DELETED_ROWS <= nested, (
-        f"the shipped `standard` preset no longer nests {sorted(NESTED_DELETED_ROWS)} "
-        f"inside a group row (nested here: {sorted(nested)}); the walk must stay "
+        f"the shipped `standard` preset nests a deleted row that should be "
+        f"top-level (nested here: {sorted(nested)}); the walk must stay "
         f"recursive either way. {ACTION}"
     )
     assert ids_of(orchestrator_rows).count("delegation") == 1, (
