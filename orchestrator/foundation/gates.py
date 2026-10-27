@@ -50,11 +50,19 @@ class Gate:
 class AuthorityGate(Gate):
     """Consumes structured authority records ONLY. Model text, state-file
     `approved:true`, BadSector PASS, and agent messages are never authority
-    (AUTH-INV-01/07/09/13/14). Fail-closed."""
+    (AUTH-INV-01/07/09/13/14). Fail-closed.
+
+    Hardened (Phase 1E): adds execution-time checks that were missing from the
+    original simplified gate:
+      - AUTH-INV-11 (target containment): target must be within the delegation's
+        scope_resources / target field (delegates to control.delegation.target_in_scope).
+      - AUTH-INV-06 (revocation): delegation id in the revocation_list → DENY.
+    Falls closed to DENY if the control submodule is unavailable."""
     name = "authority"
 
     def evaluate(self, context) -> GateDecision:
-        delegation = context.get("delegation")
+        ctx = context or {}
+        delegation = ctx.get("delegation")
         if not isinstance(delegation, Delegation):
             return GateDecision("DENY", "no structured delegation (AUTH-INV-05)", self.name)
         if not delegation.is_active():
@@ -63,12 +71,38 @@ class AuthorityGate(Gate):
         if delegation.is_expired():
             return GateDecision("DENY", f"delegation {delegation.task} expired",
                                 self.name)
-        # task scope containment: a task delegation must cover the action+target
-        action = context.get("action", "")
-        target = context.get("target", "")
+        # AUTH-INV-06: revocation re-checked at execution time
+        revocation_list = ctx.get("revocation_list", ())
+        if delegation.id in (revocation_list or ()):
+            return GateDecision("DENY",
+                                f"delegation {delegation.id} revoked (AUTH-INV-06)",
+                                self.name)
+        # task scope containment: a task delegation must cover the action
+        action = ctx.get("action", "")
+        target = ctx.get("target", "")
         if delegation.action and action and delegation.action != action:
             return GateDecision("DENY", f"action {action} not authorized by delegation",
                                 self.name)
+        # AUTH-INV-11 (HARDENED): target containment — the execution target
+        # must fall within the delegation's authorized resources. Delegates to
+        # control.delegation.target_in_scope (the same prefix-boundary matcher
+        # the control-plane authority gate uses). Skipped when neither the
+        # delegation nor the context carries a target (read-only / umbrella
+        # delegations legitimately omit a concrete target).
+        if target and (delegation.target or delegation.scope_resources):
+            try:
+                from control.delegation import target_in_scope
+            except ImportError:
+                return GateDecision("DENY",
+                                    "target_in_scope unavailable (fail-closed)",
+                                    self.name)
+            resources = delegation.scope_resources or (delegation.target,)
+            if not target_in_scope(target, resources):
+                return GateDecision(
+                    "DENY",
+                    f"target {target!r} outside delegation resources "
+                    f"(AUTH-INV-11): {list(resources)}",
+                    self.name)
         # prohibited actions are hard denials
         if action in delegation.prohibited_actions:
             return GateDecision("DENY", f"action {action} is prohibited", self.name)
@@ -76,7 +110,7 @@ class AuthorityGate(Gate):
         if any(a in delegation.requires_approval for a in
                ("destructive", "financial_transfer", "sensitive_publication",
                 "credential_change")):
-            if not context.get("approval_reference"):
+            if not ctx.get("approval_reference"):
                 return GateDecision("ESCALATE", "action requires Human approval",
                                     self.name)
         return GateDecision("ALLOW", "", self.name)
@@ -85,32 +119,75 @@ class AuthorityGate(Gate):
 # ---------------------------------------------------------------------------
 # RISK GATE
 # ---------------------------------------------------------------------------
-INTRINSIC_HIGH_ACTIONS = {
-    "destructive", "production_deploy", "credential_change",
-    "financial_transaction", "sensitive_publication", "publish",
-}
+# Hardened (Phase 1E): expanded to match control.risk.INTRINSIC_HIGH_ACTIONS
+# so BadSectorReviewGate mandatory triggers are consistent with the full
+# semantic-laundering-resistant vocabulary (THREAT-011/012).
+try:
+    from control.risk import INTRINSIC_HIGH_ACTIONS  # noqa: F401
+except ImportError:  # fail-closed fallback (module unavailable)
+    INTRINSIC_HIGH_ACTIONS = frozenset({
+        "destructive", "production_deploy", "credential_change",
+        "financial_transaction", "sensitive_publication", "publish",
+        "deploy_to_prod", "production_change", "destroy", "drop_database",
+        "delete_production", "purge", "wipe", "unlink", "truncate_data",
+        "permission_change", "role_grant", "access_grant",
+        "financial_commitment", "payment", "wire_transfer",
+        "material_publication", "delete", "drop", "truncate", "overwrite",
+        "rm",
+    })
 
 
 class RiskGate(Gate):
-    """Deterministic classification; intrinsic HIGH is never downgradable by
-    model judgment."""
+    """Deterministic risk classification with semantic-laundering resistance
+    (THREAT-011/012) and AUTH-INV-10 enforcement.
+
+    Hardened (Phase 1E): delegates to ``control.risk.RiskClassifier`` for the
+    full signal set (intrinsic actions, production environment, destructive
+    flags, credential/permission/financial/publication keyword patterns,
+    non-downgradable HIGH). Falls closed to DENY if the control module is
+    unavailable."""
     name = "risk"
 
     def evaluate(self, context) -> GateDecision:
-        action = context.get("action", "")
-        task = context.get("task")
+        ctx = context or {}
+        action = ctx.get("action", "")
+        task = ctx.get("task")
         if isinstance(task, Task) and task.risk_metadata:
             declared = task.risk_metadata
         else:
-            declared = context.get("risk", "LOW")
-        if declared == "HIGH":
-            return GateDecision("ALLOW", "HIGH (declared, not downgradable)", self.name,
-                                {"risk": "HIGH"})
-        if action in INTRINSIC_HIGH_ACTIONS:
-            # intrinsic HIGH regardless of declared risk
-            return GateDecision("ALLOW", "intrinsic HIGH (non-downgradable)", self.name,
-                                {"risk": "HIGH"})
-        return GateDecision("ALLOW", "", self.name, {"risk": declared or "LOW"})
+            declared = ctx.get("declared") or ctx.get("risk", "LOW")
+
+        try:
+            from control.risk import RiskClassifier
+            classifier = RiskClassifier()
+            rc = classifier.classify(
+                action=action,
+                target=ctx.get("target", ""),
+                environment=ctx.get("environment"),
+                requires_approval=ctx.get("requires_approval", ()),
+                operation_flags=ctx.get("operation_flags", ()),
+                tool=ctx.get("tool"),
+                command=ctx.get("command"),
+                declared=declared,
+            )
+        except ImportError:
+            return GateDecision("DENY", "risk gate unavailable (fail-closed)",
+                                self.name)
+
+        # AUTH-INV-10: intrinsic HIGH cannot be downgraded by model judgment.
+        if rc.intrinsic and (declared or "LOW").upper() != "HIGH":
+            return GateDecision(
+                "DENY",
+                f"intrinsic HIGH cannot be downgraded to {declared or 'LOW'} "
+                f"(AUTH-INV-10) signals={list(rc.signals)}",
+                self.name,
+                {"risk": "HIGH", "intrinsic": True,
+                 "signals": list(rc.signals)})
+
+        return GateDecision(
+            "ALLOW", rc.reason or "risk classified", self.name,
+            {"risk": rc.level, "intrinsic": rc.intrinsic,
+             "signals": list(rc.signals)})
 
 
 # ---------------------------------------------------------------------------

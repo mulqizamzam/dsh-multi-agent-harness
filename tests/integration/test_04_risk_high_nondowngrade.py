@@ -9,9 +9,11 @@
 
 class TestINT04RiskHighNonDowngrade:
     def test_destructive_declared_low_stays_high(self, harness):
-        """A destructive action declared LOW is reclassified HIGH by the gate."""
+        """A destructive action declared LOW is intrinsic HIGH; the gate DENYs
+        the downgrade attempt (AUTH-INV-10). detail still carries risk=HIGH
+        so the classification is preserved for escalation."""
         dec = harness.evaluate_gate("risk", {"action": "destructive", "risk": "LOW"})
-        assert dec.decision == "ALLOW"  # the gate classifies; ALLOW = classification recorded
+        assert dec.decision == "DENY"  # DENY: intrinsic HIGH declared LOW
         assert dec.detail["risk"] == "HIGH"
 
     def test_production_deploy_intrinsic_high(self, harness):

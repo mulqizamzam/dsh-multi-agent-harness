@@ -357,12 +357,19 @@ class TestOrchestratorDirectExecution:
                                          "target": "prod/x"}).decision == "DENY"
 
     def test_orc_002_high_action_must_route_to_specialist(self):
-        """ORC-002: a HIGH action attempted directly is DENIED by the gate; it
-        must route through a specialist under authority + approval."""
+        """ORC-002: a HIGH action attempted without explicit HIGH declaration
+        is DENIED at the risk gate (AUTH-INV-10 — intrinsic HIGH cannot be
+        downgraded to LOW); it must be explicitly declared HIGH and route
+        through a specialist under authority + approval."""
         cp = ControlPlane()
-        # risk gate flags HIGH (intrinsic), authority gate DENYs (no delegation)
-        assert cp.evaluate("risk", {"action": "destructive"}).decision == "ALLOW"
-        assert cp.evaluate("risk", {"action": "destructive"}).detail["risk"] == "HIGH"
+        # risk gate DENYs: intrinsic HIGH declared LOW (defaults) → downgrade
+        # attempt blocked (AUTH-INV-10). detail still carries the reclassified
+        # risk so callers can escalate/distinguish.
+        dec = cp.evaluate("risk", {"action": "destructive"})
+        assert dec.decision == "DENY"
+        assert dec.detail["risk"] == "HIGH"
+        assert dec.detail["intrinsic"] is True
+        # authority gate also DENYs (no delegation)
         assert cp.evaluate("authority", {"action": "destructive",
                                          "target": "x"}).decision == "DENY"
 
@@ -376,12 +383,15 @@ class TestOrchestratorDirectExecution:
                                                      "target": "agents/cto/policy.yaml"}).decision == "ALLOW"
 
     def test_risk_gate_non_downgradable_high(self):
-        """AUTH-INV-10: a destructive action declared LOW is still intrinsic
-        HIGH in the risk gate — model judgment cannot downgrade it."""
+        """AUTH-INV-10: a destructive action declared LOW is intrinsic HIGH;
+        the gate DENYs the downgrade attempt (fail-closed, non-downgradable).
+        The detail carries risk=HIGH so callers can escalate rather than
+        silently proceed."""
         cp = ControlPlane()
         dec = cp.evaluate("risk", {"action": "destructive", "risk": "LOW"})
-        assert dec.decision == "ALLOW"
-        assert dec.detail["risk"] == "HIGH"  # reclassified, never downgraded
+        assert dec.decision == "DENY"  # DENY, not ALLOW — downgrade blocked
+        assert dec.detail["risk"] == "HIGH"
+        assert dec.detail["intrinsic"] is True
 
 
 # ===========================================================================
