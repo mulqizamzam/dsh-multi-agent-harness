@@ -1,9 +1,10 @@
 # ADR 0004 — Orchestrator Role Preset (root-session composition)
 
-- **Status**: accepted and **implemented** (2026-09-12, Human decision — the owner asked for the Orchestrator to become a real, deployable role and selected the "selectable/deployable preset" option over the documentation-only completion). Deployment was executed the same day and verified: `runs/orchestrator-preset-2026-09-12/` (24/24 harness checks, 0 failed; live roster discovery 16 rows, 0 broken). Change-request record: `docs/phase-1/0006-orchestrator-preset-composition-exception-change-request.md`.
+- **Status**: accepted and **implemented** (2026-09-12, Human decision — the owner asked for the Orchestrator to become a real, deployable role and selected the "selectable/deployable preset" option over the documentation-only completion).
 - **Date**: 2026-09-12
+- **Architecture note (2026-10-10)**: the initial deployment model — copies placed under the user preset root `$DSH_HOME/.agent-presets/orchestrator/` — was **retired** by the plugin-registration cutover. As of that date the `dsh-multi-agent-harness` plugin (`index.js` + `cordis.patch.yml`) registers the presets **straight from the repo** at `agents/<id>/` and `orchestrator/`; `$DSH_HOME/.agent-presets/` no longer exists and `$DSH_HOME/.agent-presets/orchestrator/` is not a populated path. This ADR's *decision* (D1–D6) is unchanged; only the *deployment mechanism* changed. The verification block is updated to reflect the new gate.
 - **Version pin**: DeepSeek Harness `0.1.1-rc.2` (unchanged; no DSH core modification)
-- **Scope**: `multi-agent-harness/` + the user preset root `$DSH_HOME/.agent-presets/`. Does **not** modify the DSH checkout `/home/administrator/deepseek-harness/` (read-only), the profile layer `$DSH_HOME/profiles/web/cordis.patch.yml`, or any shipped preset.
+- **Scope**: `multi-agent-harness/` plugin, registered straight from `agents/<id>/` and `orchestrator/` via `dsh-multi-agent-harness/index.js`. As of 2026-10-10 this no longer writes to or reads from `$DSH_HOME/.agent-presets/`. Does **not** modify the DSH checkout `/home/administrator/deepseek-harness/` (read-only), the profile layer `$DSH_HOME/profiles/web/cordis.patch.yml`, or any shipped preset.
 - **Amends**: ADR 0001 Decision 3 (hybrid orchestrator) — **refines the composition of the root session; does not reverse the architecture.** Supersedes the recorded value `orchestrator_preset: standard` in `config/role-preset-mapping.yaml` (`draft_artifacts`) and the Phase-1C statement in `docs/phase-1/0002-role-isolation-draft.md` §"Constraints" item 3.
 
 ---
@@ -18,8 +19,8 @@ It left one thing unspecified: **how the root session is composed.** The recorde
 
 The verified state that motivates this ADR:
 
-1. **The orchestrator has no preset of its own.** `$DSH_HOME/.agent-presets/` holds fifteen `role-*` directories (one per specialist); there is no `orchestrator` directory. The shipped presets are `standard`, `code`, `cordis`, `minimal` (`/home/administrator/deepseek-harness/apps/cli/config/agent-presets/`).
-2. **The root session therefore runs the `standard` preset**, whose persona is `You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.` (`standard/agent.cordis.yml:28`). A coding-agent persona is not a coordination identity.
+1. **The orchestrator has no preset of its own.** At the time of this decision the user preset root `$DSH_HOME/.agent-presets/` held fifteen `role-*` directories (one per specialist) and no `orchestrator` directory. (That root was retired on 2026-10-10 by the plugin-registration cutover — see the Architecture note in Status — but the *finding* stands: there was no orchestrator preset.) The shipped presets were `standard`, `code`, `cordis`, `minimal` (`/home/administrator/deepseek-harness/apps/cli/config/agent-presets/`).
+2. **The root session therefore runs the `standard` preset**, whose persona is `You are a coding agent powered by the {{model}} model.` (from `standard.patch.yml:14` — the shipped standard patch is the deployment source of truth). Note: the working directory is NOT referenced via `{{cwd}}` here; it is delivered separately as a runtime-context section. A coding-agent persona is not a coordination identity.
 3. **The orchestrator's declared `toolFilter` is currently unenforced.** `config/role-preset-mapping.yaml:367-392` declares the orchestrator's `allow` and `deny` sets, but nothing **composes** them: the field is a recorded intent (`orchestrator/contract.md` treats the control plane, not the session tool list, as the security boundary — THREAT-025). The concrete, verified divergence: the orchestrator's deny list names `ralph` (`config/role-preset-mapping.yaml:375`) and its notes say "ralph is a fresh-agent loop, not orchestration" (`:390-392`), yet the `standard` preset the root session runs mounts `tool-ralph` (`standard/agent.cordis.yml:230-231`) — so the live root session carries a tool its own declared policy denies.
 
 The owner's instruction resolves the open item: make the Orchestrator a real role that can be **selected and deployed**, not merely documented.
@@ -28,9 +29,9 @@ The owner's instruction resolves the open item: make the Orchestrator a real rol
 
 ### D1 — The orchestrator gets its own agent preset
 
-A new preset with id `orchestrator`, deployed at the user preset root `$DSH_HOME/.agent-presets/orchestrator/`, containing `agent.cordis.yml` (composition) and `preset.yml` (display metadata). The repo source of truth is `orchestrator/agent.cordis.yml` and `orchestrator/preset.yml`, mirroring the `agents/<id>/agent.cordis.yml` → `$DSH_HOME/.agent-presets/role-<id>/` pattern already used for all fifteen specialists.
+A new preset with id `orchestrator`, containing `agent.cordis.yml` (composition) and `preset.yml` (display metadata). **Deployment mechanism (as amended 2026-10-10):** the preset lives in the repo at `orchestrator/` and is registered straight into DSH by the `dsh-multi-agent-harness` plugin (`index.js` + `cordis.patch.yml`) — there is no longer a copy step and no `$DSH_HOME/.agent-presets/orchestrator/` directory. The repo source is both the source of truth and the live artifact. This mirrors the `agents/<id>/` registration used for all fifteen specialists.
 
-The user preset root is package-owned (`USER_PRESET_DIR = '.agent-presets'`) and auto-discovered with `includeUserRoot` enabled (verified: `docs/phase-1/0003-d4-composition-exception-change-request.md:30`), so discovery needs no roster reconfiguration.
+The user preset root was package-owned (`USER_PRESET_DIR = '.agent-presets'`) and auto-discovered with `includeUserRoot` enabled (verified: `docs/phase-1/0003-d4-composition-exception-change-request.md:30`). *(Amended 2026-10-10: under the current plugin-registration architecture discovery reads the repo sources directly, so this sentence describes the retired mechanism for historical continuity, not the active path.)*
 
 **Where the binding is declared (and where it cannot be).** The orchestrator→preset binding is declared in `config/role-preset-mapping.yaml` under `draft_artifacts.orchestrator_preset`. It is deliberately **not** a `preset:` property on the `orchestrator:` entry, for two verified reasons: that entry's schema (`schemas/role-mapping.schema.json`, `$defs.orchestratorEntry`) is `additionalProperties: false` over a fixed property set, so an extra property fails `tests/validate_config.py` (observed: `Additional properties are not allowed ('preset' was unexpected) at ['orchestrator']`); and `preset_naming_convention: 'role-<id>'` does not derive the orchestrator's id, because that id is `orchestrator`, not `role-orchestrator`. The binding is therefore **not derivable from the convention** and must be stated explicitly somewhere — `orchestrator_preset` is that place. This ADR does not modify the mapping schema.
 
@@ -68,7 +69,7 @@ This ADR changes **how** the root session may be composed. It does **not**:
 
 ### D6 — The change is additive and reversible
 
-Deployment creates one new directory under the user preset root. It modifies no existing preset, no shipped preset, and no profile patch file. Rollback is the removal of that directory; roster discovery is unmemoized, so removal takes effect on the next read, and sessions already joined keep the standing mount they joined.
+Deployment creates one entry in the plugin's live registration table and is registered under the `orchestrator` id; no filesystem directory is touched by a deploy-copy step. Rollback is the removal of the plugin's `orchestrator` registration row (or reversion of the plugin commit); sessions already joined keep the standing mount they joined, as before.
 
 ## Consequences
 
@@ -91,9 +92,13 @@ Deployment creates one new directory under the user preset root. It modifies no 
 
 ## Verification
 
-Deployment was verified before it is reported as complete. The evidence plan (discovery, `broken` status, parse shape, absence of the four deleted rows, SHA-256 source↔deployed equality, `standard` unchanged, default unchanged) is specified in `docs/phase-1/0006-orchestrator-preset-composition-exception-change-request.md` §Verification, following the INT-* evidence style of `runs/mount-verification-2026-09-07/`.
+## Verification
 
-**Outcome (2026-09-12).** Harness `runs/orchestrator-preset-2026-09-12/verify_preset.py`: **24 passed, 0 failed**. Live roster discovery through the real API (`scanRoot` from `@deepseek-ai/dsh-agent-presets`) against `$DSH_HOME/.agent-presets`: **16 rows, 0 broken**, `orchestrator` present with `trust: user` and `broken: none`. `python3 tests/validate_config.py`: **456 passed, 0 failed** (exit 0) — identical to the pre-change baseline. Deployed composition and metadata are byte-identical to their repo sources (SHA-256). `standard`, the profile patch, and all 15 pre-existing preset compositions are unchanged; exactly one preset was added.
+Under the current (post-2026-10-10) plugin-registration architecture, the preset is verified from the repo sources directly — there is no deploy-copy to byte-compare against. The evidence gate is composition integrity: the composition must be exactly the shipped `standard` preset minus the four documented deleted rows.
+
+- `tests/unit/test_orchestrator_preset_derivation.py` — asserts the orchestrator preset is `standard` minus exactly `{tool-ralph, tool-pwsh, time-context, tool-plugin-market}`, counted **recursively** (the nested-row trap is guarded), and fails with an `ACTION:` pointer when upstream drifts.
+- `tests/unit/test_preset_source_integrity.py` — asserts all 16 repo sources are mount-ready: dialect (every persona row carries `prefix`, never the legacy `text:` key), parse-shapes into a non-empty named-row list, and the registry id set == the `agents/` + `orchestrator` source set with the `role-<id>` mapping exactly derivable from `index.js`.
+- `tests/validate_config.py` — schema + permission-matrix + tool-surface consistency (run in prior phase: 456 passed, 0 failed).
 
 **Two defects were found by verification and fixed. They are recorded because both produce silent false confidence:**
 
@@ -110,7 +115,7 @@ Deployment was verified before it is reported as complete. The evidence plan (di
 - **The per-session selection is now closed.** The one link this ADR could not verify for itself — a session actually running the preset — was exercised by the owner in a separate session. That is the owner's report, not an independently reproduced measurement here; recorded so the gap is not left looking open.
 - **Six deployed compositions were stale, and the drift was in the comments.** Measuring the deployment found 6 of 16 `agent.cordis.yml` files (badsector, cfo, kai, nova, somad, zeko — the baseline seven less `cto`) differing from their repo sources. The recursive tool-row sets were **identical** in every one; the whole difference was a header comment. The repo said `Mounted 2026-09-07 …`; the deployed copies still said `DRAFT — NOT MOUNTED`, i.e. each deployed file asserted the opposite of its own true status. All six were re-synced from the repo. This is the concrete reason the repo, not the deployed tree, is the source of truth.
 - **Permissions were split 8/8**, from two deployment batches: 7 baseline roles plus `orchestrator` at mode 600, the 8 expansion roles at 644. Unified to directories 700 / files 600 on the owner's instruction. Recorded as hygiene, **not** as a security fix: `$DSH_HOME` is itself mode 700, so no other principal could reach the preset root at either mode.
-- **A deployment sync test now guards all of it** (`tests/unit/test_preset_deployment_sync.py`): byte-equality of all 16 repo↔deployed file pairs, completeness of the deployed set against the repo-sourced ids (so an unsourced preset cannot reappear), and *uniformity* of directory and file modes — deliberately uniformity rather than the specific values `700`/`600`, because the defect was a split, and hard-coding values would make the gate fragile across machines.
+- **A deployment sync test now guards all of it** (`tests/unit/test_preset_source_integrity.py`, superseding the retired `test_preset_deployment_sync.py` at the 2026-10-10 cutover): source integrity for all 16 presets — every composition parses, every persona carries `prefix` not `text`, and the registry id set matches the `agents/` + `orchestrator` source set with `role-<id>` mapping derived from the plugin. As a consequence, comment drift cannot silently land (there is no deploy copy to drift from), and the dialect gate catches the exact failure mode that was observed during the cutover: every preset would mount broken if the persona key drifted back to the legacy `text:` format.
 
 ## References
 

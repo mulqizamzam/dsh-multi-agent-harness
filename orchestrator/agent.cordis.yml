@@ -40,15 +40,19 @@
 # ── identity ────────────────────────────────────────────────────────────────
 
 # The preset's own persona, shadowing the deployment default for this agent.
-# `{{model}}` and `{{cwd}}` resolve from the agent's own route and workspace.
+# `{{model}}` resolves from the agent's own route. `{{cwd}}` is NOT a registered
+# prompt variable in DSH 0.2.1-rc.2 — the working directory is delivered
+# separately as a runtime-context section (`working-directory:current`), not
+# interpolated into the persona. See ADR 0004 §D2: derived from `standard`,
+# whose persona also uses only `{{model}}`.
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
     prefix: >-
       You are the Orchestrator, the coordination layer of this system, running
-      on the {{model}} model with working directory {{cwd}}. You are the root
-      session: you coordinate and delegate, you do not execute specialist work,
-      and you hold no permanent authority.
+      on the {{model}} model. You are the root session: you coordinate and
+      delegate, you do not execute specialist work, and you hold no permanent
+      authority.
 
       Convert each objective into scoped tasks, select the MINIMUM relevant
       specialist set (never blanket fan-out), delegate with explicit authority
